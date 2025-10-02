@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.Constants;
 import frc.team4276.frc2025.SimManager;
-import frc.team4276.frc2025.subsystems.superstructure.displacer.Displacer;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.Elevator;
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffector;
 import java.util.function.BooleanSupplier;
@@ -15,7 +14,6 @@ import org.littletonrobotics.junction.Logger;
 public class Superstructure extends SubsystemBase {
   private final Elevator elevator;
   private final EndEffector endeffector;
-  private final Displacer displacer;
 
   private boolean wantScore = false;
   private boolean leftL1 = false;
@@ -40,10 +38,9 @@ public class Superstructure extends SubsystemBase {
 
   private double elevatorCharacterizationInput = 0.0;
 
-  public Superstructure(Elevator elevator, EndEffector endeffector, Displacer displacer) {
+  public Superstructure(Elevator elevator, EndEffector endeffector) {
     this.elevator = elevator;
     this.endeffector = endeffector;
-    this.displacer = displacer;
 
     elevator.setCoastOverride(() -> false);
 
@@ -75,7 +72,6 @@ public class Superstructure extends SubsystemBase {
       case STOW:
         elevator.setGoal(Elevator.Goal.STOW);
         endeffector.setGoal(EndEffector.Goal.IDLE);
-        displacer.setGoal(Displacer.Goal.MOOORV);
 
         break;
 
@@ -87,7 +83,6 @@ public class Superstructure extends SubsystemBase {
       case INTAKE:
         elevator.setGoal(Elevator.Goal.INTAKE);
         endeffector.setGoal(EndEffector.Goal.INTAKE);
-        displacer.setGoal(Displacer.Goal.IDLE);
 
         break;
 
@@ -109,20 +104,17 @@ public class Superstructure extends SubsystemBase {
       case LO_ALGAE:
         elevator.setGoal(Elevator.Goal.LO_ALGAE);
         endeffector.setGoal(EndEffector.Goal.IDLE);
-        displacer.setGoal(Displacer.Goal.VROOOM);
 
         break;
       case HI_ALGAE:
         elevator.setGoal(Elevator.Goal.HI_ALGAE);
         endeffector.setGoal(EndEffector.Goal.IDLE);
-        displacer.setGoal(Displacer.Goal.VROOOM);
 
         break;
 
       case CLIMB:
         elevator.setGoal(Elevator.Goal.STOW);
         endeffector.setGoal(EndEffector.Goal.IDLE);
-        displacer.setGoal(Displacer.Goal.IDLE);
 
         break;
       case CHARACTERIZING:
@@ -139,7 +131,6 @@ public class Superstructure extends SubsystemBase {
 
     elevator.periodic();
     endeffector.periodic();
-    displacer.periodic();
 
     Logger.recordOutput("Superstructure/DesiredGoal", desiredGoal);
     Logger.recordOutput("Superstructure/CurrentGoal", currentGoal);

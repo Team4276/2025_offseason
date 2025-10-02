@@ -10,7 +10,7 @@ import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.subsystems.drive.Drive;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure;
 import frc.team4276.util.AllianceFlipUtil;
-import frc.team4276.util.ViXController;
+import frc.team4276.util.hid.ViXController;
 import java.util.function.DoubleSupplier;
 
 public class IntakeCommands {

@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.frc2025.RobotState;
-import frc.team4276.frc2025.ScoringHelper;
 import frc.team4276.frc2025.field.FieldConstants.Reef;
 import frc.team4276.frc2025.subsystems.drive.Drive;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure;
@@ -70,17 +69,10 @@ public class AutoScore {
         .andThen(
             new DriveToPose(drive, () -> goal.get().get().getAlign(), robotPose)
                 .until(
-                    () ->
-                        // inTolerance(
-                        // goal.get().get(),
-                        // goal.get().get().getAlign(),
-                        // reefNudgeThreshold.get())
-                        // &&
-                        proceedScoring()))
+                    () -> proceedScoring()))
         .andThen(
             new DriveToPose(drive, () -> goal.get().get().getScore(), robotPose)
                 .alongWith(
-                    // superstructure.setGoalCommand(level),
                     superstructure.autoScoreCommand(),
                     Commands.waitUntil(
                             () ->
@@ -90,41 +82,6 @@ public class AutoScore {
                         .andThen(superstructure.scoreCommand(false))
                         .andThen(Commands.waitSeconds(0.5))))
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
-  }
-
-  public static Command coralAlignCommand(
-      Drive drive,
-      DoubleSupplier xSupplier,
-      DoubleSupplier ySupplier,
-      Superstructure superstructure,
-      ScoringHelper scoringHelper) {
-
-    Supplier<Pose2d> alignPose = scoringHelper.getSelectedReef()::getAlign;
-    Supplier<Pose2d> scorePose = scoringHelper.getSelectedReef()::getScore;
-
-    return Commands.sequence(
-        Commands.waitUntil(
-                () ->
-                    inTolerance(
-                        scoringHelper.getSelectedReef(), alignPose.get(), reefAlignThreshold.get()))
-            .deadlineFor(
-                DriveCommands.joystickDriveAtHeading(
-                    drive, xSupplier, ySupplier, () -> scorePose.get().getRotation())),
-        new DriveToPose(
-                drive,
-                alignPose,
-                () -> getRobotPose(scoringHelper.getSelectedReef(), alignPose.get()))
-            .until(
-                () ->
-                    inTolerance(
-                        scoringHelper.getSelectedReef(),
-                        scorePose.get(),
-                        reefNudgeThreshold.get())),
-        new DriveToPose(
-                drive,
-                scorePose,
-                () -> getRobotPose(scoringHelper.getSelectedReef(), scorePose.get()))
-            .alongWith(superstructure.setGoalCommand(scoringHelper.getSuperstructureGoal())));
   }
 
   public static Command bargeScoreCommand() {

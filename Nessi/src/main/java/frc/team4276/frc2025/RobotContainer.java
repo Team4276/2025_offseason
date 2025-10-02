@@ -7,20 +7,16 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.team4276.frc2025.AutoSelector.AutoQuestion;
 import frc.team4276.frc2025.AutoSelector.AutoQuestionResponse;
 import frc.team4276.frc2025.commands.AutoScore;
 import frc.team4276.frc2025.commands.DriveCommands;
-import frc.team4276.frc2025.commands.DriveToPose;
 import frc.team4276.frc2025.commands.FeedForwardCharacterization;
 import frc.team4276.frc2025.commands.IntakeCommands;
 import frc.team4276.frc2025.commands.WheelRadiusCharacterization;
@@ -35,7 +31,6 @@ import frc.team4276.frc2025.subsystems.hopper.HopperIOSparkMax;
 import frc.team4276.frc2025.subsystems.superstructure.RollerSensorsIO;
 import frc.team4276.frc2025.subsystems.superstructure.RollerSensorsIOHardware;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure;
-import frc.team4276.frc2025.subsystems.superstructure.displacer.Displacer;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.Elevator;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorIO;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorIOSparkMax;
@@ -46,15 +41,14 @@ import frc.team4276.frc2025.subsystems.vision.Vision;
 import frc.team4276.frc2025.subsystems.vision.VisionIO;
 import frc.team4276.frc2025.subsystems.vision.VisionIOPhotonVision;
 import frc.team4276.util.AllianceFlipUtil;
-import frc.team4276.util.ViXController;
 import frc.team4276.util.dashboard.ElasticUI;
+import frc.team4276.util.hid.CowsController;
+import frc.team4276.util.hid.ViXController;
 import frc.team4276.util.ios.GyroIO;
 import frc.team4276.util.ios.GyroIOADIS;
 import frc.team4276.util.ios.ModuleIO;
 import frc.team4276.util.ios.ModuleIOSim;
 import frc.team4276.util.ios.ModuleIOSpark;
-import frc.team4276.util.ios.RollerIO;
-import frc.team4276.util.ios.RollerIOSparkMax;
 import frc.team4276.util.ios.VisionIOPhotonVisionSim;
 import java.util.List;
 import java.util.function.DoubleSupplier;
@@ -80,24 +74,16 @@ public class RobotContainer {
   private enum BindSetting {
     DEFAULT,
     DEMO,
-    EXPERIMENTAL,
-    TEST
+    EXPERIMENTAL
   }
 
-  private final BindSetting bindSetting = Constants.isDemo ? BindSetting.DEMO : BindSetting.TEST;
+  private final BindSetting bindSetting = Constants.isDemo ? BindSetting.DEMO : BindSetting.DEFAULT;
 
   private final ViXController driver = new ViXController(0);
-  private final CommandGenericHID buttonBoard = new CommandGenericHID(1);
-  private final ViXController operator = new ViXController(2);
-  private final Joystick demoStickRight = new Joystick(3);
-  private final Joystick demoStickLeft = new Joystick(4);
-
-  private final ScoringHelper scoringHelper = new ScoringHelper(buttonBoard, operator);
+  private final CowsController demoController = new CowsController(1, 2);
 
   private final Alert driverDisconnected =
       new Alert("Driver controller disconnected (port 0).", AlertType.kWarning);
-  private final Alert operatorDisconnected =
-      new Alert("Operator controller disconnected (port 1).", AlertType.kWarning);
 
   // Overrides
   private final DigitalInput elevatorCoastOverride =
@@ -133,8 +119,7 @@ public class RobotContainer {
                   new EndEffector(
                       new EndEffectorIOSparkMax(
                           Ports.ENDEFFECTOR_LEFT, Ports.ENDEFFECTOR_RIGHT, 40, false, true),
-                      new RollerSensorsIOHardware()),
-                  new Displacer(new RollerIOSparkMax(Ports.ALGAE_DISPLACER, 20, false, true)));
+                      new RollerSensorsIOHardware()));
           hopper =
               new Hopper(
                   new HopperIOSparkMax(Ports.HOPPER_LEFT, true),
@@ -145,10 +130,7 @@ public class RobotContainer {
               new Vision(
                   RobotState.getInstance()::addVisionMeasurement,
                   new VisionIOPhotonVision(0),
-                  new VisionIOPhotonVision(1)
-                  // ,
-                  // new VisionIOPhotonVision(2)
-                  );
+                  new VisionIOPhotonVision(1));
         }
 
         case SIMBOT -> {
@@ -163,8 +145,7 @@ public class RobotContainer {
           superstructure =
               new Superstructure(
                   new Elevator(new ElevatorIO() {}),
-                  new EndEffector(new EndEffectorIO() {}, new RollerSensorsIO() {}),
-                  new Displacer(new RollerIO() {}));
+                  new EndEffector(new EndEffectorIO() {}, new RollerSensorsIO() {}));
           hopper = new Hopper(new HopperIO() {}, new HopperIO() {});
           climber = new Climber(new ClimberIO() {});
           if (disableVisionSim) {
@@ -194,18 +175,14 @@ public class RobotContainer {
     if (vision == null) {
       vision =
           new Vision(
-              RobotState.getInstance()::addVisionMeasurement, new VisionIO() {}, new VisionIO() {}
-              // ,
-              // new VisionIO() {}
-              );
+              RobotState.getInstance()::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
     }
 
     if (superstructure == null) {
       superstructure =
           new Superstructure(
               new Elevator(new ElevatorIO() {}),
-              new EndEffector(new EndEffectorIO() {}, new RollerSensorsIO() {}),
-              new Displacer(new RollerIO() {}));
+              new EndEffector(new EndEffectorIO() {}, new RollerSensorsIO() {}));
     }
 
     if (hopper == null) {
@@ -414,10 +391,6 @@ public class RobotContainer {
         configureExperimentalBindings();
         break;
 
-      case TEST:
-        configureTestBinds();
-        break;
-
       default:
         break;
     }
@@ -426,15 +399,14 @@ public class RobotContainer {
   private void configureDemoBindings() {
     /***************** Drive Triggers *****************/
     // Drive suppliers
-    DoubleSupplier driverX = () -> -demoStickLeft.getY();
-    DoubleSupplier driverY = () -> -demoStickLeft.getX();
-    DoubleSupplier driverOmega = () -> -demoStickRight.getX();
+    DoubleSupplier driverX = () -> -demoController.getLeftWithDeadband().y;
+    DoubleSupplier driverY = () -> -demoController.getLeftWithDeadband().x;
+    DoubleSupplier driverOmega = () -> -demoController.getRightWithDeadband().x;
 
     drive.setDefaultCommand(DriveCommands.joystickDrive(drive, driverX, driverY, driverOmega));
 
     driver
-        .a()
-        .and(driver.povUp())
+        .start()
         .onTrue(
             Commands.runOnce(
                     () ->
@@ -445,18 +417,15 @@ public class RobotContainer {
                                     AllianceFlipUtil.apply(Rotation2d.kZero))))
                 .ignoringDisable(true));
 
-    operator.leftTrigger().whileTrue(superstructure.setGoalCommand(Superstructure.Goal.INTAKE));
+    driver.leftTrigger().whileTrue(superstructure.setGoalCommand(Superstructure.Goal.INTAKE));
 
-    operator
-        .a()
-        .and(driver.povUp().negate())
-        .toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L1));
+    driver.a().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L1));
 
-    operator.x().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L2));
+    driver.x().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L2));
 
-    operator.b().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L3));
+    driver.b().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L3));
 
-    operator.rightTrigger().whileTrue(superstructure.scoreCommand(false));
+    driver.rightTrigger().whileTrue(superstructure.scoreCommand(false));
   }
 
   private void configureControllerBindings() {
@@ -470,156 +439,7 @@ public class RobotContainer {
 
     // Reset gyro to 0° when A button is pressed
     driver
-        .a()
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        RobotState.getInstance()
-                            .resetPose(
-                                new Pose2d(
-                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
-                                    AllianceFlipUtil.apply(Rotation2d.kZero))))
-                .ignoringDisable(true));
-
-    /***************** Coral Triggers *****************/
-
-    // Intake
-    driver
-        .x()
-        .and(() -> !disableHeadingAutoAlign)
-        .whileTrue(
-            IntakeCommands.intakeAtAngle(
-                Rotation2d.fromDegrees(305), superstructure, drive, driver, driverX, driverY));
-
-    driver
-        .b()
-        .and(() -> !disableHeadingAutoAlign)
-        .whileTrue(
-            IntakeCommands.intakeAtAngle(
-                Rotation2d.fromDegrees(55), superstructure, drive, driver, driverX, driverY));
-
-    driver
-        .x()
-        .and(() -> disableHeadingAutoAlign)
-        .whileTrue(IntakeCommands.intake(superstructure, driver));
-
-    driver
-        .b()
-        .and(() -> disableHeadingAutoAlign)
-        .whileTrue(IntakeCommands.intake(superstructure, driver));
-
-    // Scoring
-    driver
-        .rightTrigger()
-        .and(() -> disableHeadingAutoAlign)
-        .whileTrue(superstructure.setGoalCommand(scoringHelper::getSuperstructureGoal));
-
-    driver
-        .rightTrigger()
-        .and(
-            () ->
-                (disableTranslationAutoAlign && !disableHeadingAutoAlign)
-                    || scoringHelper.getSuperstructureGoal() == Superstructure.Goal.L1)
-        .whileTrue(
-            DriveCommands.joystickDriveAtHeading(
-                    drive,
-                    driverX,
-                    driverY,
-                    () -> scoringHelper.getSelectedReef().getScore().getRotation())
-                .alongWith(superstructure.setGoalCommand(scoringHelper::getSuperstructureGoal)));
-
-    driver
-        .rightTrigger()
-        .and(
-            () ->
-                !disableTranslationAutoAlign
-                    && !disableHeadingAutoAlign
-                    && scoringHelper.getSuperstructureGoal() != Superstructure.Goal.L1)
-        .whileTrue(
-            AutoScore.coralAlignCommand(drive, driverX, driverY, superstructure, scoringHelper)
-                .alongWith(
-                    Commands.waitUntil(
-                            () ->
-                                superstructure.getGoal() != Superstructure.Goal.STOW
-                                    && superstructure.atGoal()
-                                    && DriveToPose.atGoal())
-                        .andThen(driver.rumbleCommand(RumbleType.kBothRumble, 1.0, 0.2, 3))));
-
-    driver.rightBumper().and(driver.rightTrigger()).whileTrue(superstructure.scoreCommand(false));
-
-    driver.leftBumper().and(driver.rightTrigger()).whileTrue(superstructure.scoreCommand(true));
-
-    // Modal
-    driver
-        .povRight()
-        .onTrue(Commands.runOnce(() -> disableTranslationAutoAlign = !disableTranslationAutoAlign));
-
-    driver
-        .povLeft()
-        .onTrue(Commands.runOnce(() -> disableHeadingAutoAlign = !disableHeadingAutoAlign));
-
-    // Misc
-    driver
-        .rightBumper()
-        .and(() -> !driver.getRT())
-        .whileTrue(superstructure.setGoalCommand(Superstructure.Goal.SHUFFLE));
-
-    /***************** Algae Triggers *****************/
-
-    // Displacing
-    driver
-        .y()
-        .and(
-            () ->
-                scoringHelper.getSuperstructureGoal() == Superstructure.Goal.L2
-                    || scoringHelper.getSuperstructureGoal() == Superstructure.Goal.L1)
-        .and(() -> superstructure.getGoal() != Superstructure.Goal.L3)
-        .toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.LO_ALGAE));
-
-    driver
-        .y()
-        .and(
-            () ->
-                !(superstructure.getGoal() == Superstructure.Goal.L2
-                    || superstructure.getGoal() == Superstructure.Goal.L1))
-        .and(() -> scoringHelper.getSuperstructureGoal() == Superstructure.Goal.L3)
-        .toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.HI_ALGAE));
-
-    /***************** Climbing Triggers *****************/
-
-    driver
-        .povUp()
-        .toggleOnTrue(
-            climber
-                .climbCommand()
-                .alongWith(hopper.setGoalCommand(Hopper.Goal.CLIMB))
-                .alongWith(superstructure.setGoalCommand(Superstructure.Goal.CLIMB))
-                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-
-    driver
-        .leftTrigger()
-        .and(() -> climber.isClimbing())
-        .whileTrue(climber.setGoalCommand(Climber.Goal.RAISE));
-
-    driver
-        .rightTrigger()
-        .and(() -> climber.isClimbing())
-        .whileTrue(climber.setGoalCommand(Climber.Goal.CLIMB));
-  }
-
-  public void configureExperimentalBindings() {
-    /***************** Drive Triggers *****************/
-    // Drive suppliers
-    DoubleSupplier driverX = () -> -driver.getLeftWithDeadband().y;
-    DoubleSupplier driverY = () -> -driver.getLeftWithDeadband().x;
-    DoubleSupplier driverOmega = () -> -driver.getRightWithDeadband().x;
-
-    drive.setDefaultCommand(DriveCommands.joystickDrive(drive, driverX, driverY, driverOmega));
-
-    // Reset gyro to 0° when A button is pressed
-    driver
-        .a()
-        .and(driver.povDown())
+        .start()
         .onTrue(
             Commands.runOnce(
                     () ->
@@ -643,10 +463,7 @@ public class RobotContainer {
         .whileTrue(IntakeCommands.intake(superstructure, driver));
 
     // Align and Score / Lock
-    driver
-        .a()
-        .and(driver.povDown().negate())
-        .toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L1));
+    driver.a().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L1));
 
     driver
         .b()
@@ -716,47 +533,7 @@ public class RobotContainer {
         .whileTrue(climber.setGoalCommand(Climber.Goal.CLIMB));
   }
 
-  private void configureTestBinds() {
-    /***************** Drive Triggers *****************/
-    // Drive suppliers
-    DoubleSupplier driverX = () -> -driver.getLeftWithDeadband().y;
-    DoubleSupplier driverY = () -> -driver.getLeftWithDeadband().x;
-    DoubleSupplier driverOmega = () -> -driver.getRightWithDeadband().x;
-
-    drive.setDefaultCommand(DriveCommands.joystickDrive(drive, driverX, driverY, driverOmega));
-
-    driver
-        .a()
-        .and(driver.povUp())
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        RobotState.getInstance()
-                            .resetPose(
-                                new Pose2d(
-                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
-                                    AllianceFlipUtil.apply(Rotation2d.kZero))))
-                .ignoringDisable(true));
-
-    driver
-        .povUp()
-        .toggleOnTrue(
-            climber
-                .climbCommand()
-                .alongWith(hopper.setGoalCommand(Hopper.Goal.CLIMB))
-                .alongWith(superstructure.setGoalCommand(Superstructure.Goal.CLIMB))
-                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
-
-    driver
-        .leftTrigger()
-        .and(() -> climber.isClimbing())
-        .whileTrue(climber.setGoalCommand(Climber.Goal.RAISE));
-
-    driver
-        .rightTrigger()
-        .and(() -> climber.isClimbing())
-        .whileTrue(climber.setGoalCommand(Climber.Goal.CLIMB));
-  }
+  public void configureExperimentalBindings() {}
 
   public void configureUI() {
     ElasticUI.setAlignToggleSuppliers(
@@ -796,10 +573,6 @@ public class RobotContainer {
             ? false
             : !DriverStation.isJoystickConnected(driver.getHID().getPort())
                 || !DriverStation.getJoystickIsXbox(driver.getHID().getPort()));
-    operatorDisconnected.set(
-        Constants.isSim
-            ? false
-            : !DriverStation.isJoystickConnected(buttonBoard.getHID().getPort()));
   }
 
   /**
@@ -808,13 +581,6 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return autoSelector
-        .getCommand()
-        .beforeStarting(
-            () -> {
-              vision.setCamerasEnabled(true, true, true);
-              // drive.calibrate();
-            })
-        .finallyDo(() -> vision.setCamerasEnabled(true, true, true));
+    return autoSelector.getCommand();
   }
 }

@@ -24,16 +24,16 @@ import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.subsystems.vision.VisionConstants;
 import frc.team4276.frc2025.subsystems.vision.VisionIO.TargetObservation;
 import frc.team4276.util.AllianceFlipUtil;
-import frc.team4276.util.VikSwervePoseEstimator;
 import frc.team4276.util.dashboard.ElasticUI;
 import frc.team4276.util.dashboard.LoggedTunableNumber;
+import frc.team4276.util.pose.VikSwervePoseEstimator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
-public class RobotState { // TODO: figure out why zeroing first breaks auto align
+public class RobotState {
   private LoggedTunableNumber txTyObservationStaleSecs =
       new LoggedTunableNumber("RobotState/TxTyObsStaleSecs", 0.5);
   private static final LoggedTunableNumber minDistanceTagPoseBlend =

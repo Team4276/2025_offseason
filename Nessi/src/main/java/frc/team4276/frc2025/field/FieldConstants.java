@@ -12,8 +12,7 @@ import frc.team4276.util.AllianceFlipUtil;
 public class FieldConstants {
   public static final int aprilTagCount = 22;
   public static final AprilTagFieldLayout apriltagLayout =
-      AprilTagFieldLayout // TODO: add fudge factors
-          .loadField(AprilTagFields.k2025ReefscapeWelded);
+      AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
   public static final double fieldLength = Units.inchesToMeters(690.875958);
   public static final double fieldWidth = Units.inchesToMeters(317);

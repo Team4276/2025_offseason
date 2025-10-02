@@ -35,7 +35,7 @@ public class Vision extends SubsystemBase {
   private final double priorityStaleTime = 0.5;
   private final double maxPriorityDist = 1.5;
 
-  private boolean[] camerasEnabled = {true, true, true};
+  private boolean[] camerasEnabled = {true, true};
 
   public Vision(VisionConsumer consumer, VisionIO... io) {
     this.consumer = consumer;

@@ -1,4 +1,4 @@
-package frc.team4276.util;
+package frc.team4276.util.hid;
 
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 public class ViXController extends CommandXboxController {
   private double JOYSTICK_DEADBAND = 0.1;
-  private double TRIGGER_DEADBAND = 0.5;
+  private double TRIGGER_DEADBAND = 0.25;
 
   public ViXController(int port) {
     super(port);

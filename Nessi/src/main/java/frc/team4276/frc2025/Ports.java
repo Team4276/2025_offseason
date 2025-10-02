@@ -17,8 +17,6 @@ public class Ports {
   public static final int ENDEFFECTOR_RIGHT = 11;
   public static final int ENDEFFECTOR_LEFT = 12;
 
-  public static final int ALGAE_DISPLACER = 15;
-
   public static final int CLIMBER_WENCH = 16;
   public static final int CLIMBER_WHEEL = 17;
 
