@@ -1,0 +1,452 @@
+{
+  "hubs": [
+    {
+      "x": -8,
+      "y": -8,
+      "width": 1552,
+      "height": 832,
+      "state": {
+        "sidebar": {
+          "width": 300,
+          "expanded": [
+            "/AdvantageKit",
+            "/AdvantageKit/RealOutputs/SwerveStates/Setpoints",
+            "/AdvantageKit/RealOutputs/SwerveStates/SetpointsOptimized",
+            "/AdvantageKit/RealOutputs/RobotState/EstimatedPose/rotation",
+            "/AdvantageKit/RealOutputs/RobotState/EstimatedPose/translation",
+            "/AdvantageKit/RealOutputs/Drive/SwerveStates/Torques/0",
+            "/AdvantageKit/RealOutputs/Drive/SwerveStates/Torques/0/angle",
+            "/AdvantageKit/RealOutputs/Arm/Mechanism2d/Measured",
+            "/AdvantageKit/RealOutputs/Arm/Mechanism2d/Goal",
+            "/AdvantageKit/RealOutputs/Arm/Mechanism3d/Measured/translation",
+            "/AdvantageKit/RealOutputs/Arm/Mechanism3d/Goal/rotation",
+            "/AdvantageKit/RealOutputs/Arm/Mechanism3d/Goal/translation",
+            "/AdvantageKit/RealOutputs/Arm/Mechanism3d/Goal/rotation/q",
+            "/AdvantageKit/RealOutputs/Rollers",
+            "/AdvantageKit/RealOutputs/Drive/SwerveStates/Measured/0",
+            "/AdvantageKit/RealOutputs/Drive/SwerveStates/OptimizedSetpoints/0",
+            "/AdvantageKit/RealOutputs/Trajectory/SetpointPose/rotation",
+            "/AdvantageKit/RealOutputs/Trajectory/SetpointPose/translation",
+            "/AdvantageKit/RealOutputs/AutoAlign/SetpointPose/rotation",
+            "/AdvantageKit/RealOutputs/AutoAlign/SetpointPose/translation",
+            "/AdvantageKit/RealOutputs/Vision/Camera0/TagPoses",
+            "/AdvantageKit/RealOutputs/Elevator/Mechanism3d",
+            "/AdvantageKit/Drive/Module0",
+            "/AdvantageKit/Drive/Module0/TurnPosition",
+            "/AdvantageKit/RealOutputs/Drive/SwerveStates",
+            "/AdvantageKit/RealOutputs/Drive/SwerveStates/Measured/0/angle",
+            "/AdvantageKit/RealOutputs/Drive/SwerveStates/OptimizedSetpoints/0/angle",
+            "/AdvantageKit/RealOutputs/Elevator/SetpointState",
+            "/AdvantageKit/Elevator/CurrentAmps",
+            "/AdvantageKit/RealOutputs/ScoringHepler",
+            "/AdvantageKit/RealOutputs/Vision/Camera0",
+            "/RealOutputs/Vision/Camera0",
+            "/ReplayOutputs",
+            "/ReplayOutputs/Vision/Summary",
+            "/ReplayOutputs/Elevator/Mechanism3d",
+            "/ReplayOutputs/Arm/Mechanism3d",
+            "/ReplayOutputs/Vision",
+            "/ReplayOutputs/Vision/Sumary",
+            "/AdvantageKit/RealOutputs/DriveTrajectory",
+            "/Vision/Camera0",
+            "/RealOutputs/Vision/Summary",
+            "/ReplayOutputs/RobotState",
+            "/ReplayOutputs/Superstructure",
+            "/ReplayOutputs/ScoringHelper",
+            "/Vision/Camera0/PoseObservations/0",
+            "/AdvantageKit/RealOutputs/Drive/MeasuredSpeeds",
+            "/Vision",
+            "/AdvantageKit/Vision/Camera0/PoseObservations/0",
+            "/AdvantageKit/Vision/Camera0/TargetObservations/0",
+            "/AdvantageKit/Vision/Camera1",
+            "/AdvantageKit/RealOutputs/Hopper",
+            "/AdvantageKit/Hopper/Left",
+            "/AdvantageKit/Hopper/Right",
+            "/AdvantageKit/RealOutputs/RobotState/TxTyPoses/9/translation",
+            "/AdvantageKit/Vision/Camera0",
+            "/AdvantageKit/RealOutputs",
+            "/AdvantageKit/RealOutputs/RobotState/TxTyPoses/8",
+            "/AdvantageKit/RealOutputs/DriveToPose",
+            "/AdvantageKit/RealOutputs/Elevator",
+            "/AdvantageKit/RealOutputs/Vision",
+            "/AdvantageKit/RealOutputs/Vision/Summary",
+            "/AdvantageKit/Vision/Camera2",
+            "/AdvantageKit/Vision/Camera1/PoseObservations/0/fieldToCam1",
+            "/AdvantageKit/RealOutputs/Algaefier/Mechanism3d",
+            "/AdvantageKit/RealOutputs/Hopper/Mechanism3d",
+            "/AdvantageKit/RealOutputs/Hopper/Mechanism3d/Measured",
+            "/AdvantageKit/RealOutputs/Climber",
+            "/AdvantageKit/RealOutputs/Climber/Mechanism3d"
+          ]
+        },
+        "tabs": {
+          "selected": 4,
+          "tabs": [
+            {
+              "type": 0,
+              "title": "",
+              "controller": null,
+              "controllerUUID": "gq0agzbheas2x22p15oaw9qyfp0lgasl",
+              "renderer": "#/",
+              "controlsHeight": 0
+            },
+            {
+              "type": 2,
+              "title": "Odometry",
+              "controller": {
+                "sources": [],
+                "game": "2024 Field",
+                "bumpers": "blue",
+                "origin": "blue",
+                "orientation": 0,
+                "size": 30
+              },
+              "controllerUUID": "6a2t87zyp2v1si7gpiodjyhyqjktxlh1",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 9,
+              "title": "Swerve",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "states",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Drive/SwerveStates/Setpoints",
+                    "logType": "SwerveModuleState[]",
+                    "visible": false,
+                    "options": {
+                      "color": "#ff0000",
+                      "arrangement": "0,1,2,3"
+                    }
+                  },
+                  {
+                    "type": "states",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Drive/SwerveStates/OptimizedSetpoints",
+                    "logType": "SwerveModuleState[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#0000ff",
+                      "arrangement": "0,1,2,3"
+                    }
+                  },
+                  {
+                    "type": "states",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Drive/SwerveStates/Measured",
+                    "logType": "SwerveModuleState[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#00ff00",
+                      "arrangement": "0,1,2,3"
+                    }
+                  },
+                  {
+                    "type": "states",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Drive/SwerveStates/Torques",
+                    "logType": "SwerveModuleState[]",
+                    "visible": false,
+                    "options": {
+                      "color": "#ff8c00",
+                      "arrangement": "0,1,2,3"
+                    }
+                  }
+                ],
+                "maxSpeed": 5,
+                "sizeX": 0.65,
+                "sizeY": 0.65,
+                "orientation": 1
+              },
+              "controllerUUID": "863jbuaj4qi5nvlwh23vv2v0q35k27jh",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 9,
+              "title": "Swerve",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "chassisSpeeds",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Drive/MeasuredSpeeds",
+                    "logType": "ChassisSpeeds",
+                    "visible": true,
+                    "options": {
+                      "color": "#ff0000"
+                    }
+                  },
+                  {
+                    "type": "chassisSpeeds",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Drive/DesiredSpeeds",
+                    "logType": "ChassisSpeeds",
+                    "visible": true,
+                    "options": {
+                      "color": "#0000ff"
+                    }
+                  },
+                  {
+                    "type": "chassisSpeeds",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Drive/SetpointSpeeds",
+                    "logType": "ChassisSpeeds",
+                    "visible": true,
+                    "options": {
+                      "color": "#00ff00"
+                    }
+                  }
+                ],
+                "maxSpeed": 5,
+                "sizeX": 0.65,
+                "sizeY": 0.65,
+                "orientation": 1
+              },
+              "controllerUUID": "tist5ec9ph1yhxo9st9eqdz8f6a7g3p0",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 3,
+              "title": "3D Field",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "robot",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/RobotState/EstimatedPose",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi"
+                    }
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Elevator/Mechanism3d/Measured",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Algaefier/Mechanism3d/Measured",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Climber/Mechanism3d/Measured",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Hopper/Mechanism3d/Measured/Left",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "component",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Hopper/Mechanism3d/Measured/Right",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {}
+                  },
+                  {
+                    "type": "vision",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Vision/Summary/TagPoses",
+                    "logType": "Pose3d[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#00ff00",
+                      "size": "normal"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/ScoringHelper/SelectedScorePose",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi",
+                      "color": "#00ffff"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/ScoringHelper/SelectedAlignPose",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi",
+                      "color": "#ff00ff"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/Vision/Summary/RobotPosesAccepted",
+                    "logType": "Pose3d[]",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi",
+                      "color": "#00ff00"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "NT:/AdvantageKit/RealOutputs/RobotState/TxTyPoses/9",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi",
+                      "color": "#ff8c00"
+                    }
+                  }
+                ],
+                "game": "2025 Field (Welded)",
+                "origin": "blue"
+              },
+              "controllerUUID": "9feaj173nxrit7cpugvt14uh5wpept08",
+              "renderer": {
+                "cameraIndex": -1,
+                "orbitFov": 50,
+                "cameraPosition": [
+                  -4.854704977403582,
+                  1.923066685700515,
+                  4.900455690774875
+                ],
+                "cameraTarget": [
+                  -5.880200050766914,
+                  0.7830741128639405,
+                  3.1181811416797918
+                ]
+              },
+              "controlsHeight": 254
+            },
+            {
+              "type": 3,
+              "title": "3D Field",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "robot",
+                    "logKey": "/ReplayOutputs/RobotState/EstimatedPose",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi"
+                    }
+                  },
+                  {
+                    "type": "vision",
+                    "logKey": "/ReplayOutputs/Vision/Summary/TagPoses",
+                    "logType": "Pose3d[]",
+                    "visible": true,
+                    "options": {
+                      "color": "#00ff00",
+                      "size": "normal"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "/ReplayOutputs/TrajectoryController/SetpointPose",
+                    "logType": "Pose2d",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi",
+                      "color": "#ff8c00"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "/ReplayOutputs/Vision/Summary/RobotPosesAccepted",
+                    "logType": "Pose3d[]",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi",
+                      "color": "#00ff00"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "/ReplayOutputs/Vision/Summary/RobotPosesCanceled",
+                    "logType": "Pose3d[]",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi",
+                      "color": "#ffff00"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "/ReplayOutputs/Vision/Summary/RobotPosesRejected",
+                    "logType": "Pose3d[]",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi",
+                      "color": "#ff0000"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "/Vision/Camera0/PoseObservations/0/fieldToCam1",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi",
+                      "color": "#ff00ff"
+                    }
+                  },
+                  {
+                    "type": "ghost",
+                    "logKey": "/Vision/Camera0/PoseObservations/0/fieldToCam2",
+                    "logType": "Pose3d",
+                    "visible": true,
+                    "options": {
+                      "model": "SDR_Nessi",
+                      "color": "#00ffff"
+                    }
+                  }
+                ],
+                "game": "2025 Field (Welded)",
+                "origin": "blue"
+              },
+              "controllerUUID": "x27s6wrk3xws4proijexxe72y6rrmgvu",
+              "renderer": {
+                "cameraIndex": -1,
+                "orbitFov": 50,
+                "cameraPosition": [
+                  -5.916597544440673,
+                  1.4812007316700342,
+                  2.127019355475968
+                ],
+                "cameraTarget": [
+                  -3.547838563743205,
+                  0.7793474840799788,
+                  1.4526071559186626
+                ]
+              },
+              "controlsHeight": 265
+            },
+            {
+              "type": 8,
+              "title": "Joysticks",
+              "controller": [
+                "Xbox Controller (White)",
+                "Xbox Controller (Blue)",
+                "None",
+                "None",
+                "None",
+                "None"
+              ],
+              "controllerUUID": "s4l9jwog2eu8o10c2y65h0anbkp9qekz",
+              "renderer": null,
+              "controlsHeight": 85
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "satellites": [],
+  "version": "4.1.2"
+}
