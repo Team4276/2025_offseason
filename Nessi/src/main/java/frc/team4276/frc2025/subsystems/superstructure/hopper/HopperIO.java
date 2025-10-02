@@ -1,4 +1,4 @@
-package frc.team4276.frc2025.subsystems.hopper;
+package frc.team4276.frc2025.subsystems.superstructure.hopper;
 
 import org.littletonrobotics.junction.AutoLog;
 

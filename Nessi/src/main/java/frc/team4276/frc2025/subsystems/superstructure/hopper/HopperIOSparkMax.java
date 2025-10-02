@@ -1,12 +1,12 @@
-package frc.team4276.frc2025.subsystems.hopper;
+package frc.team4276.frc2025.subsystems.superstructure.hopper;
 
-import static frc.team4276.frc2025.subsystems.hopper.HopperConstants.currentLimit;
-import static frc.team4276.frc2025.subsystems.hopper.HopperConstants.encoderPositionFactor;
-import static frc.team4276.frc2025.subsystems.hopper.HopperConstants.encoderVelocityFactor;
-import static frc.team4276.frc2025.subsystems.hopper.HopperConstants.kd;
-import static frc.team4276.frc2025.subsystems.hopper.HopperConstants.ki;
-import static frc.team4276.frc2025.subsystems.hopper.HopperConstants.kp;
-import static frc.team4276.frc2025.subsystems.hopper.HopperConstants.readFreq;
+import static frc.team4276.frc2025.subsystems.superstructure.hopper.HopperConstants.currentLimit;
+import static frc.team4276.frc2025.subsystems.superstructure.hopper.HopperConstants.encoderPositionFactor;
+import static frc.team4276.frc2025.subsystems.superstructure.hopper.HopperConstants.encoderVelocityFactor;
+import static frc.team4276.frc2025.subsystems.superstructure.hopper.HopperConstants.kd;
+import static frc.team4276.frc2025.subsystems.superstructure.hopper.HopperConstants.ki;
+import static frc.team4276.frc2025.subsystems.superstructure.hopper.HopperConstants.kp;
+import static frc.team4276.frc2025.subsystems.superstructure.hopper.HopperConstants.readFreq;
 import static frc.team4276.util.SparkUtil.ifOk;
 import static frc.team4276.util.SparkUtil.sparkStickyFault;
 import static frc.team4276.util.SparkUtil.tryUntilOk;

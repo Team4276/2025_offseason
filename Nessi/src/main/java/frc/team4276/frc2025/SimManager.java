@@ -5,8 +5,8 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.team4276.frc2025.subsystems.hopper.HopperConstants;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorConstants;
+import frc.team4276.frc2025.subsystems.superstructure.hopper.HopperConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class SimManager {

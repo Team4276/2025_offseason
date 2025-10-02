@@ -1,4 +1,4 @@
-package frc.team4276.frc2025.subsystems.drive;
+package frc.team4276.frc2025.subsystems.superstructure.drive;
 
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;

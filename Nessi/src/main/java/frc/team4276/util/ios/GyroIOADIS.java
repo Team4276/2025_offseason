@@ -3,7 +3,7 @@ package frc.team4276.util.ios;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
-import frc.team4276.frc2025.subsystems.drive.SparkOdometryThread;
+import frc.team4276.frc2025.subsystems.superstructure.drive.SparkOdometryThread;
 import java.util.Queue;
 
 public class GyroIOADIS implements GyroIO {

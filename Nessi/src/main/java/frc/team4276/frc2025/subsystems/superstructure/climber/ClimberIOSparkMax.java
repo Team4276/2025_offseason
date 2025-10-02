@@ -1,4 +1,4 @@
-package frc.team4276.frc2025.subsystems.climber;
+package frc.team4276.frc2025.subsystems.superstructure.climber;
 
 import static frc.team4276.util.SparkUtil.ifOk;
 import static frc.team4276.util.SparkUtil.tryUntilOk;

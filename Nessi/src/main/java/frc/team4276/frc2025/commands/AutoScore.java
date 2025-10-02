@@ -6,8 +6,8 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.frc2025.RobotState;
 import frc.team4276.frc2025.field.FieldConstants.Reef;
-import frc.team4276.frc2025.subsystems.drive.Drive;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure;
+import frc.team4276.frc2025.subsystems.superstructure.drive.Drive;
 import frc.team4276.util.dashboard.LoggedTunableNumber;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
@@ -28,7 +28,7 @@ public class AutoScore {
   }
 
   public static Command selectAndScoreCommand(
-      Superstructure superstructure, Superstructure.Goal goal) {
+      Superstructure superstructure, Superstructure.WantedSuperState goal) {
     return Commands.runOnce(
         () -> {
           superstructure.selectAutoScoreGoal(goal);
@@ -68,8 +68,7 @@ public class AutoScore {
                             .isPresent()))
         .andThen(
             new DriveToPose(drive, () -> goal.get().get().getAlign(), robotPose)
-                .until(
-                    () -> proceedScoring()))
+                .until(() -> proceedScoring()))
         .andThen(
             new DriveToPose(drive, () -> goal.get().get().getScore(), robotPose)
                 .alongWith(
@@ -77,7 +76,8 @@ public class AutoScore {
                     Commands.waitUntil(
                             () ->
                                 superstructure.atGoal()
-                                    && superstructure.getGoal() != Superstructure.Goal.STOW
+                                    && superstructure.getGoal()
+                                        != Superstructure.WantedSuperState.STOW
                                     && DriveToPose.atGoal())
                         .andThen(superstructure.scoreCommand(false))
                         .andThen(Commands.waitSeconds(0.5))))

@@ -1,6 +1,6 @@
 package frc.team4276.util.ios;
 
-import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
+import static frc.team4276.frc2025.subsystems.superstructure.drive.DriveConstants.*;
 import static frc.team4276.util.SparkUtil.*;
 
 import com.revrobotics.AbsoluteEncoder;
@@ -23,7 +23,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
-import frc.team4276.frc2025.subsystems.drive.SparkOdometryThread;
+import frc.team4276.frc2025.subsystems.superstructure.drive.SparkOdometryThread;
 import java.util.Queue;
 import java.util.function.DoubleSupplier;
 

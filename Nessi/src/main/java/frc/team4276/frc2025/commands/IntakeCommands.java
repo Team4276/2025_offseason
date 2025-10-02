@@ -7,8 +7,8 @@ import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.frc2025.RobotState;
 import frc.team4276.frc2025.field.FieldConstants;
-import frc.team4276.frc2025.subsystems.drive.Drive;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure;
+import frc.team4276.frc2025.subsystems.superstructure.drive.Drive;
 import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.hid.ViXController;
 import java.util.function.DoubleSupplier;
@@ -50,7 +50,7 @@ public class IntakeCommands {
 
   public static Command intake(Superstructure superstructure, ViXController driver) {
     return Commands.parallel(
-            superstructure.setGoalCommand(Superstructure.Goal.INTAKE),
+            superstructure.setGoalCommand(Superstructure.WantedSuperState.INTAKE),
             Commands.waitUntil(superstructure::hasCoral)
                 .andThen(driver.rumbleCommand(RumbleType.kBothRumble, 1.0, 1.0)))
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);

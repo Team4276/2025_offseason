@@ -11,7 +11,7 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-package frc.team4276.frc2025.subsystems.drive;
+package frc.team4276.frc2025.subsystems.superstructure.drive;
 
 import com.revrobotics.REVLibError;
 import com.revrobotics.spark.SparkBase;

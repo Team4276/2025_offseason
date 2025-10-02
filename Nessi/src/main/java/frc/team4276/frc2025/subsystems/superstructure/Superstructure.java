@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.Constants;
 import frc.team4276.frc2025.SimManager;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.Elevator;
+import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffector;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -18,23 +19,36 @@ public class Superstructure extends SubsystemBase {
   private boolean wantScore = false;
   private boolean leftL1 = false;
 
-  public enum Goal {
+  public enum WantedSuperState {
     STOW,
+    STOPPED,
     INTAKE,
     L1,
     L2,
     L3,
     LO_ALGAE,
     HI_ALGAE,
-    SHUFFLE,
     CLIMB,
     CHARACTERIZING,
     CUSTOM
   }
 
-  private Goal desiredGoal = Goal.STOW;
-  private Goal currentGoal = Goal.STOW;
-  private Goal autoScoreGoal = Goal.STOW;
+  public enum CurrentSuperState {
+    STOW,
+    STOPPED,
+    INTAKE,
+    L1,
+    L2,
+    L3,
+    LO_ALGAE,
+    HI_ALGAE,
+    CLIMB,
+    CHARACTERIZING,
+    CUSTOM
+  }
+
+  private WantedSuperState wantedSuperState = WantedSuperState.STOW;
+  private CurrentSuperState currentSuperState = CurrentSuperState.STOW;
 
   private double elevatorCharacterizationInput = 0.0;
 
@@ -44,98 +58,123 @@ public class Superstructure extends SubsystemBase {
 
     elevator.setCoastOverride(() -> false);
 
-    setDefaultCommand(setGoalCommand(() -> Superstructure.Goal.STOW));
+    setDefaultCommand(setGoalCommand(() -> Superstructure.WantedSuperState.STOW));
   }
 
   @Override
   public void periodic() {
-    if (desiredGoal == Goal.STOW
-        && currentGoal == Goal.INTAKE
-        && (endeffector.getGoal() == EndEffector.Goal.SLOINTAKE
-            || endeffector.getGoal() == EndEffector.Goal.REVERSE)) {
-      // Continue intaking
-
-    } else {
-      currentGoal = desiredGoal;
-    }
-
-    if (wantScore) {
-      endeffector.setGoal(
-          currentGoal == Goal.L1
-              ? (leftL1 ? EndEffector.Goal.FAVOR_LEFT : EndEffector.Goal.FAVOR_RIGHT)
-              : EndEffector.Goal.SCORE);
-    } else {
-      endeffector.setGoal(EndEffector.Goal.IDLE);
-    }
-
-    switch (currentGoal) {
-      case STOW:
-        elevator.setGoal(Elevator.Goal.STOW);
-        endeffector.setGoal(EndEffector.Goal.IDLE);
-
-        break;
-
-      case SHUFFLE:
-        endeffector.setGoal(EndEffector.Goal.SLOINTAKE);
-
-        break;
-
-      case INTAKE:
-        elevator.setGoal(Elevator.Goal.INTAKE);
-        endeffector.setGoal(EndEffector.Goal.INTAKE);
-
-        break;
-
-      case L1:
-        elevator.setGoal(Elevator.Goal.L1);
-
-        break;
-
-      case L2:
-        elevator.setGoal(Elevator.Goal.L2);
-
-        break;
-
-      case L3:
-        elevator.setGoal(Elevator.Goal.L3);
-
-        break;
-
-      case LO_ALGAE:
-        elevator.setGoal(Elevator.Goal.LO_ALGAE);
-        endeffector.setGoal(EndEffector.Goal.IDLE);
-
-        break;
-      case HI_ALGAE:
-        elevator.setGoal(Elevator.Goal.HI_ALGAE);
-        endeffector.setGoal(EndEffector.Goal.IDLE);
-
-        break;
-
-      case CLIMB:
-        elevator.setGoal(Elevator.Goal.STOW);
-        endeffector.setGoal(EndEffector.Goal.IDLE);
-
-        break;
-      case CHARACTERIZING:
-        elevator.runCharacterization(elevatorCharacterizationInput);
-        endeffector.setGoal(endEffectorGoal);
-        break;
-
-      case CUSTOM:
-        elevator.setGoal(Elevator.Goal.CUSTOM);
-
-      default:
-        break;
-    }
+    currentSuperState = handleStateTransition();
+    applyState();
 
     elevator.periodic();
     endeffector.periodic();
 
-    Logger.recordOutput("Superstructure/DesiredGoal", desiredGoal);
-    Logger.recordOutput("Superstructure/CurrentGoal", currentGoal);
+    Logger.recordOutput("Superstructure/WantedSuperState", wantedSuperState);
+    Logger.recordOutput("Superstructure/CurrentSuperState", currentSuperState);
     Logger.recordOutput("Superstructure/WantScore", wantScore);
     Logger.recordOutput("Superstructure/HasCoral", endeffector.hasCoral());
+  }
+
+  private CurrentSuperState handleStateTransition() {
+    return switch (wantedSuperState) {
+      default:
+        yield CurrentSuperState.STOPPED;
+
+      case STOW:
+        yield CurrentSuperState.STOW;
+
+      case L1:
+        yield CurrentSuperState.L1;
+
+      case L2:
+        yield CurrentSuperState.L2;
+
+      case L3:
+        yield CurrentSuperState.L3;
+
+      case LO_ALGAE:
+        yield CurrentSuperState.LO_ALGAE;
+
+      case HI_ALGAE:
+        yield CurrentSuperState.HI_ALGAE;
+
+      case CLIMB:
+        yield CurrentSuperState.CLIMB;
+
+      case CHARACTERIZING:
+        yield CurrentSuperState.CHARACTERIZING;
+
+      case CUSTOM:
+        yield CurrentSuperState.CUSTOM;
+    };
+  }
+
+  private void applyState() {
+    if (wantScore) {
+      endeffector.setWantedState(
+          wantedSuperState == WantedSuperState.L1
+              ? (leftL1
+                  ? EndEffector.WantedState.SCORE_LEFT_L1
+                  : EndEffector.WantedState.SCORE_RIGHT_L1)
+              : EndEffector.WantedState.SCORE);
+    } else {
+      endeffector.setWantedState(EndEffector.WantedState.IDLE);
+    }
+
+    switch (currentSuperState) {
+      case STOW:
+        elevator.setGoal(ElevatorConstants.Goal.STOW);
+        endeffector.setWantedState(EndEffector.WantedState.IDLE);
+
+        break;
+
+      case INTAKE:
+        elevator.setGoal(ElevatorConstants.Goal.INTAKE);
+        endeffector.setWantedState(EndEffector.WantedState.INTAKE);
+
+        break;
+
+      case L1:
+        elevator.setGoal(ElevatorConstants.Goal.L1);
+
+        break;
+
+      case L2:
+        elevator.setGoal(ElevatorConstants.Goal.L2);
+
+        break;
+
+      case L3:
+        elevator.setGoal(ElevatorConstants.Goal.L3);
+
+        break;
+
+      case LO_ALGAE:
+        elevator.setGoal(ElevatorConstants.Goal.LO_ALGAE);
+        endeffector.setWantedState(EndEffector.WantedState.IDLE);
+
+        break;
+      case HI_ALGAE:
+        elevator.setGoal(ElevatorConstants.Goal.HI_ALGAE);
+        endeffector.setWantedState(EndEffector.WantedState.IDLE);
+
+        break;
+
+      case CLIMB:
+        elevator.setGoal(ElevatorConstants.Goal.STOW);
+        endeffector.setWantedState(EndEffector.WantedState.IDLE);
+
+        break;
+      case CHARACTERIZING:
+        elevator.runCharacterization(elevatorCharacterizationInput);
+        break;
+
+      case CUSTOM:
+        elevator.setGoal(ElevatorConstants.Goal.CUSTOM);
+
+      default:
+        break;
+    }
   }
 
   public boolean atGoal() {
@@ -146,33 +185,29 @@ public class Superstructure extends SubsystemBase {
     return Math.abs(elevator.getGoal().getPositionMetres() - elevator.getPositionMetres()) < tol;
   }
 
-  public Goal getGoal() {
-    return currentGoal;
+  public WantedSuperState getGoal() {
+    return wantedSuperState;
   }
 
-  public void selectAutoScoreGoal(Goal goal) {
-    autoScoreGoal = goal;
-  }
+  public void selectAutoScoreGoal(WantedSuperState goal) {}
 
   public Command autoScoreCommand() {
     return startEnd(
+        () -> {},
         () -> {
-          desiredGoal = autoScoreGoal;
-        },
-        () -> {
-          desiredGoal = Goal.STOW;
+          wantedSuperState = WantedSuperState.STOW;
         });
   }
 
-  public void setGoal(Supplier<Goal> goal) {
-    desiredGoal = goal.get();
+  public void setGoal(Supplier<WantedSuperState> goal) {
+    wantedSuperState = goal.get();
   }
 
-  public Command setGoalCommand(Supplier<Goal> goal) {
-    return startEnd(() -> setGoal(goal), () -> setGoal(() -> Goal.STOW));
+  public Command setGoalCommand(Supplier<WantedSuperState> goal) {
+    return startEnd(() -> setGoal(goal), () -> setGoal(() -> WantedSuperState.STOW));
   }
 
-  public Command setGoalCommand(Goal goal) {
+  public Command setGoalCommand(WantedSuperState goal) {
     return setGoalCommand(() -> goal);
   }
 
@@ -194,7 +229,7 @@ public class Superstructure extends SubsystemBase {
 
   public void acceptCharacterizationInput(double input) {
     elevatorCharacterizationInput = input;
-    setGoal(() -> Goal.CHARACTERIZING);
+    setGoal(() -> WantedSuperState.CHARACTERIZING);
   }
 
   public double getFFCharacterizationVelocity() {
@@ -203,12 +238,6 @@ public class Superstructure extends SubsystemBase {
 
   public void endCharacterizaton() {
     elevator.endCharacterizaton();
-  }
-
-  private EndEffector.Goal endEffectorGoal = EndEffector.Goal.IDLE;
-
-  public void setEndEffectorGoal(EndEffector.Goal goal) {
-    endEffectorGoal = goal;
   }
 
   public void setCoastOverride(BooleanSupplier override) {

@@ -1,7 +1,7 @@
-package frc.team4276.frc2025.subsystems.drive;
+package frc.team4276.frc2025.subsystems.superstructure.drive;
 
 import static edu.wpi.first.units.Units.Volts;
-import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
+import static frc.team4276.frc2025.subsystems.superstructure.drive.DriveConstants.*;
 
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;

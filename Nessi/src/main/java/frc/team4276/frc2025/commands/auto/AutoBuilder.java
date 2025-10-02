@@ -12,9 +12,9 @@ import frc.team4276.frc2025.AutoSelector;
 import frc.team4276.frc2025.AutoSelector.AutoQuestionResponse;
 import frc.team4276.frc2025.Constants;
 import frc.team4276.frc2025.commands.DriveTrajectory;
-import frc.team4276.frc2025.subsystems.drive.Drive;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure;
-import frc.team4276.frc2025.subsystems.superstructure.Superstructure.Goal;
+import frc.team4276.frc2025.subsystems.superstructure.Superstructure.WantedSuperState;
+import frc.team4276.frc2025.subsystems.superstructure.drive.Drive;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -145,7 +145,9 @@ public class AutoBuilder {
         Commands.sequence(
                 new DriveTrajectory(drive, traj1),
                 Commands.waitUntil(
-                    () -> superstructure.atGoal() && superstructure.getGoal() != Goal.STOW),
+                    () ->
+                        superstructure.atGoal()
+                            && superstructure.getGoal() != WantedSuperState.STOW),
                 scoreCommand(superstructure))
             .deadlineFor(
                 Commands.waitSeconds(traj1.getTotalTimeSeconds() - 0.75)
@@ -165,16 +167,18 @@ public class AutoBuilder {
         scoringCommand);
   }
 
-  private Command speedyCoral(PathPlannerTrajectory traj, Goal goal) {
+  private Command speedyCoral(PathPlannerTrajectory traj, WantedSuperState goal) {
     return Commands.sequence(
             new DriveTrajectory(drive, traj)
                 .andThen(
                     Commands.waitUntil(
-                        () -> superstructure.atGoal() && superstructure.getGoal() != Goal.STOW),
+                        () ->
+                            superstructure.atGoal()
+                                && superstructure.getGoal() != WantedSuperState.STOW),
                     scoreCommand(superstructure)))
         .deadlineFor(
             superstructure
-                .setGoalCommand(Goal.INTAKE)
+                .setGoalCommand(WantedSuperState.INTAKE)
                 .withDeadline(
                     Commands.either(
                         Commands.waitSeconds(1.0),
@@ -223,18 +227,20 @@ public class AutoBuilder {
   }
 
   private Command shrimpleCoral(
-      PathPlannerTrajectory scTraj, PathPlannerTrajectory intTraj, Goal goal) {
+      PathPlannerTrajectory scTraj, PathPlannerTrajectory intTraj, WantedSuperState goal) {
     return Commands.sequence(
         Commands.sequence(
                 new DriveTrajectory(drive, scTraj),
                 Commands.waitUntil(
-                    () -> superstructure.atGoal() && superstructure.getGoal() != Goal.STOW),
+                    () ->
+                        superstructure.atGoal()
+                            && superstructure.getGoal() != WantedSuperState.STOW),
                 scoreCommand(superstructure))
             .deadlineFor(
                 Commands.waitSeconds(scTraj.getTotalTimeSeconds() - 0.75)
                     .andThen(superstructure.setGoalCommand(goal))),
         superstructure
-            .setGoalCommand(Goal.INTAKE)
+            .setGoalCommand(WantedSuperState.INTAKE)
             .withDeadline(
                 new DriveTrajectory(drive, intTraj)
                     .andThen(
@@ -251,7 +257,9 @@ public class AutoBuilder {
     return shrimpleOcrAuto(List.of(AutoQuestionResponse.G))
         .withDeadline(
             Commands.waitUntil( // Cancel rest of path after first score
-                () -> !superstructure.hasCoral() && superstructure.getGoal() == Goal.INTAKE));
+                () ->
+                    !superstructure.hasCoral()
+                        && superstructure.getGoal() == WantedSuperState.INTAKE));
   }
 
   public Command shrimpleOcrAuto() {
@@ -267,22 +275,22 @@ public class AutoBuilder {
     return shrimpleOcrAuto(reefs);
   }
 
-  private Superstructure.Goal toGoal(AutoQuestionResponse response) {
+  private Superstructure.WantedSuperState toGoal(AutoQuestionResponse response) {
     switch (response) {
       case L1_LEFT:
-        return Superstructure.Goal.L1;
+        return Superstructure.WantedSuperState.L1;
 
       case L1_RIGHT:
-        return Superstructure.Goal.L1;
+        return Superstructure.WantedSuperState.L1;
 
       case L2:
-        return Superstructure.Goal.L2;
+        return Superstructure.WantedSuperState.L2;
 
       case L3:
-        return Superstructure.Goal.L3;
+        return Superstructure.WantedSuperState.L3;
 
       default:
-        return Superstructure.Goal.STOW;
+        return Superstructure.WantedSuperState.STOW;
     }
   }
 

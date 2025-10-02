@@ -1,6 +1,6 @@
 package frc.team4276.frc2025;
 
-import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
+import static frc.team4276.frc2025.subsystems.superstructure.drive.DriveConstants.*;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;

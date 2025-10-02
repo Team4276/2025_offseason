@@ -1,36 +1,44 @@
 package frc.team4276.frc2025.subsystems.superstructure.endeffector;
 
-import edu.wpi.first.wpilibj.DriverStation;
-import frc.team4276.frc2025.subsystems.superstructure.RollerSensorsIO;
-import frc.team4276.frc2025.subsystems.superstructure.RollerSensorsIOInputsAutoLogged;
-import frc.team4276.util.dashboard.LoggedTunableNumber;
+import static frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffectorConstants.*;
+
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class EndEffector {
-  private static final LoggedTunableNumber favorVolts =
-      new LoggedTunableNumber("EndEffector/FavorVolts", 4.5);
-  private static final LoggedTunableNumber lagVolts =
-      new LoggedTunableNumber("EndEffector/LagVolts", 2.0);
+  private final EndEffectorIO io;
+  private final EndEffectorIOInputsAutoLogged inputs = new EndEffectorIOInputsAutoLogged();
 
-  public enum Goal {
-    IDLE(() -> 0.0, () -> 0.0),
-    INTAKE(new LoggedTunableNumber("EndEffector/IntakeVolts", 5.0)),
-    SLOINTAKE(new LoggedTunableNumber("EndEffector/SlowIntakeVolts", 3.0)),
-    SCORE(new LoggedTunableNumber("EndEffector/ScoreVolts", 4.0)),
-    REVERSE(new LoggedTunableNumber("EndEffector/ReverseVolts", -1.0)),
-    FAVOR_LEFT(favorVolts, lagVolts),
-    FAVOR_RIGHT(lagVolts, favorVolts);
+  private final RollerSensorsIO sensorsIO;
+  private final RollerSensorsIOInputsAutoLogged sensorsInputs =
+      new RollerSensorsIOInputsAutoLogged();
+
+  public enum WantedState {
+    IDLE,
+    INTAKE,
+    SCORE,
+    SCORE_RIGHT_L1,
+    SCORE_LEFT_L1
+  }
+
+  private enum SystemState {
+    IDLE(() -> 0.0),
+    INTAKING(intakeVolts),
+    INTAKING_SLOW(intakeSlowVolts),
+    SCORING(scoreVolts),
+    REVERSING(reverseVolts),
+    SCORING_RIGHT_L1(favorVolts, lagVolts),
+    SCORING_LEFT_L1(lagVolts, favorVolts);
 
     private final DoubleSupplier rightVoltageGoal;
     private final DoubleSupplier leftVoltageGoal;
 
-    private Goal(DoubleSupplier leftVoltageGoal, DoubleSupplier rightVoltageGoal) {
+    private SystemState(DoubleSupplier leftVoltageGoal, DoubleSupplier rightVoltageGoal) {
       this.leftVoltageGoal = leftVoltageGoal;
       this.rightVoltageGoal = rightVoltageGoal;
     }
 
-    private Goal(DoubleSupplier voltageGoal) {
+    private SystemState(DoubleSupplier voltageGoal) {
       this.leftVoltageGoal = voltageGoal;
       this.rightVoltageGoal = voltageGoal;
     }
@@ -44,17 +52,8 @@ public class EndEffector {
     }
   }
 
-  private Goal goal = Goal.IDLE;
-  private Goal currGoal = Goal.IDLE;
-
-  private final EndEffectorIO io;
-  private final EndEffectorIOInputsAutoLogged inputs = new EndEffectorIOInputsAutoLogged();
-
-  private final RollerSensorsIO sensorsIO;
-  private final RollerSensorsIOInputsAutoLogged sensorsInputs =
-      new RollerSensorsIOInputsAutoLogged();
-
-  private boolean hasCoral = false;
+  private WantedState wantedState = WantedState.IDLE;
+  private SystemState systemState = SystemState.IDLE;
 
   public EndEffector(EndEffectorIO io, RollerSensorsIO sensorsIO) {
     this.io = io;
@@ -68,42 +67,52 @@ public class EndEffector {
     sensorsIO.updateInputs(sensorsInputs);
     Logger.processInputs("EndEffector/BeamBreak", sensorsInputs);
 
-    if (DriverStation.isDisabled()) {
-      currGoal = Goal.IDLE;
-    }
-
-    if (currGoal == Goal.INTAKE && sensorsInputs.backRead) {
-      currGoal = Goal.SLOINTAKE;
-
-    } else if (currGoal == Goal.SLOINTAKE && !sensorsInputs.backRead) {
-      currGoal = Goal.REVERSE;
-
-    } else if (currGoal == Goal.REVERSE && sensorsInputs.backRead) {
-      currGoal = Goal.IDLE;
-
-    } else if ((goal == Goal.INTAKE || goal == Goal.SLOINTAKE)
-        && (currGoal != Goal.IDLE || sensorsInputs.frontRead)) {
-      // Continue staging process
-
-    } else {
-      currGoal = goal;
-      hasCoral = sensorsInputs.frontRead;
-    }
-
-    io.runVolts(currGoal.getLeftVolts(), currGoal.getRightVolts());
-    Logger.recordOutput("EndEffector/Goal", goal);
-    Logger.recordOutput("EndEffector/CurrentGoal", currGoal);
+    systemState = handleStateTransition();
+    io.runVolts(systemState.getLeftVolts(), systemState.getRightVolts());
+    Logger.recordOutput("EndEffector/WantedState", wantedState);
+    Logger.recordOutput("EndEffector/SystemState", systemState);
   }
 
-  public Goal getGoal() {
-    return goal;
+  private SystemState handleStateTransition() {
+    return switch (wantedState) {
+      case INTAKE:
+        {
+          if (sensorsInputs.backTripped && sensorsInputs.frontRead) {
+            yield SystemState.IDLE;
+
+          } else if (sensorsInputs.backCleared) {
+            yield SystemState.REVERSING;
+
+          } else if (sensorsInputs.backTripped && !sensorsInputs.frontRead) {
+            yield SystemState.INTAKING_SLOW;
+
+          } else {
+            yield SystemState.INTAKING;
+          }
+        }
+      case SCORE:
+        {
+          yield SystemState.SCORING;
+        }
+      case SCORE_RIGHT_L1:
+        {
+          yield SystemState.SCORING_RIGHT_L1;
+        }
+      case SCORE_LEFT_L1:
+        {
+          yield SystemState.SCORING_LEFT_L1;
+        }
+
+      default:
+        yield SystemState.IDLE;
+    };
   }
 
-  public void setGoal(Goal goal) {
-    this.goal = goal;
+  public void setWantedState(WantedState wantedState) {
+    this.wantedState = wantedState;
   }
 
   public boolean hasCoral() {
-    return hasCoral;
+    return sensorsInputs.frontRead;
   }
 }

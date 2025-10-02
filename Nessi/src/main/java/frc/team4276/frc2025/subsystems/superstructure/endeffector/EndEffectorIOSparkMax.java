@@ -14,7 +14,6 @@ import java.util.function.DoubleSupplier;
 public class EndEffectorIOSparkMax implements EndEffectorIO {
   private final SparkMax leftMotor;
   private final SparkMax rightMotor;
-  ;
   private final Debouncer motorConnectedDebounce = new Debouncer(0.5);
 
   public EndEffectorIOSparkMax(

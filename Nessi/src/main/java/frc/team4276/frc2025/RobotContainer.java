@@ -21,22 +21,22 @@ import frc.team4276.frc2025.commands.FeedForwardCharacterization;
 import frc.team4276.frc2025.commands.IntakeCommands;
 import frc.team4276.frc2025.commands.WheelRadiusCharacterization;
 import frc.team4276.frc2025.commands.auto.AutoBuilder;
-import frc.team4276.frc2025.subsystems.climber.Climber;
-import frc.team4276.frc2025.subsystems.climber.ClimberIO;
-import frc.team4276.frc2025.subsystems.climber.ClimberIOSparkMax;
-import frc.team4276.frc2025.subsystems.drive.Drive;
-import frc.team4276.frc2025.subsystems.hopper.Hopper;
-import frc.team4276.frc2025.subsystems.hopper.HopperIO;
-import frc.team4276.frc2025.subsystems.hopper.HopperIOSparkMax;
-import frc.team4276.frc2025.subsystems.superstructure.RollerSensorsIO;
-import frc.team4276.frc2025.subsystems.superstructure.RollerSensorsIOHardware;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure;
+import frc.team4276.frc2025.subsystems.superstructure.climber.Climber;
+import frc.team4276.frc2025.subsystems.superstructure.climber.ClimberIO;
+import frc.team4276.frc2025.subsystems.superstructure.climber.ClimberIOSparkMax;
+import frc.team4276.frc2025.subsystems.superstructure.drive.Drive;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.Elevator;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorIO;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorIOSparkMax;
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffector;
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffectorIO;
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffectorIOSparkMax;
+import frc.team4276.frc2025.subsystems.superstructure.endeffector.RollerSensorsIO;
+import frc.team4276.frc2025.subsystems.superstructure.endeffector.RollerSensorsIOHardware;
+import frc.team4276.frc2025.subsystems.superstructure.hopper.Hopper;
+import frc.team4276.frc2025.subsystems.superstructure.hopper.HopperIO;
+import frc.team4276.frc2025.subsystems.superstructure.hopper.HopperIOSparkMax;
 import frc.team4276.frc2025.subsystems.vision.Vision;
 import frc.team4276.frc2025.subsystems.vision.VisionIO;
 import frc.team4276.frc2025.subsystems.vision.VisionIOPhotonVision;
@@ -417,13 +417,15 @@ public class RobotContainer {
                                     AllianceFlipUtil.apply(Rotation2d.kZero))))
                 .ignoringDisable(true));
 
-    driver.leftTrigger().whileTrue(superstructure.setGoalCommand(Superstructure.Goal.INTAKE));
+    driver
+        .leftTrigger()
+        .whileTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.INTAKE));
 
-    driver.a().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L1));
+    driver.a().toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.L1));
 
-    driver.x().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L2));
+    driver.x().toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.L2));
 
-    driver.b().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L3));
+    driver.b().toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.L3));
 
     driver.rightTrigger().whileTrue(superstructure.scoreCommand(false));
   }
@@ -463,17 +465,19 @@ public class RobotContainer {
         .whileTrue(IntakeCommands.intake(superstructure, driver));
 
     // Align and Score / Lock
-    driver.a().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.L1));
+    driver.a().toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.L1));
 
     driver
         .b()
         .and(driver.rightTrigger().or(driver.leftTrigger()))
-        .onTrue(AutoScore.selectAndScoreCommand(superstructure, Superstructure.Goal.L2));
+        .onTrue(
+            AutoScore.selectAndScoreCommand(superstructure, Superstructure.WantedSuperState.L2));
 
     driver
         .x()
         .and(driver.rightTrigger().or(driver.leftTrigger()))
-        .onTrue(AutoScore.selectAndScoreCommand(superstructure, Superstructure.Goal.L3));
+        .onTrue(
+            AutoScore.selectAndScoreCommand(superstructure, Superstructure.WantedSuperState.L3));
 
     driver
         .rightTrigger()
@@ -492,25 +496,23 @@ public class RobotContainer {
     // Scoring for L1
     driver
         .rightTrigger()
-        .and(() -> superstructure.getGoal() == Superstructure.Goal.L1)
+        .and(() -> superstructure.getGoal() == Superstructure.WantedSuperState.L1)
         .whileTrue(superstructure.scoreCommand(false));
 
     driver
         .leftTrigger()
-        .and(() -> superstructure.getGoal() == Superstructure.Goal.L1)
+        .and(() -> superstructure.getGoal() == Superstructure.WantedSuperState.L1)
         .whileTrue(superstructure.scoreCommand(true));
-
-    // Misc
-    driver
-        .povRight()
-        .and(() -> superstructure.hasCoral())
-        .whileTrue(superstructure.setGoalCommand(Superstructure.Goal.SHUFFLE));
 
     /***************** Algae Triggers *****************/
     // Displacing
-    driver.leftBumper().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.LO_ALGAE));
+    driver
+        .leftBumper()
+        .toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.LO_ALGAE));
 
-    driver.rightBumper().toggleOnTrue(superstructure.setGoalCommand(Superstructure.Goal.HI_ALGAE));
+    driver
+        .rightBumper()
+        .toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.HI_ALGAE));
 
     /***************** Climbing Triggers *****************/
     driver
@@ -519,7 +521,7 @@ public class RobotContainer {
             climber
                 .climbCommand()
                 .alongWith(hopper.setGoalCommand(Hopper.Goal.CLIMB))
-                .alongWith(superstructure.setGoalCommand(Superstructure.Goal.CLIMB))
+                .alongWith(superstructure.setGoalCommand(Superstructure.WantedSuperState.CLIMB))
                 .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
 
     driver

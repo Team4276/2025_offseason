@@ -6,7 +6,7 @@ import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import frc.team4276.frc2025.subsystems.drive.DriveConstants;
+import frc.team4276.frc2025.subsystems.superstructure.drive.DriveConstants;
 import frc.team4276.util.AllianceFlipUtil;
 import java.util.ArrayList;
 import java.util.List;
