@@ -10,41 +10,39 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.team4276.frc2025.AutoSelector;
 import frc.team4276.frc2025.AutoSelector.AutoQuestionResponse;
-import frc.team4276.frc2025.Constants;
-import frc.team4276.frc2025.commands.DriveTrajectory;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure;
+import frc.team4276.frc2025.subsystems.superstructure.Superstructure.CurrentSuperState;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure.WantedSuperState;
-import frc.team4276.frc2025.subsystems.superstructure.drive.Drive;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AutoBuilder {
-  private final Drive drive; // TODO: add drive to pose auto
-  private final Superstructure superstructure;
+  private final Superstructure superstructure; // TODO: add drive to pose auto
   private final AutoSelector autoSelector;
 
-  public AutoBuilder(Drive drive, Superstructure superstructure, AutoSelector autoSelector) {
-    this.drive = drive;
+  public AutoBuilder(Superstructure superstructure, AutoSelector autoSelector) {
     this.superstructure = superstructure;
     this.autoSelector = autoSelector;
   }
 
   public Command testTraj(String name) {
-    var traj = getPathPlannerTrajectoryFromChoreo(name);
+    // var traj = getPathPlannerTrajectoryFromChoreo(name);
 
-    return resetPose(traj.getInitialPose()).andThen(new DriveTrajectory(drive, traj));
+    return Commands.none();
+    // resetPose(traj.getInitialPose()).andThen(new DriveTrajectory(drive, traj));
   }
 
   public Command taxiAuto(String name) {
     // Check if need to flip paths to barge side
-    boolean mirrorLengthwise = autoSelector.getResponses().get(0) == AutoQuestionResponse.NO;
+    // boolean mirrorLengthwise = autoSelector.getResponses().get(0) == AutoQuestionResponse.NO;
 
-    var traj = getPathPlannerTrajectoryFromChoreo(name, mirrorLengthwise);
+    // var traj = getPathPlannerTrajectoryFromChoreo(name, mirrorLengthwise);
 
-    return Commands.sequence(
-        resetPose(traj.getInitialPose()),
-        Commands.waitSeconds(autoSelector.getDelayInput()),
-        new DriveTrajectory(drive, traj));
+    return Commands.none();
+    // Commands.sequence(
+    //     resetPose(traj.getInitialPose()),
+    //     Commands.waitSeconds(autoSelector.getDelayInput()),
+    //     new DriveTrajectory(drive, traj));
   }
 
   public Command sandyEggosAuto(
@@ -141,17 +139,17 @@ public class AutoBuilder {
     var traj1 =
         getPathPlannerTrajectoryFromChoreo("c_st_sc_" + reefs.get(0).toString(), mirrorLengthwise);
 
-    scoringCommand.addCommands(
-        Commands.sequence(
-                new DriveTrajectory(drive, traj1),
-                Commands.waitUntil(
-                    () ->
-                        superstructure.atGoal()
-                            && superstructure.getGoal() != WantedSuperState.STOW),
-                scoreCommand(superstructure))
-            .deadlineFor(
-                Commands.waitSeconds(traj1.getTotalTimeSeconds() - 0.75)
-                    .andThen(superstructure.setGoalCommand(toGoal(levels.get(0))))));
+    // scoringCommand.addCommands(
+    //     Commands.sequence(
+    //             new DriveTrajectory(drive, traj1),
+    //             Commands.waitUntil(
+    //                 () ->
+    //                     superstructure.atGoal()
+    //                         && superstructure.getGoal() != WantedSuperState.STOW),
+    //             scoreCommand(superstructure))
+    //         .deadlineFor(
+    //             Commands.waitSeconds(traj1.getTotalTimeSeconds() - 0.75)
+    //                 .andThen(superstructure.setGoalCommand(toGoal(levels.get(0))))));
 
     for (int i = 1; i < reefs.size(); i++) {
       var traj =
@@ -168,25 +166,26 @@ public class AutoBuilder {
   }
 
   private Command speedyCoral(PathPlannerTrajectory traj, WantedSuperState goal) {
-    return Commands.sequence(
-            new DriveTrajectory(drive, traj)
-                .andThen(
-                    Commands.waitUntil(
-                        () ->
-                            superstructure.atGoal()
-                                && superstructure.getGoal() != WantedSuperState.STOW),
-                    scoreCommand(superstructure)))
-        .deadlineFor(
-            superstructure
-                .setGoalCommand(WantedSuperState.INTAKE)
-                .withDeadline(
-                    Commands.either(
-                        Commands.waitSeconds(1.0),
-                        Commands.waitUntil(() -> superstructure.hasCoral()),
-                        () -> Constants.isSim))
-                .andThen(
-                    Commands.waitSeconds(traj.getTotalTimeSeconds() - 0.75)
-                        .andThen(superstructure.setGoalCommand(goal))));
+    return Commands.none();
+    // Commands.sequence(
+    //         new DriveTrajectory(drive, traj)
+    //             .andThen(
+    //                 Commands.waitUntil(
+    //                     () ->
+    //                         superstructure.atGoal()
+    //                             && superstructure.getGoal() != WantedSuperState.STOW),
+    //                 scoreCommand(superstructure)))
+    //     .deadlineFor(
+    //         superstructure
+    //             .setGoalCommand(WantedSuperState.INTAKE_CORAL)
+    //             .withDeadline(
+    //                 Commands.either(
+    //                     Commands.waitSeconds(1.0),
+    //                     Commands.waitUntil(() -> superstructure.hasCoral()),
+    //                     () -> Constants.isSim))
+    //             .andThen(
+    //                 Commands.waitSeconds(traj.getTotalTimeSeconds() - 0.75)
+    //                     .andThen(superstructure.setGoalCommand(goal))));
   }
 
   public Command shrimpleOcrAuto(
@@ -228,25 +227,26 @@ public class AutoBuilder {
 
   private Command shrimpleCoral(
       PathPlannerTrajectory scTraj, PathPlannerTrajectory intTraj, WantedSuperState goal) {
-    return Commands.sequence(
-        Commands.sequence(
-                new DriveTrajectory(drive, scTraj),
-                Commands.waitUntil(
-                    () ->
-                        superstructure.atGoal()
-                            && superstructure.getGoal() != WantedSuperState.STOW),
-                scoreCommand(superstructure))
-            .deadlineFor(
-                Commands.waitSeconds(scTraj.getTotalTimeSeconds() - 0.75)
-                    .andThen(superstructure.setGoalCommand(goal))),
-        superstructure
-            .setGoalCommand(WantedSuperState.INTAKE)
-            .withDeadline(
-                new DriveTrajectory(drive, intTraj)
-                    .andThen(
-                        Constants.isSim
-                            ? Commands.waitSeconds(intakeWaitTime)
-                            : Commands.waitUntil(() -> superstructure.hasCoral()))));
+    return Commands.none();
+    // Commands.sequence(
+    //     Commands.sequence(
+    //             new DriveTrajectory(drive, scTraj),
+    //             Commands.waitUntil(
+    //                 () ->
+    //                     superstructure.atGoal()
+    //                         && superstructure.getGoal() != WantedSuperState.STOW),
+    //             scoreCommand(superstructure))
+    //         .deadlineFor(
+    //             Commands.waitSeconds(scTraj.getTotalTimeSeconds() - 0.75)
+    //                 .andThen(superstructure.setGoalCommand(goal))),
+    //     superstructure
+    //         .setGoalCommand(WantedSuperState.INTAKE_CORAL)
+    //         .withDeadline(
+    //             new DriveTrajectory(drive, intTraj)
+    //                 .andThen(
+    //                     Constants.isSim
+    //                         ? Commands.waitSeconds(intakeWaitTime)
+    //                         : Commands.waitUntil(() -> superstructure.hasCoral()))));
   }
 
   public Command shrimpleOcrAuto(List<AutoQuestionResponse> reefs) {
@@ -259,7 +259,8 @@ public class AutoBuilder {
             Commands.waitUntil( // Cancel rest of path after first score
                 () ->
                     !superstructure.hasCoral()
-                        && superstructure.getGoal() == WantedSuperState.INTAKE));
+                        && superstructure.getCurrentSuperState()
+                            == CurrentSuperState.INTAKE_CORAL));
   }
 
   public Command shrimpleOcrAuto() {
@@ -278,16 +279,16 @@ public class AutoBuilder {
   private Superstructure.WantedSuperState toGoal(AutoQuestionResponse response) {
     switch (response) {
       case L1_LEFT:
-        return Superstructure.WantedSuperState.L1;
+        return Superstructure.WantedSuperState.SCORE_LEFT_L1;
 
       case L1_RIGHT:
-        return Superstructure.WantedSuperState.L1;
+        return Superstructure.WantedSuperState.SCORE_LEFT_L1;
 
       case L2:
-        return Superstructure.WantedSuperState.L2;
+        return Superstructure.WantedSuperState.SCORE_LEFT_L2;
 
       case L3:
-        return Superstructure.WantedSuperState.L3;
+        return Superstructure.WantedSuperState.SCORE_LEFT_L3;
 
       default:
         return Superstructure.WantedSuperState.STOW;

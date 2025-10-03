@@ -128,17 +128,11 @@ public class Robot extends LoggedRobot {
     Threads.setCurrentThreadPriority(true, 10);
   }
 
-  /** This function is called periodically during all modes. */
   @Override
   public void robotPeriodic() {
 
     VirtualSubsystem.periodicAll();
     ElasticUI.update();
-    // Runs the Scheduler. This is responsible for polling buttons, adding
-    // newly-scheduled commands, running already-scheduled commands, removing
-    // finished or interrupted commands, and running subsystem periodic() methods.
-    // This must be called from the robot's periodic block in order for anything in
-    // the Command-based framework to work.
     CommandScheduler.getInstance().run();
 
     // Print auto duration
@@ -155,7 +149,6 @@ public class Robot extends LoggedRobot {
       }
     }
 
-    // Robot container periodic methods
     robotContainer.update();
     RobotState.getInstance().update();
 
@@ -169,11 +162,9 @@ public class Robot extends LoggedRobot {
             && !canInitialErrorTimer.hasElapsed(canErrorTimeThreshold));
   }
 
-  /** This function is called once when the robot is disabled. */
   @Override
   public void disabledInit() {}
 
-  /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {
     if (AutoSelector.hasAutoChanged()) {
@@ -182,15 +173,8 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void disabledExit() {
-    if (DriverStation.isFMSAttached()) {
-      robotContainer.setToggles(false, false);
-    } else {
-      robotContainer.setToggles(true, true);
-    }
-  }
+  public void disabledExit() {}
 
-  /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
     autoMessagePrinted = false;
@@ -201,28 +185,21 @@ public class Robot extends LoggedRobot {
       Elastic.selectTab("Auto");
     }
 
-    // schedule the autonomous command (example)
     if (autonomousCommand != null) {
       autonomousCommand.schedule();
     }
   }
 
-  /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {}
 
   @Override
   public void autonomousExit() {
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
   }
 
-  /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
     if (!Constants.isTuning) {
@@ -230,29 +207,23 @@ public class Robot extends LoggedRobot {
     }
   }
 
-  /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {}
 
   @Override
   public void teleopExit() {}
 
-  /** This function is called once when test mode is enabled. */
   @Override
   public void testInit() {
-    // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
   }
 
-  /** This function is called periodically during test mode. */
   @Override
   public void testPeriodic() {}
 
-  /** This function is called once when the robot is first started up. */
   @Override
   public void simulationInit() {}
 
-  /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {}
 }

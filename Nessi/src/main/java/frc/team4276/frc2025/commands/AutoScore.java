@@ -31,7 +31,7 @@ public class AutoScore {
       Superstructure superstructure, Superstructure.WantedSuperState goal) {
     return Commands.runOnce(
         () -> {
-          superstructure.selectAutoScoreGoal(goal);
+          // superstructure.selectAutoScoreGoal(goal);
           proceedScoring = true;
         });
   }
@@ -72,14 +72,13 @@ public class AutoScore {
         .andThen(
             new DriveToPose(drive, () -> goal.get().get().getScore(), robotPose)
                 .alongWith(
-                    superstructure.autoScoreCommand(),
                     Commands.waitUntil(
                             () ->
-                                superstructure.atGoal()
-                                    && superstructure.getGoal()
-                                        != Superstructure.WantedSuperState.STOW
+                                // superstructure.atGoal()
+                                //     &&
+                                superstructure.getCurrentSuperState()
+                                        != Superstructure.CurrentSuperState.STOW
                                     && DriveToPose.atGoal())
-                        .andThen(superstructure.scoreCommand(false))
                         .andThen(Commands.waitSeconds(0.5))))
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }

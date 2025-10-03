@@ -32,7 +32,7 @@ public class Climber extends SubsystemBase {
   private Goal goal = Goal.IDLE;
   private final ClimberIO io;
   private final ClimberIOInputsAutoLogged inputs = new ClimberIOInputsAutoLogged();
-  private BooleanSupplier override;
+  private BooleanSupplier override = () -> false;
   private boolean isClimbing = false;
   private boolean hasFlippedCoast = false;
 

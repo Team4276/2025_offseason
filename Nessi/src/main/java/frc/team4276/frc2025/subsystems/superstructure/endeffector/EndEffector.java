@@ -2,10 +2,13 @@ package frc.team4276.frc2025.subsystems.superstructure.endeffector;
 
 import static frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffectorConstants.*;
 
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.team4276.frc2025.Constants;
+import frc.team4276.frc2025.SimManager;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
-public class EndEffector {
+public class EndEffector extends SubsystemBase {
   private final EndEffectorIO io;
   private final EndEffectorIOInputsAutoLogged inputs = new EndEffectorIOInputsAutoLogged();
 
@@ -113,6 +116,6 @@ public class EndEffector {
   }
 
   public boolean hasCoral() {
-    return sensorsInputs.frontRead;
+    return Constants.isSim ? SimManager.hasCoral() : sensorsInputs.frontRead;
   }
 }

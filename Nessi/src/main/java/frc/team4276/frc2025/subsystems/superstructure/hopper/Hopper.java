@@ -35,7 +35,7 @@ public class Hopper extends SubsystemBase {
 
   private final HopperIO leftIo;
   private final HopperIO rightIo;
-  private BooleanSupplier override;
+  private BooleanSupplier override = () -> false;
 
   private final HopperIOInputsAutoLogged leftInputs = new HopperIOInputsAutoLogged();
   private final HopperIOInputsAutoLogged rightInputs = new HopperIOInputsAutoLogged();

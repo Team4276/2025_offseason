@@ -1,250 +1,369 @@
 package frc.team4276.frc2025.subsystems.superstructure;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.team4276.frc2025.Constants;
-import frc.team4276.frc2025.SimManager;
+import frc.team4276.frc2025.subsystems.superstructure.SuperstructureConstants.AutomationLevel;
+import frc.team4276.frc2025.subsystems.superstructure.SuperstructureConstants.ReefSelectionMethod;
+import frc.team4276.frc2025.subsystems.superstructure.climber.Climber;
+import frc.team4276.frc2025.subsystems.superstructure.drive.Drive;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.Elevator;
-import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorConstants;
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffector;
+import frc.team4276.frc2025.subsystems.superstructure.hopper.Hopper;
+import frc.team4276.frc2025.subsystems.vision.Vision;
 import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Superstructure extends SubsystemBase {
+  private final Drive drive;
+  private final Vision vision;
   private final Elevator elevator;
   private final EndEffector endeffector;
+  private final Hopper hopper;
+  private final Climber climber;
 
-  private boolean wantScore = false;
-  private boolean leftL1 = false;
+  private SuperstructureConstants.AutomationLevel automationLevel = AutomationLevel.AUTO_RELEASE;
 
   public enum WantedSuperState {
     STOW,
     STOPPED,
-    INTAKE,
-    L1,
-    L2,
-    L3,
-    LO_ALGAE,
-    HI_ALGAE,
+    INTAKE_CORAL,
+    SCORE_MANUAL_L1,
+    SCORE_LEFT_L1,
+    SCORE_LEFT_L2,
+    SCORE_LEFT_L3,
+    SCORE_RIGHT_L1,
+    SCORE_RIGHT_L2,
+    SCORE_RIGHT_L3,
+    MANUAL_SCORE,
+    REEF_ALGAE,
+    CLIMB_PREP,
     CLIMB,
-    CHARACTERIZING,
     CUSTOM
   }
 
   public enum CurrentSuperState {
     STOW,
     STOPPED,
-    INTAKE,
-    L1,
-    L2,
-    L3,
-    LO_ALGAE,
-    HI_ALGAE,
+    INTAKE_CORAL,
+    SCORE_MANUAL_L1,
+    SCORE_LEFT_TELEOP_L1,
+    SCORE_LEFT_TELEOP_L2,
+    SCORE_LEFT_TELEOP_L3,
+    SCORE_RIGHT_TELEOP_L1,
+    SCORE_RIGHT_TELEOP_L2,
+    SCORE_RIGHT_TELEOP_L3,
+    SCORE_LEFT_AUTO_L1,
+    SCORE_RIGHT_AUTO_L1,
+    SCORE_LEFT_AUTO_L2,
+    SCORE_LEFT_AUTO_L3,
+    SCORE_RIGHT_AUTO_L2,
+    SCORE_RIGHT_AUTO_L3,
+    MANUAL_LEFT_L1,
+    MANUAL_RIGHT_L1,
+    MANUAL_L2,
+    MANUAL_L3,
+    REEF_ALGAE,
+    CLIMB_PREP,
     CLIMB,
-    CHARACTERIZING,
     CUSTOM
   }
 
-  private WantedSuperState wantedSuperState = WantedSuperState.STOW;
-  private CurrentSuperState currentSuperState = CurrentSuperState.STOW;
+  private WantedSuperState wantedSuperState = WantedSuperState.STOPPED;
+  private CurrentSuperState currentSuperState = CurrentSuperState.STOPPED;
 
-  private double elevatorCharacterizationInput = 0.0;
+  private SuperstructureConstants.ReefSelectionMethod reefSelectionMethod =
+      ReefSelectionMethod.ROTATION;
 
-  public Superstructure(Elevator elevator, EndEffector endeffector) {
+  public enum GamePieceState {
+    NO_BANANA,
+    CORAL,
+    L1_MODE
+  }
+
+  private GamePieceState gamePieceState = GamePieceState.NO_BANANA;
+
+  public Superstructure(
+      Drive drive,
+      Vision vision,
+      Elevator elevator,
+      EndEffector endeffector,
+      Hopper hopper,
+      Climber climber) {
+    this.drive = drive;
+    this.vision = vision;
     this.elevator = elevator;
     this.endeffector = endeffector;
-
-    elevator.setCoastOverride(() -> false);
-
-    setDefaultCommand(setGoalCommand(() -> Superstructure.WantedSuperState.STOW));
+    this.hopper = hopper;
+    this.climber = climber;
   }
 
   @Override
   public void periodic() {
+    gamePieceState = endeffector.hasCoral() ? GamePieceState.CORAL : GamePieceState.NO_BANANA;
+
     currentSuperState = handleStateTransition();
     applyState();
 
-    elevator.periodic();
-    endeffector.periodic();
-
     Logger.recordOutput("Superstructure/WantedSuperState", wantedSuperState);
     Logger.recordOutput("Superstructure/CurrentSuperState", currentSuperState);
-    Logger.recordOutput("Superstructure/WantScore", wantScore);
-    Logger.recordOutput("Superstructure/HasCoral", endeffector.hasCoral());
+    Logger.recordOutput("Superstructure/HasCoral", gamePieceState == GamePieceState.CORAL);
   }
 
   private CurrentSuperState handleStateTransition() {
-    return switch (wantedSuperState) {
+    switch (wantedSuperState) {
       default:
-        yield CurrentSuperState.STOPPED;
+        currentSuperState = CurrentSuperState.STOPPED;
+
+        break;
 
       case STOW:
-        yield CurrentSuperState.STOW;
+        currentSuperState = CurrentSuperState.STOW;
 
-      case L1:
-        yield CurrentSuperState.L1;
+        break;
 
-      case L2:
-        yield CurrentSuperState.L2;
+      case INTAKE_CORAL:
+        currentSuperState = CurrentSuperState.INTAKE_CORAL;
 
-      case L3:
-        yield CurrentSuperState.L3;
+        break;
 
-      case LO_ALGAE:
-        yield CurrentSuperState.LO_ALGAE;
+      case SCORE_LEFT_L1:
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_LEFT_AUTO_L1
+                : CurrentSuperState.SCORE_LEFT_TELEOP_L1;
 
-      case HI_ALGAE:
-        yield CurrentSuperState.HI_ALGAE;
+        break;
+
+      case SCORE_LEFT_L2:
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_LEFT_AUTO_L2
+                : CurrentSuperState.SCORE_LEFT_TELEOP_L2;
+
+        break;
+
+      case SCORE_LEFT_L3:
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_LEFT_AUTO_L3
+                : CurrentSuperState.SCORE_LEFT_TELEOP_L3;
+
+        break;
+
+      case SCORE_RIGHT_L1:
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_RIGHT_AUTO_L1
+                : CurrentSuperState.SCORE_RIGHT_TELEOP_L1;
+
+        break;
+
+      case SCORE_RIGHT_L2:
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_RIGHT_AUTO_L2
+                : CurrentSuperState.SCORE_RIGHT_TELEOP_L2;
+
+        break;
+
+      case SCORE_RIGHT_L3:
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_RIGHT_AUTO_L3
+                : CurrentSuperState.SCORE_RIGHT_TELEOP_L3;
+
+        break;
+
+      case MANUAL_SCORE:
+        switch (currentSuperState) {
+          case SCORE_LEFT_TELEOP_L1:
+            currentSuperState = CurrentSuperState.MANUAL_LEFT_L1;
+
+            break;
+
+          case SCORE_RIGHT_TELEOP_L1:
+            currentSuperState = CurrentSuperState.MANUAL_RIGHT_L1;
+
+            break;
+
+          case SCORE_RIGHT_TELEOP_L2:
+          case SCORE_LEFT_TELEOP_L2:
+            currentSuperState = CurrentSuperState.MANUAL_L2;
+
+            break;
+
+          case SCORE_RIGHT_TELEOP_L3:
+          case SCORE_LEFT_TELEOP_L3:
+            currentSuperState = CurrentSuperState.MANUAL_L3;
+
+            break;
+
+          default:
+            break;
+        }
+
+      case REEF_ALGAE:
+        currentSuperState = CurrentSuperState.REEF_ALGAE;
+
+        break;
+
+      case CLIMB_PREP:
+        currentSuperState = CurrentSuperState.CLIMB_PREP;
+
+        break;
 
       case CLIMB:
-        yield CurrentSuperState.CLIMB;
+        currentSuperState = CurrentSuperState.CLIMB;
 
-      case CHARACTERIZING:
-        yield CurrentSuperState.CHARACTERIZING;
+        break;
 
       case CUSTOM:
-        yield CurrentSuperState.CUSTOM;
-    };
+        currentSuperState = CurrentSuperState.CUSTOM;
+
+        break;
+    }
+    ;
+
+    return currentSuperState;
   }
 
   private void applyState() {
-    if (wantScore) {
-      endeffector.setWantedState(
-          wantedSuperState == WantedSuperState.L1
-              ? (leftL1
-                  ? EndEffector.WantedState.SCORE_LEFT_L1
-                  : EndEffector.WantedState.SCORE_RIGHT_L1)
-              : EndEffector.WantedState.SCORE);
-    } else {
-      endeffector.setWantedState(EndEffector.WantedState.IDLE);
-    }
-
     switch (currentSuperState) {
       case STOW:
-        elevator.setGoal(ElevatorConstants.Goal.STOW);
-        endeffector.setWantedState(EndEffector.WantedState.IDLE);
-
         break;
 
-      case INTAKE:
-        elevator.setGoal(ElevatorConstants.Goal.INTAKE);
-        endeffector.setWantedState(EndEffector.WantedState.INTAKE);
-
+      case INTAKE_CORAL:
         break;
 
-      case L1:
-        elevator.setGoal(ElevatorConstants.Goal.L1);
-
+      case SCORE_MANUAL_L1:
         break;
 
-      case L2:
-        elevator.setGoal(ElevatorConstants.Goal.L2);
-
+      case SCORE_LEFT_TELEOP_L1:
         break;
 
-      case L3:
-        elevator.setGoal(ElevatorConstants.Goal.L3);
-
+      case SCORE_LEFT_TELEOP_L2:
         break;
 
-      case LO_ALGAE:
-        elevator.setGoal(ElevatorConstants.Goal.LO_ALGAE);
-        endeffector.setWantedState(EndEffector.WantedState.IDLE);
-
+      case SCORE_LEFT_TELEOP_L3:
         break;
-      case HI_ALGAE:
-        elevator.setGoal(ElevatorConstants.Goal.HI_ALGAE);
-        endeffector.setWantedState(EndEffector.WantedState.IDLE);
 
+      case SCORE_RIGHT_TELEOP_L1:
+        break;
+
+      case SCORE_RIGHT_TELEOP_L2:
+        break;
+
+      case SCORE_RIGHT_TELEOP_L3:
+        break;
+
+      case SCORE_LEFT_AUTO_L1:
+        break;
+
+      case SCORE_RIGHT_AUTO_L1:
+        break;
+
+      case SCORE_LEFT_AUTO_L2:
+        break;
+
+      case SCORE_LEFT_AUTO_L3:
+        break;
+
+      case SCORE_RIGHT_AUTO_L2:
+        break;
+
+      case SCORE_RIGHT_AUTO_L3:
+        break;
+
+      case MANUAL_LEFT_L1:
+        break;
+
+      case MANUAL_RIGHT_L1:
+        break;
+
+      case MANUAL_L2:
+        break;
+
+      case MANUAL_L3:
+        break;
+
+      case REEF_ALGAE:
+        break;
+
+      case CLIMB_PREP:
         break;
 
       case CLIMB:
-        elevator.setGoal(ElevatorConstants.Goal.STOW);
-        endeffector.setWantedState(EndEffector.WantedState.IDLE);
-
-        break;
-      case CHARACTERIZING:
-        elevator.runCharacterization(elevatorCharacterizationInput);
         break;
 
       case CUSTOM:
-        elevator.setGoal(ElevatorConstants.Goal.CUSTOM);
+        break;
+
+      case STOPPED:
+        break;
 
       default:
         break;
     }
   }
 
-  public boolean atGoal() {
-    return elevator.atGoal();
-  }
-
-  public boolean withinTolerance(double tol) {
-    return Math.abs(elevator.getGoal().getPositionMetres() - elevator.getPositionMetres()) < tol;
-  }
-
-  public WantedSuperState getGoal() {
-    return wantedSuperState;
-  }
-
-  public void selectAutoScoreGoal(WantedSuperState goal) {}
-
-  public Command autoScoreCommand() {
-    return startEnd(
-        () -> {},
-        () -> {
-          wantedSuperState = WantedSuperState.STOW;
-        });
-  }
-
-  public void setGoal(Supplier<WantedSuperState> goal) {
-    wantedSuperState = goal.get();
-  }
-
-  public Command setGoalCommand(Supplier<WantedSuperState> goal) {
-    return startEnd(() -> setGoal(goal), () -> setGoal(() -> WantedSuperState.STOW));
-  }
-
-  public Command setGoalCommand(WantedSuperState goal) {
-    return setGoalCommand(() -> goal);
-  }
-
-  public Command scoreCommand(BooleanSupplier isLeftL1) {
-    return scoreCommand(isLeftL1.getAsBoolean());
-  }
-
-  public Command scoreCommand(boolean isLeftL1) {
-    return Commands.startEnd(
-        () -> {
-          wantScore = true;
-          leftL1 = isLeftL1;
-        },
-        () -> {
-          wantScore = false;
-          SimManager.setHasCoral(false);
-        });
-  }
-
-  public void acceptCharacterizationInput(double input) {
-    elevatorCharacterizationInput = input;
-    setGoal(() -> WantedSuperState.CHARACTERIZING);
-  }
-
-  public double getFFCharacterizationVelocity() {
-    return elevator.getFFCharacterizationVelocity();
-  }
-
-  public void endCharacterizaton() {
-    elevator.endCharacterizaton();
-  }
-
-  public void setCoastOverride(BooleanSupplier override) {
-    elevator.setCoastOverride(override);
+  public CurrentSuperState getCurrentSuperState() {
+    return currentSuperState;
   }
 
   public boolean hasCoral() {
-    return Constants.isSim ? SimManager.hasCoral() : endeffector.hasCoral();
+    return gamePieceState == GamePieceState.CORAL;
+  }
+
+  public void setCoastOverride(
+      BooleanSupplier elevatorOverride,
+      BooleanSupplier climberOverride,
+      BooleanSupplier hopperOverride) {
+    elevator.setCoastOverride(elevatorOverride);
+    climber.setCoastOverride(climberOverride);
+    hopper.setCoastOverride(hopperOverride);
+  }
+
+  public void setWantedSuperState(WantedSuperState superState) {
+    wantedSuperState = superState;
+  }
+
+  public Command setStateCommand(WantedSuperState superState, boolean runDuringClimb) {
+    Command command = new InstantCommand(() -> setWantedSuperState(superState));
+    if (!runDuringClimb) {
+      command =
+          command.onlyIf(
+              () ->
+                  currentSuperState != CurrentSuperState.CLIMB
+                      && currentSuperState != CurrentSuperState.CLIMB_PREP);
+    }
+
+    return command;
+  }
+
+  public Command setStateCommand(WantedSuperState superState) {
+    return setStateCommand(superState, false);
+  }
+
+  public Command configureButtonBinding(
+      WantedSuperState hasCoralCondition,
+      WantedSuperState noPieceCondition,
+      WantedSuperState l1ModeCondition) {
+
+    return switch (gamePieceState) {
+      case CORAL:
+        {
+          yield setStateCommand(hasCoralCondition);
+        }
+      case NO_BANANA:
+        {
+          yield setStateCommand(noPieceCondition);
+        }
+      case L1_MODE:
+        {
+          yield setStateCommand(l1ModeCondition);
+        }
+    };
   }
 }

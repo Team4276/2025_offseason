@@ -7,13 +7,15 @@ import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.Constants;
 import frc.team4276.frc2025.SimManager;
+import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorConstants.Goal;
 import frc.team4276.util.dashboard.LoggedTunableNumber;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
 
-public class Elevator {
+public class Elevator extends SubsystemBase {
 
   private Goal goal = Goal.STOW;
 
@@ -36,9 +38,7 @@ public class Elevator {
           new TrapezoidProfile.Constraints(maxVel.getAsDouble(), maxAccel.getAsDouble()));
   private TrapezoidProfile.State setpointState = new TrapezoidProfile.State();
 
-  private BooleanSupplier coastOverride;
-
-  private double characterizationInput = 0.0;
+  private BooleanSupplier coastOverride = () -> false;
 
   /** position that reads zero on the elevator */
   private double homedPosition = 0.0;
@@ -101,26 +101,21 @@ public class Elevator {
         atGoalTimer.reset();
       }
 
-      if (goal == Goal.CHARACTERIZING) {
-        io.runVolts(characterizationInput);
+      setpointState =
+          profile.calculate(
+              0.02, setpointState, new TrapezoidProfile.State(goal.getPositionMetres(), 0.0));
+      double setpointRotations =
+          metresToRotations(MathUtil.clamp(setpointState.position, minInput, maxInput))
+              + homedPosition;
+      io.runSetpoint(setpointRotations, ff.calculate(setpointState.velocity));
 
-      } else {
-        setpointState =
-            profile.calculate(
-                0.02, setpointState, new TrapezoidProfile.State(goal.getPositionMetres(), 0.0));
-        double setpointRotations =
-            metresToRotations(MathUtil.clamp(setpointState.position, minInput, maxInput))
-                + homedPosition;
-        io.runSetpoint(setpointRotations, ff.calculate(setpointState.velocity));
-
-        Logger.recordOutput("Elevator/SetpointRotations", setpointRotations);
-        Logger.recordOutput("Elevator/SetpointState/PosMetres", setpointState.position);
-        Logger.recordOutput("Elevator/SetpointState/VelMetres", setpointState.velocity);
-        Logger.recordOutput(
-            "Elevator/SetpointState/PosRotations", metresToRotations(setpointState.position));
-        Logger.recordOutput(
-            "Elevator/SetpointState/VelRotations", metresToRotations(setpointState.velocity));
-      }
+      Logger.recordOutput("Elevator/SetpointRotations", setpointRotations);
+      Logger.recordOutput("Elevator/SetpointState/PosMetres", setpointState.position);
+      Logger.recordOutput("Elevator/SetpointState/VelMetres", setpointState.velocity);
+      Logger.recordOutput(
+          "Elevator/SetpointState/PosRotations", metresToRotations(setpointState.position));
+      Logger.recordOutput(
+          "Elevator/SetpointState/VelRotations", metresToRotations(setpointState.velocity));
     }
 
     SimManager.addElevatorGoalObs(goal.getPositionMetres());
@@ -150,19 +145,6 @@ public class Elevator {
 
   public boolean atGoalDebounce() {
     return atGoalTimer.get() > atGoalTime;
-  }
-
-  public void runCharacterization(double output) {
-    characterizationInput = output;
-    goal = Goal.CHARACTERIZING;
-  }
-
-  public double getFFCharacterizationVelocity() {
-    return rotationsToMetres(inputs.velocity);
-  }
-
-  public void endCharacterizaton() {
-    characterizationInput = 0.0;
   }
 
   public static double metresToRotations(double metres) {

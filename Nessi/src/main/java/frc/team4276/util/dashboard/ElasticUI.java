@@ -12,14 +12,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.team4276.util.AllianceFlipUtil;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 public class ElasticUI {
   private ElasticUI() {}
-
-  private static BooleanSupplier headingAlignSupplier;
-  private static BooleanSupplier driveAlignSupplier;
 
   private static final Timer rainbowTimer = new Timer();
   private static final String[] rainbow;
@@ -45,11 +41,6 @@ public class ElasticUI {
         };
   }
 
-  public static void setAlignToggleSuppliers(BooleanSupplier heading, BooleanSupplier drive) {
-    headingAlignSupplier = heading;
-    driveAlignSupplier = drive;
-  }
-
   public static void update() {
     if (rainbowTimer.advanceIfElapsed(0.06)) {
       if (offset >= rainbow.length) {
@@ -66,8 +57,6 @@ public class ElasticUI {
     }
 
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
-    SmartDashboard.putBoolean("Heading Align Enabled", !headingAlignSupplier.getAsBoolean());
-    SmartDashboard.putBoolean("Drive Align Enabled", !driveAlignSupplier.getAsBoolean());
   }
 
   public static void putSwerveDrive(

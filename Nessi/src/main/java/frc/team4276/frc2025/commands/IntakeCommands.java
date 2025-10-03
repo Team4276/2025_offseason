@@ -50,7 +50,7 @@ public class IntakeCommands {
 
   public static Command intake(Superstructure superstructure, ViXController driver) {
     return Commands.parallel(
-            superstructure.setGoalCommand(Superstructure.WantedSuperState.INTAKE),
+            superstructure.setStateCommand(Superstructure.WantedSuperState.INTAKE_CORAL),
             Commands.waitUntil(superstructure::hasCoral)
                 .andThen(driver.rumbleCommand(RumbleType.kBothRumble, 1.0, 1.0)))
         .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);

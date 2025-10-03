@@ -98,10 +98,11 @@ public class AutoCommands {
   }
 
   public static Command scoreCommand(Superstructure superstructure, boolean isLeftL1) {
-    return superstructure
-        .scoreCommand(isLeftL1)
-        .alongWith(notificationCommand("Scoring"))
-        .withTimeout(scoreWaitTime)
-        .withName("Score");
+    return Commands.none();
+    // superstructure
+    //     .scoreCommand(isLeftL1)
+    //     .alongWith(notificationCommand("Scoring"))
+    //     .withTimeout(scoreWaitTime)
+    //     .withName("Score");
   }
 }

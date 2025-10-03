@@ -7,21 +7,16 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.team4276.frc2025.AutoSelector.AutoQuestion;
 import frc.team4276.frc2025.AutoSelector.AutoQuestionResponse;
-import frc.team4276.frc2025.commands.AutoScore;
 import frc.team4276.frc2025.commands.DriveCommands;
-import frc.team4276.frc2025.commands.FeedForwardCharacterization;
-import frc.team4276.frc2025.commands.IntakeCommands;
-import frc.team4276.frc2025.commands.WheelRadiusCharacterization;
 import frc.team4276.frc2025.commands.auto.AutoBuilder;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure;
+import frc.team4276.frc2025.subsystems.superstructure.Superstructure.CurrentSuperState;
+import frc.team4276.frc2025.subsystems.superstructure.Superstructure.WantedSuperState;
 import frc.team4276.frc2025.subsystems.superstructure.climber.Climber;
 import frc.team4276.frc2025.subsystems.superstructure.climber.ClimberIO;
 import frc.team4276.frc2025.subsystems.superstructure.climber.ClimberIOSparkMax;
@@ -41,7 +36,6 @@ import frc.team4276.frc2025.subsystems.vision.Vision;
 import frc.team4276.frc2025.subsystems.vision.VisionIO;
 import frc.team4276.frc2025.subsystems.vision.VisionIOPhotonVision;
 import frc.team4276.util.AllianceFlipUtil;
-import frc.team4276.util.dashboard.ElasticUI;
 import frc.team4276.util.hid.CowsController;
 import frc.team4276.util.hid.ViXController;
 import frc.team4276.util.ios.GyroIO;
@@ -63,12 +57,14 @@ import org.littletonrobotics.junction.AutoLogOutput;
 public class RobotContainer {
   // Subsystems
   private Drive drive;
-  private Superstructure superstructure;
+  private Vision vision;
+  private Elevator elevator;
+  private EndEffector endEffector;
   private Hopper hopper;
   private Climber climber;
-  private Vision vision;
 
-  private AutoBuilder autoBuilder;
+  private final Superstructure superstructure;
+  private final AutoBuilder autoBuilder;
 
   // Controller
   private enum BindSetting {
@@ -90,17 +86,12 @@ public class RobotContainer {
       new DigitalInput(Ports.ELEVATOR_COAST_OVERRIDE);
   private final DigitalInput climberCoastOverride = new DigitalInput(Ports.CLIMBER_COAST_OVERRIDE);
   private final DigitalInput hopperCoastOverride = new DigitalInput(Ports.HOPPER_COAST_OVERRIDE);
-  private final DigitalInput armCoastOverride = new DigitalInput(Ports.ARM_COAST_OVERRIDE);
 
-  // Coral Scoring Logic
-  @AutoLogOutput private boolean disableHeadingAutoAlign = true;
-  @AutoLogOutput private boolean disableTranslationAutoAlign = true;
   @AutoLogOutput private boolean disableVisionSim = false;
 
   // Dashboard inputs
   private final AutoSelector autoSelector = new AutoSelector();
 
-  /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     if (Constants.getMode() != Constants.Mode.REPLAY) {
       switch (Constants.getType()) {
@@ -113,24 +104,23 @@ public class RobotContainer {
                   new ModuleIOSpark(1),
                   new ModuleIOSpark(2),
                   new ModuleIOSpark(3));
-          superstructure =
-              new Superstructure(
-                  new Elevator(new ElevatorIOSparkMax()),
-                  new EndEffector(
-                      new EndEffectorIOSparkMax(
-                          Ports.ENDEFFECTOR_LEFT, Ports.ENDEFFECTOR_RIGHT, 40, false, true),
-                      new RollerSensorsIOHardware()));
+          vision =
+              new Vision(
+                  RobotState.getInstance()::addVisionMeasurement,
+                  new VisionIOPhotonVision(0),
+                  new VisionIOPhotonVision(1));
+          elevator = new Elevator(new ElevatorIOSparkMax());
+          endEffector =
+              new EndEffector(
+                  new EndEffectorIOSparkMax(
+                      Ports.ENDEFFECTOR_LEFT, Ports.ENDEFFECTOR_RIGHT, 40, false, true),
+                  new RollerSensorsIOHardware());
           hopper =
               new Hopper(
                   new HopperIOSparkMax(Ports.HOPPER_LEFT, true),
                   new HopperIOSparkMax(Ports.HOPPER_RIGHT, false));
           climber =
               new Climber(new ClimberIOSparkMax(Ports.CLIMBER_WENCH, Ports.CLIMBER_WHEEL, 40, 40));
-          vision =
-              new Vision(
-                  RobotState.getInstance()::addVisionMeasurement,
-                  new VisionIOPhotonVision(0),
-                  new VisionIOPhotonVision(1));
         }
 
         case SIMBOT -> {
@@ -142,12 +132,6 @@ public class RobotContainer {
                   new ModuleIOSim(),
                   new ModuleIOSim(),
                   new ModuleIOSim());
-          superstructure =
-              new Superstructure(
-                  new Elevator(new ElevatorIO() {}),
-                  new EndEffector(new EndEffectorIO() {}, new RollerSensorsIO() {}));
-          hopper = new Hopper(new HopperIO() {}, new HopperIO() {});
-          climber = new Climber(new ClimberIO() {});
           if (disableVisionSim) {
             vision = new Vision(RobotState.getInstance()::addVisionMeasurement);
           } else {
@@ -157,6 +141,10 @@ public class RobotContainer {
                     new VisionIOPhotonVisionSim(0, RobotState.getInstance()::getEstimatedPose),
                     new VisionIOPhotonVisionSim(1, RobotState.getInstance()::getEstimatedPose));
           }
+          elevator = new Elevator(new ElevatorIO() {});
+          endEffector = new EndEffector(new EndEffectorIO() {}, new RollerSensorsIO() {});
+          hopper = new Hopper(new HopperIO() {}, new HopperIO() {});
+          climber = new Climber(new ClimberIO() {});
         }
       }
     }
@@ -172,19 +160,6 @@ public class RobotContainer {
               new ModuleIO() {});
     }
 
-    if (vision == null) {
-      vision =
-          new Vision(
-              RobotState.getInstance()::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
-    }
-
-    if (superstructure == null) {
-      superstructure =
-          new Superstructure(
-              new Elevator(new ElevatorIO() {}),
-              new EndEffector(new EndEffectorIO() {}, new RollerSensorsIO() {}));
-    }
-
     if (hopper == null) {
       hopper = new Hopper(new HopperIO() {}, new HopperIO() {});
     }
@@ -193,28 +168,26 @@ public class RobotContainer {
       climber = new Climber(new ClimberIO() {});
     }
 
-    configureOverrides();
-    configureAutos();
-    if (Constants.isTuning) {
-      configureTuningRoutines();
+    if (vision == null) {
+      vision =
+          new Vision(
+              RobotState.getInstance()::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
     }
+
+    superstructure = new Superstructure(drive, vision, elevator, endEffector, hopper, climber);
+
+    superstructure.setCoastOverride(
+        elevatorCoastOverride::get, climberCoastOverride::get, hopperCoastOverride::get);
+
+    autoBuilder = new AutoBuilder(superstructure, autoSelector);
+    configureAutos();
     configureButtonBindings();
-    configureUI();
 
     // Peace and quiet
     DriverStation.silenceJoystickConnectionWarning(true);
-
-    calibrationBuffer.reset();
-  }
-
-  private void configureOverrides() {
-    superstructure.setCoastOverride(elevatorCoastOverride::get);
-    climber.setCoastOverride(climberCoastOverride::get);
-    hopper.setCoastOverride(hopperCoastOverride::get);
   }
 
   private void configureAutos() {
-    autoBuilder = new AutoBuilder(drive, superstructure, autoSelector);
     // Set up auto routines
     autoSelector.addRoutine(
         "RP Shrimple OCR Auto",
@@ -334,43 +307,6 @@ public class RobotContainer {
         () -> autoBuilder.taxiAuto("t_WALL"));
   }
 
-  private void configureTuningRoutines() {
-    // Set up SysId routines
-    autoSelector.addRoutine("Box Test", () -> autoBuilder.testTraj("z_BoxTest"));
-    autoSelector.addRoutine(
-        "Drive Wheel Radius Characterization", () -> new WheelRadiusCharacterization(drive));
-    autoSelector.addRoutine(
-        "Drive Simple FF Characterization",
-        () ->
-            new FeedForwardCharacterization(
-                drive, drive::runCharacterization, drive::getFFCharacterizationVelocity));
-    autoSelector.addRoutine(
-        "Drive SysId (Quasistatic Forward)",
-        () -> drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoSelector.addRoutine(
-        "Drive SysId (Quasistatic Reverse)",
-        () -> drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoSelector.addRoutine(
-        "Drive SysId (Dynamic Forward)", () -> drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoSelector.addRoutine(
-        "Drive SysId (Dynamic Reverse)", () -> drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    autoSelector.addRoutine(
-        "Elevator Simple FF Characterization",
-        () ->
-            new FeedForwardCharacterization(
-                superstructure,
-                superstructure::acceptCharacterizationInput,
-                superstructure::getFFCharacterizationVelocity));
-    autoSelector.addRoutine(
-        "(Reverse) Elevator Simple FF Characterization",
-        () ->
-            new FeedForwardCharacterization(
-                superstructure,
-                superstructure::acceptCharacterizationInput,
-                superstructure::getFFCharacterizationVelocity,
-                true));
-  }
-
   /**
    * Use this method to define your button->command mappings. Buttons can be created by
    * instantiating a {@link GenericHID} or one of its subclasses ({@link
@@ -396,9 +332,119 @@ public class RobotContainer {
     }
   }
 
+  private void configureControllerBindings() {
+    DoubleSupplier driverX = () -> -driver.getLeftWithDeadband().y;
+    DoubleSupplier driverY = () -> -driver.getLeftWithDeadband().x;
+    DoubleSupplier driverOmega = () -> -driver.getRightWithDeadband().x;
+
+    drive.setDefaultCommand(DriveCommands.joystickDrive(drive, driverX, driverY, driverOmega));
+
+    driver
+        .start()
+        .onTrue(
+            Commands.runOnce(
+                    () ->
+                        RobotState.getInstance()
+                            .resetPose(
+                                new Pose2d(
+                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
+                                    AllianceFlipUtil.apply(Rotation2d.kZero))))
+                .ignoringDisable(true));
+
+    // Reef Scoring
+    driver
+        .rightTrigger()
+        .and(driver.y().negate())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                Superstructure.WantedSuperState.SCORE_RIGHT_L3,
+                Superstructure.WantedSuperState.INTAKE_CORAL,
+                Superstructure.WantedSuperState.SCORE_RIGHT_L1))
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
+
+    driver
+        .leftTrigger()
+        .and(driver.y().negate())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                Superstructure.WantedSuperState.SCORE_LEFT_L3,
+                Superstructure.WantedSuperState.INTAKE_CORAL,
+                Superstructure.WantedSuperState.SCORE_LEFT_L1))
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
+
+    driver
+        .rightBumper()
+        .and(driver.y().negate())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                Superstructure.WantedSuperState.SCORE_RIGHT_L2,
+                Superstructure.WantedSuperState.STOW,
+                Superstructure.WantedSuperState.STOW))
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
+
+    driver
+        .leftBumper()
+        .and(driver.y().negate())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                Superstructure.WantedSuperState.SCORE_LEFT_L2,
+                Superstructure.WantedSuperState.STOW,
+                Superstructure.WantedSuperState.STOW))
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
+
+    driver
+        .rightBumper()
+        .and(driver.y())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                Superstructure.WantedSuperState.SCORE_RIGHT_L1,
+                Superstructure.WantedSuperState.STOW,
+                Superstructure.WantedSuperState.STOW))
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
+
+    driver
+        .leftBumper()
+        .and(driver.y())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                Superstructure.WantedSuperState.SCORE_LEFT_L1,
+                Superstructure.WantedSuperState.STOW,
+                Superstructure.WantedSuperState.STOW))
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
+
+    driver
+        .a()
+        .onTrue(
+            superstructure.configureButtonBinding(
+                Superstructure.WantedSuperState.STOW,
+                Superstructure.WantedSuperState.MANUAL_SCORE,
+                Superstructure.WantedSuperState.MANUAL_SCORE));
+
+    // Purge Gamepiece(s)
+    driver.b().onTrue(Commands.none());
+
+    driver
+        .x()
+        .onTrue(superstructure.setStateCommand(WantedSuperState.REEF_ALGAE))
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
+
+    // Climb
+    driver
+        .povUp()
+        .onTrue(
+            Commands.either(
+                superstructure.setStateCommand(Superstructure.WantedSuperState.CLIMB, true),
+                superstructure.setStateCommand(Superstructure.WantedSuperState.CLIMB_PREP, true),
+                () -> superstructure.getCurrentSuperState() == CurrentSuperState.CLIMB_PREP));
+
+    // L1 Mode
+    driver.povRight().onTrue(Commands.none());
+
+    // Exit Mode
+    driver.povDown().onTrue(Commands.none());
+  }
+
   private void configureDemoBindings() {
-    /***************** Drive Triggers *****************/
-    // Drive suppliers
     DoubleSupplier driverX = () -> -demoController.getLeftWithDeadband().y;
     DoubleSupplier driverY = () -> -demoController.getLeftWithDeadband().x;
     DoubleSupplier driverOmega = () -> -demoController.getRightWithDeadband().x;
@@ -419,153 +465,32 @@ public class RobotContainer {
 
     driver
         .leftTrigger()
-        .whileTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.INTAKE));
-
-    driver.a().toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.L1));
-
-    driver.x().toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.L2));
-
-    driver.b().toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.L3));
-
-    driver.rightTrigger().whileTrue(superstructure.scoreCommand(false));
-  }
-
-  private void configureControllerBindings() {
-    /***************** Drive Triggers *****************/
-    // Drive suppliers
-    DoubleSupplier driverX = () -> -driver.getLeftWithDeadband().y;
-    DoubleSupplier driverY = () -> -driver.getLeftWithDeadband().x;
-    DoubleSupplier driverOmega = () -> -driver.getRightWithDeadband().x;
-
-    drive.setDefaultCommand(DriveCommands.joystickDrive(drive, driverX, driverY, driverOmega));
-
-    // Reset gyro to 0° when A button is pressed
-    driver
-        .start()
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        RobotState.getInstance()
-                            .resetPose(
-                                new Pose2d(
-                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
-                                    AllianceFlipUtil.apply(Rotation2d.kZero))))
-                .ignoringDisable(true));
-
-    /***************** Coral Triggers *****************/
-    // Intake
-    driver
-        .rightTrigger()
-        .and(() -> !superstructure.hasCoral())
-        .whileTrue(IntakeCommands.gamerIntake(superstructure, drive, driver, driverX, driverY));
+        .whileTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.INTAKE_CORAL));
 
     driver
-        .leftTrigger()
-        .and(() -> !superstructure.hasCoral())
-        .whileTrue(IntakeCommands.intake(superstructure, driver));
-
-    // Align and Score / Lock
-    driver.a().toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.L1));
-
-    driver
-        .b()
-        .and(driver.rightTrigger().or(driver.leftTrigger()))
-        .onTrue(
-            AutoScore.selectAndScoreCommand(superstructure, Superstructure.WantedSuperState.L2));
+        .a()
+        .toggleOnTrue(
+            superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_LEFT_L1));
 
     driver
         .x()
-        .and(driver.rightTrigger().or(driver.leftTrigger()))
-        .onTrue(
-            AutoScore.selectAndScoreCommand(superstructure, Superstructure.WantedSuperState.L3));
-
-    driver
-        .rightTrigger()
-        .and(() -> superstructure.hasCoral())
-        .whileTrue(
-            AutoScore.coralAlignCommand(
-                drive, driverX, driverY, driverOmega, false, superstructure));
-
-    driver
-        .leftTrigger()
-        .and(() -> superstructure.hasCoral())
-        .whileTrue(
-            AutoScore.coralAlignCommand(
-                drive, driverX, driverY, driverOmega, true, superstructure));
-
-    // Scoring for L1
-    driver
-        .rightTrigger()
-        .and(() -> superstructure.getGoal() == Superstructure.WantedSuperState.L1)
-        .whileTrue(superstructure.scoreCommand(false));
-
-    driver
-        .leftTrigger()
-        .and(() -> superstructure.getGoal() == Superstructure.WantedSuperState.L1)
-        .whileTrue(superstructure.scoreCommand(true));
-
-    /***************** Algae Triggers *****************/
-    // Displacing
-    driver
-        .leftBumper()
-        .toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.LO_ALGAE));
-
-    driver
-        .rightBumper()
-        .toggleOnTrue(superstructure.setGoalCommand(Superstructure.WantedSuperState.HI_ALGAE));
-
-    /***************** Climbing Triggers *****************/
-    driver
-        .povUp()
         .toggleOnTrue(
-            climber
-                .climbCommand()
-                .alongWith(hopper.setGoalCommand(Hopper.Goal.CLIMB))
-                .alongWith(superstructure.setGoalCommand(Superstructure.WantedSuperState.CLIMB))
-                .withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
+            superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_LEFT_L2));
 
     driver
-        .leftTrigger()
-        .and(() -> climber.isClimbing())
-        .whileTrue(climber.setGoalCommand(Climber.Goal.RAISE));
+        .b()
+        .toggleOnTrue(
+            superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_LEFT_L3));
 
-    driver
-        .rightTrigger()
-        .and(() -> climber.isClimbing())
-        .whileTrue(climber.setGoalCommand(Climber.Goal.CLIMB));
+    // driver.rightTrigger().whileTrue(superstructure.scoreCommand(false));
   }
 
   public void configureExperimentalBindings() {}
-
-  public void configureUI() {
-    ElasticUI.setAlignToggleSuppliers(
-        () -> disableHeadingAutoAlign, () -> disableTranslationAutoAlign);
-  }
-
-  public void setToggles(boolean disableHeadingAutoAlign, boolean disableTranslationAutoAlign) {
-    this.disableHeadingAutoAlign = disableHeadingAutoAlign;
-    this.disableTranslationAutoAlign = disableTranslationAutoAlign;
-  }
-
-  private boolean prevArmCoastState = false;
-  private Timer calibrationBuffer = new Timer();
 
   public void update() {
     updateAlerts();
 
     SimManager.periodic();
-
-    if (armCoastOverride.get() == false && armCoastOverride.get() != prevArmCoastState) {
-      calibrationBuffer.restart();
-    }
-
-    if (calibrationBuffer.isRunning() && calibrationBuffer.advanceIfElapsed(1.0)) {
-      drive.calibrate();
-      calibrationBuffer.stop();
-      calibrationBuffer.reset();
-    }
-
-    prevArmCoastState = armCoastOverride.get();
   }
 
   private void updateAlerts() {
