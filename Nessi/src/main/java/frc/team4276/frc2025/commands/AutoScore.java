@@ -68,8 +68,7 @@ public class AutoScore {
                             .isPresent()))
         .andThen(
             new DriveToPose(drive, () -> goal.get().get().getAlign(), robotPose)
-                .until(
-                    () -> proceedScoring()))
+                .until(() -> proceedScoring()))
         .andThen(
             new DriveToPose(drive, () -> goal.get().get().getScore(), robotPose)
                 .alongWith(
