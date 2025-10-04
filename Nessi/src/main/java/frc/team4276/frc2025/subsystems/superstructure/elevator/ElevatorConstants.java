@@ -7,23 +7,36 @@ import frc.team4276.util.dashboard.LoggedTunableNumber;
 import java.util.function.DoubleSupplier;
 
 public class ElevatorConstants {
-  public enum Goal {
-    STOW(new LoggedTunableNumber("Elevator/StowPosition", Units.inchesToMeters(0.5))),
-    INTAKE(new LoggedTunableNumber("Elevator/IntakePosition", Units.inchesToMeters(0.5))),
-    UNJAM(new LoggedTunableNumber("Elevator/UnjamPosition", Units.inchesToMeters(15.0))),
-    L1(new LoggedTunableNumber("Elevator/L1Position", Units.inchesToMeters(0.0))),
-    L2(new LoggedTunableNumber("Elevator/L2Position", Units.inchesToMeters(6.69))),
-    L3(new LoggedTunableNumber("Elevator/L3Position", Units.inchesToMeters(21.76))),
-    NET_PREP(new LoggedTunableNumber("Elevator/NetPrep", Units.inchesToMeters(0.0))),
-    NET_SCORE(new LoggedTunableNumber("Elevator/NetScore", Units.inchesToMeters(21.26))),
-    LO_ALGAE(new LoggedTunableNumber("Elevator/LoAlgae", Units.inchesToMeters(0.0))),
-    HI_ALGAE(new LoggedTunableNumber("Elevator/HiAlgae", Units.inchesToMeters(17.32))),
-    CHARACTERIZING(() -> 0.0),
-    CUSTOM(new LoggedTunableNumber("Elevator/CustomSetpoint", 0.0));
+  public static final LoggedTunableNumber stow =
+      new LoggedTunableNumber("Elevator/StowPosition", Units.inchesToMeters(0.5));
+  public static final LoggedTunableNumber intake =
+      new LoggedTunableNumber("Elevator/IntakePosition", Units.inchesToMeters(0.5));
+  public static final LoggedTunableNumber unjam =
+      new LoggedTunableNumber("Elevator/UnjamPosition", Units.inchesToMeters(15.0));
+  public static final LoggedTunableNumber l1 =
+      new LoggedTunableNumber("Elevator/L1Position", Units.inchesToMeters(0.0));
+  public static final LoggedTunableNumber l2 =
+      new LoggedTunableNumber("Elevator/L2Position", Units.inchesToMeters(6.69));
+  public static final LoggedTunableNumber l3 =
+      new LoggedTunableNumber("Elevator/L3Position", Units.inchesToMeters(21.76));
+  public static final LoggedTunableNumber lowAlgae =
+      new LoggedTunableNumber("Elevator/LoAlgae", Units.inchesToMeters(0.0));
+  public static final LoggedTunableNumber highAlgae =
+      new LoggedTunableNumber("Elevator/HiAlgae", Units.inchesToMeters(17.32));
+
+  public enum ElevatorPosition {
+    STOW(stow),
+    INTAKE(intake),
+    UNJAM(unjam),
+    L1(l1),
+    L2(l2),
+    L3(l3),
+    LOW_ALGAE(lowAlgae),
+    HIGH_ALGAE(highAlgae);
 
     private final DoubleSupplier elevatorSetpointSupplier;
 
-    private Goal(DoubleSupplier elevatorSetpointSupplier) {
+    private ElevatorPosition(DoubleSupplier elevatorSetpointSupplier) {
       this.elevatorSetpointSupplier = elevatorSetpointSupplier;
     }
 
@@ -63,4 +76,9 @@ public class ElevatorConstants {
   public static final double maxPosition = Units.inchesToMeters(25.5); // m
 
   public static final double tolerance = 0.05; // m
+
+  public static final LoggedTunableNumber kS = new LoggedTunableNumber("Elevator/kS", 0.20);
+  public static final LoggedTunableNumber kV = new LoggedTunableNumber("Elevator/kV", 7.8);
+  public static final LoggedTunableNumber kG = new LoggedTunableNumber("Elevator/kG", 0.15);
+  public static final LoggedTunableNumber kA = new LoggedTunableNumber("Elevator/kA", 0.01);
 }

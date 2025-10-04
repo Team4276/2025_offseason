@@ -6,25 +6,30 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.Constants;
 import frc.team4276.frc2025.SimManager;
-import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorConstants.Goal;
-import frc.team4276.util.dashboard.LoggedTunableNumber;
+import frc.team4276.util.dashboard.LoggedTunableProfile;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends SubsystemBase {
-  private Goal goal = Goal.STOW;
+  private ElevatorPosition wantedElevatorPose = ElevatorPosition.STOW;
 
-  private final LoggedTunableNumber maxVel = new LoggedTunableNumber("Elevator/maxVel", 2.75);
-  private final LoggedTunableNumber maxAccel = new LoggedTunableNumber("Elevator/maxAccel", 3.0);
+  private enum WantedState {
+    IDLE,
+    MOVE_TO_POSITION,
+    CUSTOM
+  }
 
-  private final LoggedTunableNumber kS = new LoggedTunableNumber("Elevator/kS", 0.20);
-  private final LoggedTunableNumber kV = new LoggedTunableNumber("Elevator/kV", 9.0);
-  private final LoggedTunableNumber kG = new LoggedTunableNumber("Elevator/kG", 0.15);
-  private final LoggedTunableNumber kA = new LoggedTunableNumber("Elevator/kA", 0.01);
+  private enum SystemState {
+    IDLING,
+    MOVING_TO_POSITION,
+    CUSTOM
+  }
+
+  private WantedState wantedState = WantedState.IDLE;
+  private SystemState systemState = SystemState.IDLING;
 
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
@@ -32,9 +37,7 @@ public class Elevator extends SubsystemBase {
   private ElevatorFeedforward ff =
       new ElevatorFeedforward(
           kS.getAsDouble(), kG.getAsDouble(), kV.getAsDouble(), kA.getAsDouble());
-  private TrapezoidProfile profile =
-      new TrapezoidProfile(
-          new TrapezoidProfile.Constraints(maxVel.getAsDouble(), maxAccel.getAsDouble()));
+  private final LoggedTunableProfile profile = new LoggedTunableProfile("Elevator", 1.5, 20.0);
   private TrapezoidProfile.State setpointState = new TrapezoidProfile.State();
 
   private BooleanSupplier coastOverride = () -> false;
@@ -42,14 +45,9 @@ public class Elevator extends SubsystemBase {
   /** position that reads zero on the elevator */
   private double homedPosition = 0.0;
 
-  private Timer atGoalTimer = new Timer();
-  private final double atGoalTime = 0.2;
-
   public Elevator(ElevatorIO io) {
     this.io = io;
     io.setBrakeMode(true);
-
-    atGoalTimer.restart();
   }
 
   public void setCoastOverride(BooleanSupplier coastOverride) {
@@ -66,6 +64,9 @@ public class Elevator extends SubsystemBase {
     if (inputs.botLimit) {
       homedPosition = inputs.position;
     }
+
+    systemState = handleStateTransitions();
+    applyStates();
 
     if (DriverStation.isDisabled()) {
       wasDisabled = true;
@@ -84,9 +85,6 @@ public class Elevator extends SubsystemBase {
         ff =
             new ElevatorFeedforward(
                 kS.getAsDouble(), kG.getAsDouble(), kV.getAsDouble(), kA.getAsDouble());
-        profile =
-            new TrapezoidProfile(
-                new TrapezoidProfile.Constraints(maxVel.getAsDouble(), maxAccel.getAsDouble()));
       }
 
     } else {
@@ -96,54 +94,64 @@ public class Elevator extends SubsystemBase {
         hasFlippedCoast = false;
       }
 
-      if (!atGoal()) {
-        atGoalTimer.reset();
-      }
-
-      setpointState =
-          profile.calculate(
-              0.02, setpointState, new TrapezoidProfile.State(goal.getPositionMetres(), 0.0));
-      double setpointRotations =
-          metresToRotations(MathUtil.clamp(setpointState.position, minInput, maxInput))
-              + homedPosition;
-      io.runSetpoint(setpointRotations, ff.calculate(setpointState.velocity));
-
-      Logger.recordOutput("Elevator/SetpointRotations", setpointRotations);
       Logger.recordOutput("Elevator/SetpointState/PosMetres", setpointState.position);
       Logger.recordOutput("Elevator/SetpointState/VelMetres", setpointState.velocity);
-      Logger.recordOutput(
-          "Elevator/SetpointState/PosRotations", metresToRotations(setpointState.position));
-      Logger.recordOutput(
-          "Elevator/SetpointState/VelRotations", metresToRotations(setpointState.velocity));
     }
 
-    SimManager.addElevatorGoalObs(goal.getPositionMetres());
-    SimManager.addElevatorMeasuredObs(
-        Constants.isSim ? goal.getPositionMetres() : getPositionMetres());
-    Logger.recordOutput("Elevator/Goal", goal);
-    Logger.recordOutput("Elevator/GoalMetres", goal.getPositionMetres());
-    Logger.recordOutput("Elevator/GoalRotations", metresToRotations(goal.getPositionMetres()));
+    SimManager.addElevatorMeasuredObs(getPositionMetres());
+    Logger.recordOutput("Elevator/Goal", wantedElevatorPose);
     Logger.recordOutput("Elevator/AtGoal", atGoal());
     Logger.recordOutput("Elevator/HomedPositionRotation", homedPosition);
     Logger.recordOutput("Elevator/PositionMetres", getPositionMetres());
   }
 
-  public void setGoal(Goal goal) {
-    this.goal = goal;
+  private SystemState handleStateTransitions() {
+    return switch (wantedState) {
+      case IDLE:
+        yield SystemState.IDLING;
+      case MOVE_TO_POSITION:
+        yield SystemState.MOVING_TO_POSITION;
+      case CUSTOM:
+        yield SystemState.CUSTOM;
+    };
   }
 
-  public Goal getGoal() {
-    return goal;
+  private void applyStates() {
+    switch (systemState) {
+      case IDLING:
+        io.runVolts(0.0);
+
+        break;
+
+      case MOVING_TO_POSITION:
+        setpointState =
+            profile.calculate(
+                0.02,
+                setpointState,
+                new TrapezoidProfile.State(wantedElevatorPose.getPositionMetres(), 0.0));
+        double setpointRotations =
+            metresToRotations(MathUtil.clamp(setpointState.position, minInput, maxInput))
+                + homedPosition;
+        io.runSetpoint(setpointRotations, ff.calculate(setpointState.velocity));
+
+        break;
+
+      case CUSTOM:
+        break;
+    }
+  }
+
+  public void setWantedState(WantedState wantedState, ElevatorPosition elevatorPosition) {
+    this.wantedState = wantedState;
+    this.wantedElevatorPose = elevatorPosition;
+  }
+
+  public ElevatorPosition getWantedElevatorPose() {
+    return wantedElevatorPose;
   }
 
   public boolean atGoal() {
-    return Constants.isSim
-        ? true
-        : MathUtil.isNear(goal.getPositionMetres(), getPositionMetres(), tolerance);
-  }
-
-  public boolean atGoalDebounce() {
-    return atGoalTimer.get() > atGoalTime;
+    return MathUtil.isNear(wantedElevatorPose.getPositionMetres(), getPositionMetres(), tolerance);
   }
 
   public static double metresToRotations(double metres) {

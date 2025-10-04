@@ -19,7 +19,7 @@ public class Hopper extends SubsystemBase {
   public enum WantedState {
     IDLE(() -> 0.0),
     STOW(() -> 0.0),
-    CLIMB(new LoggedTunableNumber("Hopper/ClimbPosition", 20.0));
+    CLIMB(new LoggedTunableNumber("Hopper/ClimbPosition", 5.0));
 
     private final DoubleSupplier setpointSupplier;
 
@@ -53,7 +53,7 @@ public class Hopper extends SubsystemBase {
           HopperConstants.kS_right.getAsDouble(),
           HopperConstants.kG.getAsDouble(),
           HopperConstants.kV.getAsDouble());
-  private final LoggedTunableProfile profile = new LoggedTunableProfile("Hopper", 25.0, 25.0);
+  private final LoggedTunableProfile profile = new LoggedTunableProfile("Hopper", 10.0, 10.0);
   private TrapezoidProfile.State prevLeftState = new TrapezoidProfile.State();
   private TrapezoidProfile.State prevRightState = new TrapezoidProfile.State();
 
