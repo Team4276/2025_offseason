@@ -27,8 +27,6 @@ import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorIOSparkMa
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffector;
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffectorIO;
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffectorIOSparkMax;
-import frc.team4276.frc2025.subsystems.superstructure.endeffector.RollerSensorsIO;
-import frc.team4276.frc2025.subsystems.superstructure.endeffector.RollerSensorsIOHardware;
 import frc.team4276.frc2025.subsystems.superstructure.hopper.Hopper;
 import frc.team4276.frc2025.subsystems.superstructure.hopper.HopperIO;
 import frc.team4276.frc2025.subsystems.superstructure.hopper.HopperIOSparkMax;
@@ -49,12 +47,9 @@ import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 /**
- * This class is where the bulk of the robot should be declared. Since
- * Command-based is a
- * "declarative" paradigm, very little robot logic should actually be handled in
- * the {@link Robot}
- * periodic methods (other than the scheduler calls). Instead, the structure of
- * the robot (including
+ * This class is where the bulk of the robot should be declared. Since Command-based is a
+ * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
+ * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
@@ -81,15 +76,16 @@ public class RobotContainer {
   private final ViXController driver = new ViXController(0);
   private final CowsController demoController = new CowsController(1, 2);
 
-  private final Alert driverDisconnected = new Alert("Driver controller disconnected (port 0).", AlertType.kWarning);
+  private final Alert driverDisconnected =
+      new Alert("Driver controller disconnected (port 0).", AlertType.kWarning);
 
   // Overrides
-  private final DigitalInput elevatorCoastOverride = new DigitalInput(Ports.ELEVATOR_COAST_OVERRIDE);
+  private final DigitalInput elevatorCoastOverride =
+      new DigitalInput(Ports.ELEVATOR_COAST_OVERRIDE);
   private final DigitalInput climberCoastOverride = new DigitalInput(Ports.CLIMBER_COAST_OVERRIDE);
   private final DigitalInput hopperCoastOverride = new DigitalInput(Ports.HOPPER_COAST_OVERRIDE);
 
-  @AutoLogOutput
-  private boolean disableVisionSim = false;
+  @AutoLogOutput private boolean disableVisionSim = false;
 
   // Dashboard inputs
   private final AutoSelector autoSelector = new AutoSelector();
@@ -99,89 +95,80 @@ public class RobotContainer {
       switch (Constants.getType()) {
         case COMPBOT -> {
           // Real robot, instantiate hardware IO implementations
-          drive = new Drive(
-              new GyroIOADIS(),
-              new ModuleIOSpark(0),
-              new ModuleIOSpark(1),
-              new ModuleIOSpark(2),
-              new ModuleIOSpark(3));
-          vision = new Vision(
-              RobotState.getInstance()::addVisionMeasurement,
-              new VisionIOPhotonVision(0),
-              new VisionIOPhotonVision(1));
+          drive =
+              new Drive(
+                  new GyroIOADIS(),
+                  new ModuleIOSpark(0),
+                  new ModuleIOSpark(1),
+                  new ModuleIOSpark(2),
+                  new ModuleIOSpark(3));
+          vision =
+              new Vision(
+                  RobotState.getInstance()::addVisionMeasurement,
+                  new VisionIOPhotonVision(0),
+                  new VisionIOPhotonVision(1));
           elevator = new Elevator(new ElevatorIOSparkMax());
-          endEffector = new EndEffector(
-              new EndEffectorIOSparkMax(
-                  Ports.ENDEFFECTOR_LEFT, Ports.ENDEFFECTOR_RIGHT, 40, false, true),
-              new RollerSensorsIOHardware());
-          hopper = new Hopper(
-              new HopperIOSparkMax(Ports.HOPPER_LEFT, true),
-              new HopperIOSparkMax(Ports.HOPPER_RIGHT, false));
-          climber = new Climber(new ClimberIOSparkMax(Ports.CLIMBER_WENCH, Ports.CLIMBER_WHEEL, 40, 40));
+          endEffector =
+              new EndEffector(
+                  new EndEffectorIOSparkMax(
+                      Ports.ENDEFFECTOR_LEFT, Ports.ENDEFFECTOR_RIGHT, 40, false, true));
+          hopper =
+              new Hopper(
+                  new HopperIOSparkMax(Ports.HOPPER_LEFT, true),
+                  new HopperIOSparkMax(Ports.HOPPER_RIGHT, false));
+          climber =
+              new Climber(new ClimberIOSparkMax(Ports.CLIMBER_WENCH, Ports.CLIMBER_WHEEL, 40, 40));
         }
 
         case SIMBOT -> {
           // Sim robot, instantiate physics sim IO implementations
-          drive = new Drive(
-              new GyroIO() {
-              },
-              new ModuleIOSim(),
-              new ModuleIOSim(),
-              new ModuleIOSim(),
-              new ModuleIOSim());
+          drive =
+              new Drive(
+                  new GyroIO() {},
+                  new ModuleIOSim(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim(),
+                  new ModuleIOSim());
           if (disableVisionSim) {
             vision = new Vision(RobotState.getInstance()::addVisionMeasurement);
           } else {
-            vision = new Vision(
-                RobotState.getInstance()::addVisionMeasurement,
-                new VisionIOPhotonVisionSim(0, RobotState.getInstance()::getEstimatedPose),
-                new VisionIOPhotonVisionSim(1, RobotState.getInstance()::getEstimatedPose));
+            vision =
+                new Vision(
+                    RobotState.getInstance()::addVisionMeasurement,
+                    new VisionIOPhotonVisionSim(0, RobotState.getInstance()::getEstimatedPose),
+                    new VisionIOPhotonVisionSim(1, RobotState.getInstance()::getEstimatedPose));
           }
-          elevator = new Elevator(new ElevatorIO() {
-          });
-          endEffector = new EndEffector(new EndEffectorIO() {
-          }, new RollerSensorsIO() {
-          });
-          hopper = new Hopper(new HopperIO() {
-          }, new HopperIO() {
-          });
-          climber = new Climber(new ClimberIO() {
-          });
+          elevator = new Elevator(new ElevatorIO() {});
+          endEffector = new EndEffector(new EndEffectorIO() {});
+          hopper = new Hopper(new HopperIO() {}, new HopperIO() {});
+          climber = new Climber(new ClimberIO() {});
         }
       }
     }
 
     // No-op implmentations for replay
     if (drive == null) {
-      drive = new Drive(
-          new GyroIO() {
-          },
-          new ModuleIO() {
-          },
-          new ModuleIO() {
-          },
-          new ModuleIO() {
-          },
-          new ModuleIO() {
-          });
+      drive =
+          new Drive(
+              new GyroIO() {},
+              new ModuleIO() {},
+              new ModuleIO() {},
+              new ModuleIO() {},
+              new ModuleIO() {});
     }
 
     if (hopper == null) {
-      hopper = new Hopper(new HopperIO() {
-      }, new HopperIO() {
-      });
+      hopper = new Hopper(new HopperIO() {}, new HopperIO() {});
     }
 
     if (climber == null) {
-      climber = new Climber(new ClimberIO() {
-      });
+      climber = new Climber(new ClimberIO() {});
     }
 
     if (vision == null) {
-      vision = new Vision(
-          RobotState.getInstance()::addVisionMeasurement, new VisionIO() {
-          }, new VisionIO() {
-          });
+      vision =
+          new Vision(
+              RobotState.getInstance()::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
     }
 
     superstructure = new Superstructure(drive, vision, elevator, endEffector, hopper, climber);
@@ -210,12 +197,13 @@ public class RobotContainer {
         List.of(
             new AutoQuestion(
                 "Is Processor Side?", List.of(AutoQuestionResponse.YES, AutoQuestionResponse.NO))),
-        () -> autoBuilder.shrimpleOcrAuto(
-            List.of(
-                AutoQuestionResponse.F,
-                AutoQuestionResponse.B,
-                AutoQuestionResponse.A,
-                AutoQuestionResponse.E)));
+        () ->
+            autoBuilder.shrimpleOcrAuto(
+                List.of(
+                    AutoQuestionResponse.F,
+                    AutoQuestionResponse.B,
+                    AutoQuestionResponse.A,
+                    AutoQuestionResponse.E)));
     autoSelector.addRoutine(
         "Sandy Eggos Auto",
         List.of(
@@ -317,11 +305,9 @@ public class RobotContainer {
   }
 
   /**
-   * Use this method to define your button->command mappings. Buttons can be
-   * created by
+   * Use this method to define your button->command mappings. Buttons can be created by
    * instantiating a {@link GenericHID} or one of its subclasses ({@link
-   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing
-   * it to a {@link
+   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a {@link
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
@@ -354,11 +340,12 @@ public class RobotContainer {
         .start()
         .onTrue(
             Commands.runOnce(
-                () -> RobotState.getInstance()
-                    .resetPose(
-                        new Pose2d(
-                            RobotState.getInstance().getEstimatedPose().getTranslation(),
-                            AllianceFlipUtil.apply(Rotation2d.kZero))))
+                    () ->
+                        RobotState.getInstance()
+                            .resetPose(
+                                new Pose2d(
+                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
+                                    AllianceFlipUtil.apply(Rotation2d.kZero))))
                 .ignoringDisable(true));
 
     // Reef Scoring
@@ -434,10 +421,11 @@ public class RobotContainer {
     // Purge Gamepiece(s)
     driver
         .b()
-        .onTrue(superstructure.configureButtonBinding(
-            Superstructure.WantedSuperState.PURGE_GAMEPIECE,
-            Superstructure.WantedSuperState.PURGE_GAMEPIECE,
-            Superstructure.WantedSuperState.PURGE_GAMEPIECE))
+        .onTrue(
+            superstructure.configureButtonBinding(
+                Superstructure.WantedSuperState.PURGE_GAMEPIECE,
+                Superstructure.WantedSuperState.PURGE_GAMEPIECE,
+                Superstructure.WantedSuperState.PURGE_GAMEPIECE))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
@@ -455,15 +443,14 @@ public class RobotContainer {
                 () -> superstructure.getCurrentSuperState() == CurrentSuperState.CLIMB_PREP));
 
     // L1 Mode
-    driver
-        .povRight()
-        .onTrue(Commands.runOnce(() -> superstructure.setL1ModeEnabled(true)));
+    driver.povRight().onTrue(Commands.runOnce(() -> superstructure.setL1ModeEnabled(true)));
 
     // Exit Mode
     driver
         .povDown()
-        .onTrue(Commands.runOnce(() -> superstructure.setL1ModeEnabled(false))
-            .alongWith(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW)));
+        .onTrue(
+            Commands.runOnce(() -> superstructure.setL1ModeEnabled(false))
+                .alongWith(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW)));
   }
 
   private void configureDemoBindings() {
@@ -477,42 +464,41 @@ public class RobotContainer {
         .start()
         .onTrue(
             Commands.runOnce(
-                () -> RobotState.getInstance()
-                    .resetPose(
-                        new Pose2d(
-                            RobotState.getInstance().getEstimatedPose().getTranslation(),
-                            AllianceFlipUtil.apply(Rotation2d.kZero))))
+                    () ->
+                        RobotState.getInstance()
+                            .resetPose(
+                                new Pose2d(
+                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
+                                    AllianceFlipUtil.apply(Rotation2d.kZero))))
                 .ignoringDisable(true));
 
     driver
         .leftTrigger()
         .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.INTAKE_CORAL))
-        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.INTAKE_CORAL));
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
         .a()
-        .onTrue(
-            superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_LEFT_L1))
-        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.INTAKE_CORAL));
+        .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_LEFT_L1))
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
         .x()
         .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_LEFT_L2))
-        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.INTAKE_CORAL));
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
         .b()
         .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_LEFT_L3))
-        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.INTAKE_CORAL));
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
         .a()
         .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.INTAKE_CORAL))
-        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.INTAKE_CORAL));
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
   }
 
-  public void configureExperimentalBindings() {
-  }
+  public void configureExperimentalBindings() {}
 
   public void update() {
     updateAlerts();

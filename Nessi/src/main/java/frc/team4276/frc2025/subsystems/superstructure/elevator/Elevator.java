@@ -16,7 +16,6 @@ import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends SubsystemBase {
-
   private Goal goal = Goal.STOW;
 
   private final LoggedTunableNumber maxVel = new LoggedTunableNumber("Elevator/maxVel", 2.75);

@@ -1,11 +1,11 @@
 package frc.team4276.frc2025.subsystems.superstructure;
 
+import static frc.team4276.frc2025.subsystems.superstructure.SuperstructureConstants.*;
+
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.team4276.frc2025.subsystems.superstructure.SuperstructureConstants.AutomationLevel;
-import frc.team4276.frc2025.subsystems.superstructure.SuperstructureConstants.ReefSelectionMethod;
 import frc.team4276.frc2025.subsystems.superstructure.climber.Climber;
 import frc.team4276.frc2025.subsystems.superstructure.drive.Drive;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.Elevator;
@@ -75,7 +75,8 @@ public class Superstructure extends SubsystemBase {
   private WantedSuperState wantedSuperState = WantedSuperState.STOPPED;
   private CurrentSuperState currentSuperState = CurrentSuperState.STOPPED;
 
-  private SuperstructureConstants.ReefSelectionMethod reefSelectionMethod = ReefSelectionMethod.ROTATION;
+  private SuperstructureConstants.ReefSelectionMethod reefSelectionMethod =
+      ReefSelectionMethod.ROTATION;
   private boolean isL1Mode = false;
 
   public enum GamePieceState {
@@ -135,44 +136,50 @@ public class Superstructure extends SubsystemBase {
         break;
 
       case SCORE_LEFT_L1:
-        currentSuperState = DriverStation.isAutonomous()
-            ? CurrentSuperState.SCORE_LEFT_AUTO_L1
-            : CurrentSuperState.SCORE_LEFT_TELEOP_L1;
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_LEFT_AUTO_L1
+                : CurrentSuperState.SCORE_LEFT_TELEOP_L1;
 
         break;
 
       case SCORE_LEFT_L2:
-        currentSuperState = DriverStation.isAutonomous()
-            ? CurrentSuperState.SCORE_LEFT_AUTO_L2
-            : CurrentSuperState.SCORE_LEFT_TELEOP_L2;
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_LEFT_AUTO_L2
+                : CurrentSuperState.SCORE_LEFT_TELEOP_L2;
 
         break;
 
       case SCORE_LEFT_L3:
-        currentSuperState = DriverStation.isAutonomous()
-            ? CurrentSuperState.SCORE_LEFT_AUTO_L3
-            : CurrentSuperState.SCORE_LEFT_TELEOP_L3;
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_LEFT_AUTO_L3
+                : CurrentSuperState.SCORE_LEFT_TELEOP_L3;
 
         break;
 
       case SCORE_RIGHT_L1:
-        currentSuperState = DriverStation.isAutonomous()
-            ? CurrentSuperState.SCORE_RIGHT_AUTO_L1
-            : CurrentSuperState.SCORE_RIGHT_TELEOP_L1;
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_RIGHT_AUTO_L1
+                : CurrentSuperState.SCORE_RIGHT_TELEOP_L1;
 
         break;
 
       case SCORE_RIGHT_L2:
-        currentSuperState = DriverStation.isAutonomous()
-            ? CurrentSuperState.SCORE_RIGHT_AUTO_L2
-            : CurrentSuperState.SCORE_RIGHT_TELEOP_L2;
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_RIGHT_AUTO_L2
+                : CurrentSuperState.SCORE_RIGHT_TELEOP_L2;
 
         break;
 
       case SCORE_RIGHT_L3:
-        currentSuperState = DriverStation.isAutonomous()
-            ? CurrentSuperState.SCORE_RIGHT_AUTO_L3
-            : CurrentSuperState.SCORE_RIGHT_TELEOP_L3;
+        currentSuperState =
+            DriverStation.isAutonomous()
+                ? CurrentSuperState.SCORE_RIGHT_AUTO_L3
+                : CurrentSuperState.SCORE_RIGHT_TELEOP_L3;
 
         break;
 
@@ -232,84 +239,145 @@ public class Superstructure extends SubsystemBase {
   private void applyState() {
     switch (currentSuperState) {
       case STOW:
+        stow();
         break;
 
       case PURGE_GAMEPIECE:
+        purgeGamePiece();
         break;
 
       case INTAKE_CORAL:
+        intakeCoral();
         break;
 
       case SCORE_MANUAL_L1:
+        scoreManualL1();
         break;
 
       case SCORE_LEFT_TELEOP_L1:
+        scoreTeleopL1(ScoringSide.LEFT);
         break;
 
       case SCORE_LEFT_TELEOP_L2:
+        scoreTeleopL2(ScoringSide.LEFT);
         break;
 
       case SCORE_LEFT_TELEOP_L3:
+        scoreTeleopL3(ScoringSide.LEFT);
         break;
 
       case SCORE_RIGHT_TELEOP_L1:
+        scoreTeleopL1(ScoringSide.RIGHT);
         break;
 
       case SCORE_RIGHT_TELEOP_L2:
+        scoreTeleopL2(ScoringSide.RIGHT);
         break;
 
       case SCORE_RIGHT_TELEOP_L3:
+        scoreTeleopL3(ScoringSide.RIGHT);
         break;
 
       case SCORE_LEFT_AUTO_L1:
+        scoreAutoL1(ScoringSide.LEFT);
         break;
 
       case SCORE_RIGHT_AUTO_L1:
+        scoreAutoL1(ScoringSide.LEFT);
         break;
 
       case SCORE_LEFT_AUTO_L2:
+        scoreAutoL2();
         break;
 
       case SCORE_LEFT_AUTO_L3:
+        scoreAutoL3();
         break;
 
       case SCORE_RIGHT_AUTO_L2:
+        scoreAutoL2();
         break;
 
       case SCORE_RIGHT_AUTO_L3:
+        scoreAutoL3();
         break;
 
       case MANUAL_LEFT_L1:
+        manualL1(ScoringSide.LEFT);
         break;
 
       case MANUAL_RIGHT_L1:
+        manualL1(ScoringSide.RIGHT);
         break;
 
       case MANUAL_L2:
+        manualL2();
         break;
 
       case MANUAL_L3:
+        manualL3();
         break;
 
       case REEF_ALGAE:
+        reefAlgae();
         break;
 
       case CLIMB_PREP:
+        climbPrep();
         break;
 
       case CLIMB:
+        climb();
         break;
 
       case CUSTOM:
+        custom();
         break;
 
       case STOPPED:
+        stopped();
         break;
 
       default:
         break;
     }
   }
+
+  private void stopped() {}
+
+  private void stow() {}
+
+  private void purgeGamePiece() {}
+
+  private void intakeCoral() {}
+
+  private void scoreManualL1() {}
+
+  private void scoreTeleopL1(ScoringSide side) {}
+
+  private void scoreTeleopL2(ScoringSide side) {}
+
+  private void scoreTeleopL3(ScoringSide side) {}
+
+  private void scoreAutoL1(ScoringSide side) {}
+
+  private void scoreAutoL2() {}
+
+  private void scoreAutoL3() {}
+
+  private void manualL1(ScoringSide side) {}
+
+  private void manualL2() {}
+
+  private void manualL3() {}
+
+  private void reefAlgae() {}
+
+  private void climbPrep() {}
+
+  private void climb() {}
+
+  private void custom() {}
 
   public CurrentSuperState getCurrentSuperState() {
     return currentSuperState;
@@ -339,9 +407,11 @@ public class Superstructure extends SubsystemBase {
   public Command setStateCommand(WantedSuperState superState, boolean runDuringClimb) {
     Command command = new InstantCommand(() -> setWantedSuperState(superState));
     if (!runDuringClimb) {
-      command = command.onlyIf(
-          () -> currentSuperState != CurrentSuperState.CLIMB
-              && currentSuperState != CurrentSuperState.CLIMB_PREP);
+      command =
+          command.onlyIf(
+              () ->
+                  currentSuperState != CurrentSuperState.CLIMB
+                      && currentSuperState != CurrentSuperState.CLIMB_PREP);
     }
 
     return command;
@@ -357,18 +427,18 @@ public class Superstructure extends SubsystemBase {
       WantedSuperState l1ModeCondition) {
 
     return switch (gamePieceState) {
-      case CORAL: {
-        if (isL1Mode) {
-          yield setStateCommand(l1ModeCondition);
+      case CORAL:
+        {
+          if (isL1Mode) {
+            yield setStateCommand(l1ModeCondition);
+          }
+
+          yield setStateCommand(hasCoralCondition);
         }
-
-        yield setStateCommand(hasCoralCondition);
-
-      }
-      case NO_BANANA: {
-        yield setStateCommand(noPieceCondition);
-
-      }
+      case NO_BANANA:
+        {
+          yield setStateCommand(noPieceCondition);
+        }
     };
   }
 

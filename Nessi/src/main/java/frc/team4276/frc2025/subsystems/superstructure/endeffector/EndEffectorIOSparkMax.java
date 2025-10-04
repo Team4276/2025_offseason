@@ -9,12 +9,17 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.filter.Debouncer;
+import frc.team4276.frc2025.Ports;
+import frc.team4276.util.drivers.BeamBreak;
 import java.util.function.DoubleSupplier;
 
 public class EndEffectorIOSparkMax implements EndEffectorIO {
   private final SparkMax leftMotor;
   private final SparkMax rightMotor;
   private final Debouncer motorConnectedDebounce = new Debouncer(0.5);
+
+  private final BeamBreak frontBeamBreak;
+  private final BeamBreak backBeamBreak;
 
   public EndEffectorIOSparkMax(
       int left_id, int right_id, int currentLimit, boolean invert, boolean brake) {
@@ -42,6 +47,9 @@ public class EndEffectorIOSparkMax implements EndEffectorIO {
         () ->
             rightMotor.configure(
                 config, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+
+    frontBeamBreak = new BeamBreak(Ports.CORAL_BREAK_FRONT);
+    backBeamBreak = new BeamBreak(Ports.CORAL_BREAK_BACK);
   }
 
   @Override
@@ -63,6 +71,17 @@ public class EndEffectorIOSparkMax implements EndEffectorIO {
         rightMotor, rightMotor::getOutputCurrent, (value) -> inputs.rightSupplyCurrentAmps = value);
     ifOk(rightMotor, rightMotor::getMotorTemperature, (value) -> inputs.rightTempCelsius = value);
     inputs.rightConnected = motorConnectedDebounce.calculate(!sparkStickyFault);
+
+    frontBeamBreak.update();
+    backBeamBreak.update();
+
+    inputs.frontRead = frontBeamBreak.get();
+    inputs.frontTripped = frontBeamBreak.wasTripped();
+    inputs.frontCleared = frontBeamBreak.wasCleared();
+
+    inputs.backRead = backBeamBreak.get();
+    inputs.backTripped = backBeamBreak.wasTripped();
+    inputs.backCleared = backBeamBreak.wasCleared();
   }
 
   @Override

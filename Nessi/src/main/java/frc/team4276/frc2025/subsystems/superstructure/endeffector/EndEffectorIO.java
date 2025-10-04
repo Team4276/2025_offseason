@@ -16,6 +16,14 @@ public interface EndEffectorIO {
     public double rightTempCelsius = 0.0;
 
     public double torqueCurrentAmps = 0.0;
+
+    public boolean frontRead = false;
+    public boolean frontTripped = false;
+    public boolean frontCleared = false;
+
+    public boolean backRead = false;
+    public boolean backTripped = false;
+    public boolean backCleared = false;
   }
 
   default void updateInputs(EndEffectorIOInputs inputs) {}

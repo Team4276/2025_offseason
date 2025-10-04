@@ -12,10 +12,6 @@ public class EndEffector extends SubsystemBase {
   private final EndEffectorIO io;
   private final EndEffectorIOInputsAutoLogged inputs = new EndEffectorIOInputsAutoLogged();
 
-  private final RollerSensorsIO sensorsIO;
-  private final RollerSensorsIOInputsAutoLogged sensorsInputs =
-      new RollerSensorsIOInputsAutoLogged();
-
   public enum WantedState {
     IDLE,
     INTAKE,
@@ -58,17 +54,13 @@ public class EndEffector extends SubsystemBase {
   private WantedState wantedState = WantedState.IDLE;
   private SystemState systemState = SystemState.IDLE;
 
-  public EndEffector(EndEffectorIO io, RollerSensorsIO sensorsIO) {
+  public EndEffector(EndEffectorIO io) {
     this.io = io;
-    this.sensorsIO = sensorsIO;
   }
 
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("EndEffector", inputs);
-
-    sensorsIO.updateInputs(sensorsInputs);
-    Logger.processInputs("EndEffector/BeamBreak", sensorsInputs);
 
     systemState = handleStateTransition();
     io.runVolts(systemState.getLeftVolts(), systemState.getRightVolts());
@@ -80,13 +72,13 @@ public class EndEffector extends SubsystemBase {
     return switch (wantedState) {
       case INTAKE:
         {
-          if (sensorsInputs.backTripped && sensorsInputs.frontRead) {
+          if (inputs.backTripped && inputs.frontRead) {
             yield SystemState.IDLE;
 
-          } else if (sensorsInputs.backCleared) {
+          } else if (inputs.backCleared) {
             yield SystemState.REVERSING;
 
-          } else if (sensorsInputs.backTripped && !sensorsInputs.frontRead) {
+          } else if (inputs.backTripped && !inputs.frontRead) {
             yield SystemState.INTAKING_SLOW;
 
           } else {
@@ -116,6 +108,6 @@ public class EndEffector extends SubsystemBase {
   }
 
   public boolean hasCoral() {
-    return Constants.isSim ? SimManager.hasCoral() : sensorsInputs.frontRead;
+    return Constants.isSim ? SimManager.hasCoral() : inputs.frontRead;
   }
 }
