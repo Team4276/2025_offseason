@@ -10,8 +10,9 @@ import frc.team4276.frc2025.subsystems.clopper.Clopper;
 import frc.team4276.frc2025.subsystems.drive.Drive;
 import frc.team4276.frc2025.subsystems.elevator.Elevator;
 import frc.team4276.frc2025.subsystems.endeffector.EndEffector;
+import frc.team4276.frc2025.subsystems.toggles.TogglesIO;
+import frc.team4276.frc2025.subsystems.toggles.TogglesIOInputsAutoLogged;
 import frc.team4276.frc2025.subsystems.vision.Vision;
-import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Superstructure extends SubsystemBase {
@@ -20,6 +21,9 @@ public class Superstructure extends SubsystemBase {
   private final Elevator elevator;
   private final EndEffector endeffector;
   private final Clopper clopper;
+
+  private final TogglesIO togglesIO;
+  private final TogglesIOInputsAutoLogged togglesInputs = new TogglesIOInputsAutoLogged();
 
   private SuperstructureConstants.AutomationLevel automationLevel = AutomationLevel.AUTO_RELEASE;
 
@@ -85,16 +89,29 @@ public class Superstructure extends SubsystemBase {
   private GamePieceState gamePieceState = GamePieceState.NO_BANANA;
 
   public Superstructure(
-      Drive drive, Vision vision, Elevator elevator, EndEffector endeffector, Clopper clopper) {
+      Drive drive,
+      Vision vision,
+      Elevator elevator,
+      EndEffector endeffector,
+      Clopper clopper,
+      TogglesIO togglesIO) {
     this.drive = drive;
     this.vision = vision;
     this.elevator = elevator;
     this.endeffector = endeffector;
     this.clopper = clopper;
+    this.togglesIO = togglesIO;
+
+    elevator.setCoastOverride(() -> togglesInputs.elevatorCoastOverride);
+    clopper.setCoastOverride(
+        () -> togglesInputs.hopperCoastOverride, () -> togglesInputs.climberCoastOverride);
   }
 
   @Override
   public void periodic() {
+    togglesIO.updateInputs(togglesInputs);
+    Logger.processInputs("Toggles", togglesInputs);
+
     gamePieceState = endeffector.hasCoral() ? GamePieceState.CORAL : GamePieceState.NO_BANANA;
 
     currentSuperState = handleStateTransition();
@@ -341,11 +358,16 @@ public class Superstructure extends SubsystemBase {
 
   private void stow() {
     clopper.setWantedState(Clopper.WantedState.STOW);
+    endeffector.setWantedState(EndEffector.WantedState.IDLE);
   }
 
-  private void purgeGamePiece() {}
+  private void purgeGamePiece() {
+    endeffector.setWantedState(EndEffector.WantedState.PURGE);
+  }
 
-  private void intakeCoral() {}
+  private void intakeCoral() {
+    endeffector.setWantedState(EndEffector.WantedState.INTAKE);
+  }
 
   private void scoreManualL1() {}
 
@@ -361,11 +383,20 @@ public class Superstructure extends SubsystemBase {
 
   private void scoreAutoL3() {}
 
-  private void manualL1(ScoringSide side) {}
+  private void manualL1(ScoringSide side) {
+    endeffector.setWantedState(
+        side == ScoringSide.LEFT
+            ? EndEffector.WantedState.SCORE_LEFT_L1
+            : EndEffector.WantedState.SCORE_RIGHT_L1);
+  }
 
-  private void manualL2() {}
+  private void manualL2() {
+    endeffector.setWantedState(EndEffector.WantedState.SCORE);
+  }
 
-  private void manualL3() {}
+  private void manualL3() {
+    endeffector.setWantedState(EndEffector.WantedState.SCORE);
+  }
 
   private void reefAlgae() {}
 
@@ -389,14 +420,6 @@ public class Superstructure extends SubsystemBase {
 
   public boolean isL1Mode() {
     return isL1Mode;
-  }
-
-  public void setCoastOverride(
-      BooleanSupplier elevatorOverride,
-      BooleanSupplier climberOverride,
-      BooleanSupplier hopperOverride) {
-    elevator.setCoastOverride(elevatorOverride);
-    clopper.setCoastOverride(hopperOverride, climberOverride);
   }
 
   public void setWantedSuperState(WantedSuperState superState) {

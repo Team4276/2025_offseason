@@ -15,4 +15,6 @@ public class EndEffectorConstants {
       new LoggedTunableNumber("EndEffector/ScoreVolts", 4.0);
   public static final LoggedTunableNumber reverseVolts =
       new LoggedTunableNumber("EndEffector/ReverseVolts", -1.0);
+  public static final LoggedTunableNumber purgeVolts =
+      new LoggedTunableNumber("EndEffector/ReverseVolts", 7.0);
 }

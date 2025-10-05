@@ -4,7 +4,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
@@ -29,6 +28,8 @@ import frc.team4276.frc2025.subsystems.elevator.ElevatorIOSparkMax;
 import frc.team4276.frc2025.subsystems.endeffector.EndEffector;
 import frc.team4276.frc2025.subsystems.endeffector.EndEffectorIO;
 import frc.team4276.frc2025.subsystems.endeffector.EndEffectorIOSparkMax;
+import frc.team4276.frc2025.subsystems.toggles.TogglesIO;
+import frc.team4276.frc2025.subsystems.toggles.TogglesIOHardware;
 import frc.team4276.frc2025.subsystems.vision.Vision;
 import frc.team4276.frc2025.subsystems.vision.VisionIO;
 import frc.team4276.frc2025.subsystems.vision.VisionIOPhotonVision;
@@ -58,6 +59,7 @@ public class RobotContainer {
   private Elevator elevator;
   private EndEffector endEffector;
   private Clopper clopper;
+  private TogglesIO toggles;
 
   private final Superstructure superstructure;
   private final AutoBuilder autoBuilder;
@@ -76,12 +78,6 @@ public class RobotContainer {
 
   private final Alert driverDisconnected =
       new Alert("Driver controller disconnected (port 0).", AlertType.kWarning);
-
-  // Overrides
-  private final DigitalInput elevatorCoastOverride =
-      new DigitalInput(Ports.ELEVATOR_COAST_OVERRIDE);
-  private final DigitalInput climberCoastOverride = new DigitalInput(Ports.CLIMBER_COAST_OVERRIDE);
-  private final DigitalInput hopperCoastOverride = new DigitalInput(Ports.HOPPER_COAST_OVERRIDE);
 
   @AutoLogOutput private boolean disableVisionSim = false;
 
@@ -115,6 +111,7 @@ public class RobotContainer {
                   new ClimberIOSparkMax(Ports.CLIMBER_WENCH, Ports.CLIMBER_WHEEL, 40, 40),
                   new HopperIOSparkMax(Ports.HOPPER_LEFT, true),
                   new HopperIOSparkMax(Ports.HOPPER_RIGHT, false));
+          toggles = new TogglesIOHardware();
         }
 
         case SIMBOT -> {
@@ -138,6 +135,7 @@ public class RobotContainer {
           elevator = new Elevator(new ElevatorIO() {});
           endEffector = new EndEffector(new EndEffectorIO() {});
           clopper = new Clopper(new ClimberIO() {}, new HopperIO() {}, new HopperIO() {});
+          toggles = new TogglesIO() {};
         }
       }
     }
@@ -163,10 +161,11 @@ public class RobotContainer {
               RobotState.getInstance()::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
     }
 
-    superstructure = new Superstructure(drive, vision, elevator, endEffector, clopper);
+    if (toggles == null) {
+      toggles = new TogglesIO() {};
+    }
 
-    superstructure.setCoastOverride(
-        elevatorCoastOverride::get, climberCoastOverride::get, hopperCoastOverride::get);
+    superstructure = new Superstructure(drive, vision, elevator, endEffector, clopper, toggles);
 
     autoBuilder = new AutoBuilder(superstructure, autoSelector);
     configureAutos();

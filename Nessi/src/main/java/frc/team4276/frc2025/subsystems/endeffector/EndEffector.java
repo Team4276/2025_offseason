@@ -17,7 +17,8 @@ public class EndEffector extends SubsystemBase {
     INTAKE,
     SCORE,
     SCORE_RIGHT_L1,
-    SCORE_LEFT_L1
+    SCORE_LEFT_L1,
+    PURGE
   }
 
   private enum SystemState {
@@ -27,7 +28,8 @@ public class EndEffector extends SubsystemBase {
     SCORING(scoreVolts),
     REVERSING(reverseVolts),
     SCORING_RIGHT_L1(favorVolts, lagVolts),
-    SCORING_LEFT_L1(lagVolts, favorVolts);
+    SCORING_LEFT_L1(lagVolts, favorVolts),
+    PURGE(purgeVolts);
 
     private final DoubleSupplier rightVoltageGoal;
     private final DoubleSupplier leftVoltageGoal;
@@ -97,7 +99,10 @@ public class EndEffector extends SubsystemBase {
         {
           yield SystemState.SCORING_LEFT_L1;
         }
-
+      case PURGE:
+        {
+          yield SystemState.PURGE;
+        }
       default:
         yield SystemState.IDLE;
     };
