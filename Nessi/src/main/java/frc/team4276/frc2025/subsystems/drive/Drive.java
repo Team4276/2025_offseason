@@ -1,6 +1,5 @@
 package frc.team4276.frc2025.subsystems.drive;
 
-import static edu.wpi.first.units.Units.Volts;
 import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
 
 import com.pathplanner.lib.util.DriveFeedforwards;
@@ -13,10 +12,7 @@ import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.team4276.frc2025.Constants;
 import frc.team4276.frc2025.RobotState;
 import frc.team4276.util.dashboard.ElasticUI;
@@ -31,6 +27,27 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Drive extends SubsystemBase {
+  public enum WantedState {
+    TELEOP,
+    TRAJECTORY,
+    HEADING_ALIGN,
+    AUTO_ALIGN,
+    IDLE,
+    CHARACTERIZATION
+  }
+
+  public enum SystemState {
+    TELEOP,
+    TRAJECTORY,
+    HEADING_ALIGN,
+    AUTO_ALIGN,
+    IDLE,
+    CHARACTERIZATION
+  }
+
+  private WantedState wantedState = WantedState.TELEOP;
+  private SystemState systemState = SystemState.TELEOP;
+
   public enum DriveMode {
     /** Driving with input from driver joysticks. (Default) */
     TELEOP,
@@ -51,13 +68,10 @@ public class Drive extends SubsystemBase {
     WHEEL_RADIUS_CHARACTERIZATION
   }
 
-  private boolean velocityMode = false;
-
   static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
-  private final SysIdRoutine sysId;
   private final Alert gyroDisconnectedAlert =
       new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
 
@@ -88,17 +102,6 @@ public class Drive extends SubsystemBase {
 
     prevSetpoint =
         new SwerveSetpoint(getChassisSpeeds(), getModuleStates(), DriveFeedforwards.zeros(4));
-
-    // Configure SysId
-    sysId =
-        new SysIdRoutine(
-            new SysIdRoutine.Config(
-                null,
-                null,
-                null,
-                (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
-            new SysIdRoutine.Mechanism(
-                (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
 
     ElasticUI.putSwerveDrive(
         () -> getModuleStates(), () -> RobotState.getInstance().getEstimatedPose().getRotation());
@@ -133,7 +136,18 @@ public class Drive extends SubsystemBase {
       }
     }
 
-    // Update odometry
+    updateOdom();
+
+    systemState = handleStateTransition();
+    Logger.recordOutput("Drive/SystemState", systemState);
+    Logger.recordOutput("Drive/DesiredState", wantedState);
+    applyState();
+
+    // Update gyro alert
+    gyroDisconnectedAlert.set(!gyroInputs.connected && !Constants.isSim);
+  }
+
+  private void updateOdom() {
     double[] sampleTimestamps =
         modules[0].getOdometryTimestamps(); // All signals are sampled together
     int sampleCount = sampleTimestamps.length;
@@ -174,23 +188,42 @@ public class Drive extends SubsystemBase {
         RobotState.getInstance().addDriveSpeeds(getChassisSpeeds());
       }
     }
+  }
 
-    // Update current setpoint if not in velocity mode
-    if (!velocityMode) {
-      prevSetpoint =
-          new SwerveSetpoint(
-              getChassisSpeeds(),
-              getModuleStates(),
-              new DriveFeedforwards(
-                  dummyForces, dummyForces, dummyForces, dummyForces, dummyForces));
+  private SystemState handleStateTransition() {
+    return switch (wantedState) {
+      case TELEOP -> SystemState.TELEOP;
+      case TRAJECTORY -> SystemState.TRAJECTORY;
+      case HEADING_ALIGN -> SystemState.HEADING_ALIGN;
+      case AUTO_ALIGN -> SystemState.AUTO_ALIGN;
+      case CHARACTERIZATION -> SystemState.CHARACTERIZATION;
+      default -> SystemState.IDLE;
+    };
+  }
+
+  private void applyState() {
+    switch (systemState) {
+      case TELEOP:
+        break;
+
+      case TRAJECTORY:
+        break;
+
+      case HEADING_ALIGN:
+        break;
+
+      case AUTO_ALIGN:
+        break;
+
+      case IDLE:
+        break;
+
+      case CHARACTERIZATION:
+        break;
     }
-
-    // Update gyro alert
-    gyroDisconnectedAlert.set(!gyroInputs.connected && !Constants.isSim);
   }
 
   public void runVelocity(ChassisSpeeds speeds, DriveMode mode) {
-    velocityMode = true;
 
     // Calculate setpoints
     ChassisSpeeds setpointSpeeds;
@@ -232,7 +265,6 @@ public class Drive extends SubsystemBase {
   }
 
   public void runVelocity(ChassisSpeeds speeds, List<Vector<N2>> forces, DriveMode mode) {
-    velocityMode = true;
 
     // Calculate setpoints
     ChassisSpeeds setpointSpeeds;
@@ -277,59 +309,9 @@ public class Drive extends SubsystemBase {
     Logger.recordOutput("Drive/DesiredSpeeds", speeds);
   }
 
-  public void calibrate() {
-    gyroIO.calibrate();
-  }
-
-  public Command calibrateCommand() {
-    return Commands.runOnce(() -> gyroIO.calibrate()).andThen(Commands.waitSeconds(0.04));
-  }
-
   /** Stops the drive. */
   public void stop() {
     runVelocity(new ChassisSpeeds(), DriveMode.TELEOP);
-  }
-
-  /** Runs the drive in a straight line with the specified drive output. */
-  public void runCharacterization(double output) {
-    velocityMode = false;
-    for (int i = 0; i < 4; i++) {
-      modules[i].runCharacterization(output);
-    }
-  }
-
-  /** Returns the average velocity of the modules in rad/sec. */
-  public double getFFCharacterizationVelocity() {
-    double output = 0.0;
-    for (int i = 0; i < 4; i++) {
-      output += modules[i].getFFCharacterizationVelocity() / 4.0;
-    }
-    return output;
-  }
-
-  public void runWheelRadiusCharacterization(double omegaSpeed) {
-    runVelocity(new ChassisSpeeds(0.0, 0.0, omegaSpeed), DriveMode.WHEEL_RADIUS_CHARACTERIZATION);
-  }
-
-  /** Returns the position of each module in radians. */
-  public double[] getWheelRadiusCharacterizationPositions() {
-    double[] values = new double[4];
-    for (int i = 0; i < 4; i++) {
-      values[i] = modules[i].getWheelRadiusCharacterizationPosition();
-    }
-    return values;
-  }
-
-  /** Returns a command to run a quasistatic test in the specified direction. */
-  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-    return run(() -> runCharacterization(0.0))
-        .withTimeout(1.0)
-        .andThen(sysId.quasistatic(direction));
-  }
-
-  /** Returns a command to run a dynamic test in the specified direction. */
-  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-    return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(sysId.dynamic(direction));
   }
 
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */

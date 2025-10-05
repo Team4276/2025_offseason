@@ -8,8 +8,7 @@ import java.util.Queue;
 
 public class GyroIOADIS implements GyroIO {
   private final ADIS16470_IMU gyro = new ADIS16470_IMU();
-  // private double timeSinceLastReset = 0;
-  // private int iter = 0;
+
   private final Queue<Double> yawPositionQueue;
   private final Queue<Double> yawTimestampQueue;
 
@@ -25,17 +24,6 @@ public class GyroIOADIS implements GyroIO {
     inputs.yawPosition = Rotation2d.fromDegrees(gyro.getAngle());
     inputs.yawVelocityRadPerSec = Units.degreesToRadians(gyro.getRate());
 
-    /*
-     * if (timeSinceLastReset > 60 && Math.hypot(inputs.pitchPosition,
-     * inputs.rollPosition) < 2) {
-     * gyro.setGyroAngle(gyro.getPitchAxis(), 0);
-     * gyro.setGyroAngle(gyro.getRollAxis(), 0);
-     * timeSinceLastReset = 0;
-     * iter++;
-     * } else {
-     * timeSinceLastReset = (Timer.getFPGATimestamp() - (60 * iter));
-     * }
-     */
     // inputs.pitchPosition = gyro.getAngle(gyro.getPitchAxis());
     // inputs.rollPosition = gyro.getAngle(gyro.getRollAxis());
 
@@ -47,19 +35,5 @@ public class GyroIOADIS implements GyroIO {
             .toArray(Rotation2d[]::new);
     yawTimestampQueue.clear();
     yawPositionQueue.clear();
-  }
-
-  @Override
-  public void calibrate() {
-    // gyro.configCalTime(CalibrationTime._1s);
-    // gyro.calibrate();
-
-    // try {
-    // Thread.sleep(260);
-
-    // } catch (Exception e) {
-    // System.err.println(e.toString());
-    // System.exit(1);
-    // }
   }
 }
