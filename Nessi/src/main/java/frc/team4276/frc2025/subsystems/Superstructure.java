@@ -1,15 +1,15 @@
-package frc.team4276.frc2025.subsystems.superstructure;
+package frc.team4276.frc2025.subsystems;
 
-import static frc.team4276.frc2025.subsystems.superstructure.SuperstructureConstants.*;
+import static frc.team4276.frc2025.subsystems.SuperstructureConstants.*;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.team4276.frc2025.subsystems.superstructure.clopper.Clopper;
-import frc.team4276.frc2025.subsystems.superstructure.drive.Drive;
-import frc.team4276.frc2025.subsystems.superstructure.elevator.Elevator;
-import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffector;
+import frc.team4276.frc2025.subsystems.clopper.Clopper;
+import frc.team4276.frc2025.subsystems.drive.Drive;
+import frc.team4276.frc2025.subsystems.elevator.Elevator;
+import frc.team4276.frc2025.subsystems.endeffector.EndEffector;
 import frc.team4276.frc2025.subsystems.vision.Vision;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;

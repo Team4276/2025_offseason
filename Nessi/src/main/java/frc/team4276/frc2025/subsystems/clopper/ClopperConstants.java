@@ -1,4 +1,4 @@
-package frc.team4276.frc2025.subsystems.superstructure.clopper;
+package frc.team4276.frc2025.subsystems.clopper;
 
 public class ClopperConstants {
   public static final double climberMaxVel = 50;

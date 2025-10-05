@@ -1,6 +1,6 @@
-package frc.team4276.frc2025.subsystems.superstructure.elevator;
+package frc.team4276.frc2025.subsystems.elevator;
 
-import static frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorConstants.*;
+import static frc.team4276.frc2025.subsystems.elevator.ElevatorConstants.*;
 import static frc.team4276.util.SparkUtil.*;
 
 import com.revrobotics.RelativeEncoder;

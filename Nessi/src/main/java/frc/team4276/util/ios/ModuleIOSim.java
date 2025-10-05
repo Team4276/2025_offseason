@@ -1,6 +1,6 @@
 package frc.team4276.util.ios;
 
-import static frc.team4276.frc2025.subsystems.superstructure.drive.DriveConstants.*;
+import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;

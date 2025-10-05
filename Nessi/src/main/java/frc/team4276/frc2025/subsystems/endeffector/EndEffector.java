@@ -1,6 +1,6 @@
-package frc.team4276.frc2025.subsystems.superstructure.endeffector;
+package frc.team4276.frc2025.subsystems.endeffector;
 
-import static frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffectorConstants.*;
+import static frc.team4276.frc2025.subsystems.endeffector.EndEffectorConstants.*;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.Constants;

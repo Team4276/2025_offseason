@@ -1,13 +1,13 @@
-package frc.team4276.frc2025.subsystems.superstructure.clopper;
+package frc.team4276.frc2025.subsystems.clopper;
 
-import static frc.team4276.frc2025.subsystems.superstructure.clopper.ClopperConstants.*;
+import static frc.team4276.frc2025.subsystems.clopper.ClopperConstants.*;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.SimManager;
-import frc.team4276.frc2025.subsystems.superstructure.clopper.climber.ClimberIO;
-import frc.team4276.frc2025.subsystems.superstructure.clopper.climber.ClimberIOInputsAutoLogged;
-import frc.team4276.frc2025.subsystems.superstructure.clopper.hopper.HopperIO;
-import frc.team4276.frc2025.subsystems.superstructure.clopper.hopper.HopperIOInputsAutoLogged;
+import frc.team4276.frc2025.subsystems.clopper.climber.ClimberIO;
+import frc.team4276.frc2025.subsystems.clopper.climber.ClimberIOInputsAutoLogged;
+import frc.team4276.frc2025.subsystems.clopper.hopper.HopperIO;
+import frc.team4276.frc2025.subsystems.clopper.hopper.HopperIOInputsAutoLogged;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
 

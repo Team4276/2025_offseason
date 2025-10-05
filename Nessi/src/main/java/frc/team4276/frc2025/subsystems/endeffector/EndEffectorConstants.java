@@ -1,4 +1,4 @@
-package frc.team4276.frc2025.subsystems.superstructure.endeffector;
+package frc.team4276.frc2025.subsystems.endeffector;
 
 import frc.team4276.util.dashboard.LoggedTunableNumber;
 

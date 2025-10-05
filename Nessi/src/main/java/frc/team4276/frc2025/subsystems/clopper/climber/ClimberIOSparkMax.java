@@ -1,6 +1,6 @@
-package frc.team4276.frc2025.subsystems.superstructure.clopper.climber;
+package frc.team4276.frc2025.subsystems.clopper.climber;
 
-import static frc.team4276.frc2025.subsystems.superstructure.clopper.ClopperConstants.*;
+import static frc.team4276.frc2025.subsystems.clopper.ClopperConstants.*;
 import static frc.team4276.util.SparkUtil.ifOk;
 import static frc.team4276.util.SparkUtil.tryUntilOk;
 

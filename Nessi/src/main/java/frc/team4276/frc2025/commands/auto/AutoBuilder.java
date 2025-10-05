@@ -10,9 +10,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.team4276.frc2025.AutoSelector;
 import frc.team4276.frc2025.AutoSelector.AutoQuestionResponse;
-import frc.team4276.frc2025.subsystems.superstructure.Superstructure;
-import frc.team4276.frc2025.subsystems.superstructure.Superstructure.CurrentSuperState;
-import frc.team4276.frc2025.subsystems.superstructure.Superstructure.WantedSuperState;
+import frc.team4276.frc2025.subsystems.Superstructure;
+import frc.team4276.frc2025.subsystems.Superstructure.CurrentSuperState;
+import frc.team4276.frc2025.subsystems.Superstructure.WantedSuperState;
 import java.util.ArrayList;
 import java.util.List;
 

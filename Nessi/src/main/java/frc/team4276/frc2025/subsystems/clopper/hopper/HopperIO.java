@@ -1,32 +1,33 @@
-package frc.team4276.frc2025.subsystems.superstructure.elevator;
+package frc.team4276.frc2025.subsystems.clopper.hopper;
 
 import org.littletonrobotics.junction.AutoLog;
 
-public interface ElevatorIO {
+public interface HopperIO {
   @AutoLog
-  public static class ElevatorIOInputs {
+  public static class HopperIOInputs {
     public boolean leaderMotorConnected = true;
     public boolean followerMotorConnected = true;
 
     public double position = 0.0;
     public double velocity = 0.0;
 
-    public boolean topLimit = false;
-    public boolean botLimit = false;
+    public boolean isCoast = false;
 
-    public double[] appliedVolts = new double[] {0.0, 0.0};
-    public double[] currentAmps = new double[] {0.0, 0.0};
-    public double[] tempCelcius = new double[] {0.0, 0.0};
+    public double[] appliedVolts = new double[] {0.0};
+    public double[] currentAmps = new double[] {0.0};
+    public double[] tempCelcius = new double[] {0.0};
     public boolean absoluteEncoderConnected = true;
   }
 
-  public default void updateInputs(ElevatorIOInputs inputs) {}
+  public default void updateInputs(HopperIOInputs inputs) {}
 
-  /** Run to setpoint */
-  public default void runSetpoint(double setpoint, double ff) {}
+  /** Run to setpoint angle in radians */
+  public default void runSetpoint(double setpointRads, double ff) {}
 
-  /** Run to setpoint */
-  public default void runSetpoint(double setpoint) {}
+  /** Run to setpoint angle in radians */
+  public default void runSetpoint(double setpointRads) {}
+
+  public default void runMotionMagikSetpoint(double setpointRads, double ff) {}
 
   /** Run motors at volts */
   public default void runVolts(double volts) {}
@@ -39,8 +40,6 @@ public interface ElevatorIO {
 
   /** Set PID values */
   public default void setPID(double p, double i, double d) {}
-
-  public default void setPosition(double position) {}
 
   /** Stops motors */
   public default void stop() {}

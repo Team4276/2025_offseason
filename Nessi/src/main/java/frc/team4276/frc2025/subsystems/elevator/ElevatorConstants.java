@@ -1,4 +1,4 @@
-package frc.team4276.frc2025.subsystems.superstructure.elevator;
+package frc.team4276.frc2025.subsystems.elevator;
 
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;

@@ -1,4 +1,4 @@
-package frc.team4276.frc2025.subsystems.superstructure.clopper.climber;
+package frc.team4276.frc2025.subsystems.clopper.climber;
 
 import org.littletonrobotics.junction.AutoLog;
 
