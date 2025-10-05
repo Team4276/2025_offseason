@@ -16,7 +16,7 @@ import org.littletonrobotics.junction.Logger;
 public class Elevator extends SubsystemBase {
   private ElevatorPosition wantedElevatorPose = ElevatorPosition.STOW;
 
-  private enum WantedState {
+  public enum WantedState {
     IDLE,
     MOVE_TO_POSITION,
     CUSTOM
@@ -99,7 +99,7 @@ public class Elevator extends SubsystemBase {
     }
 
     SimManager.addElevatorMeasuredObs(getPositionMetres());
-    Logger.recordOutput("Elevator/Goal", wantedElevatorPose);
+    Logger.recordOutput("Elevator/WantedElevatorPose", wantedElevatorPose);
     Logger.recordOutput("Elevator/AtGoal", atGoal());
     Logger.recordOutput("Elevator/HomedPositionRotation", homedPosition);
     Logger.recordOutput("Elevator/PositionMetres", getPositionMetres());

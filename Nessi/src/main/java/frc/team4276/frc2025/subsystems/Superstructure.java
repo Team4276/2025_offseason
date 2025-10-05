@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.subsystems.clopper.Clopper;
 import frc.team4276.frc2025.subsystems.drive.Drive;
 import frc.team4276.frc2025.subsystems.elevator.Elevator;
+import frc.team4276.frc2025.subsystems.elevator.ElevatorConstants.ElevatorPosition;
 import frc.team4276.frc2025.subsystems.endeffector.EndEffector;
 import frc.team4276.frc2025.subsystems.toggles.TogglesIO;
 import frc.team4276.frc2025.subsystems.toggles.TogglesIOInputsAutoLogged;
@@ -353,19 +354,24 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void stopped() {
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.STOW);
+    endeffector.setWantedState(EndEffector.WantedState.IDLE);
     clopper.setWantedState(Clopper.WantedState.IDLE);
   }
 
   private void stow() {
-    clopper.setWantedState(Clopper.WantedState.STOW);
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.STOW);
     endeffector.setWantedState(EndEffector.WantedState.IDLE);
+    clopper.setWantedState(Clopper.WantedState.STOW);
   }
 
   private void purgeGamePiece() {
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.INTAKE);
     endeffector.setWantedState(EndEffector.WantedState.PURGE);
   }
 
   private void intakeCoral() {
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.INTAKE);
     endeffector.setWantedState(EndEffector.WantedState.INTAKE);
   }
 
@@ -401,10 +407,12 @@ public class Superstructure extends SubsystemBase {
   private void reefAlgae() {}
 
   private void climbPrep() {
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.CLIMB);
     clopper.setWantedState(Clopper.WantedState.CLIMB_PREP);
   }
 
   private void climb() {
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.CLIMB);
     clopper.setWantedState(Clopper.WantedState.CLIMB);
   }
 

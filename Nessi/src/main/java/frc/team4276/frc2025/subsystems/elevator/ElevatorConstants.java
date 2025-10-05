@@ -23,6 +23,8 @@ public class ElevatorConstants {
       new LoggedTunableNumber("Elevator/LoAlgae", Units.inchesToMeters(0.0));
   public static final LoggedTunableNumber highAlgae =
       new LoggedTunableNumber("Elevator/HiAlgae", Units.inchesToMeters(17.32));
+  public static final LoggedTunableNumber climb =
+      new LoggedTunableNumber("Elevator/Climb", Units.inchesToMeters(0.0));
 
   public enum ElevatorPosition {
     STOW(stow),
@@ -32,7 +34,8 @@ public class ElevatorConstants {
     L2(l2),
     L3(l3),
     LOW_ALGAE(lowAlgae),
-    HIGH_ALGAE(highAlgae);
+    HIGH_ALGAE(highAlgae),
+    CLIMB(climb);
 
     private final DoubleSupplier elevatorSetpointSupplier;
 
@@ -53,8 +56,8 @@ public class ElevatorConstants {
 
   public static final int currentLimit = 50;
 
-  public static final double drumDiameter = 0.04375; // m
-  public static final double drumCircumference = drumDiameter * Math.PI; // m
+  public static final double drumCircumference = Units.inchesToMeters(0.25 * 22); // m
+  public static final double drumDiameter = drumCircumference / Math.PI; // m
   public static final double encoderPositionFactor = 1.0;
   public static final double encoderVelocityFactor = 1.0 / 60.0;
   public static final boolean invertEncoder = true;
