@@ -5,8 +5,8 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.team4276.frc2025.subsystems.superstructure.clopper.ClopperConstants;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorConstants;
-import frc.team4276.frc2025.subsystems.superstructure.hopper.HopperConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class SimManager {
@@ -77,12 +77,12 @@ public class SimManager {
         new Pose3d(
             Translation3d.kZero,
             new Rotation3d(
-                0.0, 0.0, hopperLeftMeasured * HopperConstants.radsPerMotorRotation * -1.0)));
+                0.0, 0.0, hopperLeftMeasured * ClopperConstants.radsPerMotorRotation * -1.0)));
     Logger.recordOutput(
         "Hopper/Mechanism3d/Measured/Right",
         new Pose3d(
             Translation3d.kZero,
-            new Rotation3d(0.0, 0.0, hopperRightMeasured * HopperConstants.radsPerMotorRotation)));
+            new Rotation3d(0.0, 0.0, hopperRightMeasured * ClopperConstants.radsPerMotorRotation)));
 
     Logger.recordOutput(
         "Climber/Mechanism3d/Measured",
@@ -101,12 +101,12 @@ public class SimManager {
         "Hopper/Mechanism3d/Goal/Left",
         new Pose3d(
             Translation3d.kZero,
-            new Rotation3d(0.0, 0.0, hopperGoal * HopperConstants.radsPerMotorRotation * -1.0)));
+            new Rotation3d(0.0, 0.0, hopperGoal * ClopperConstants.radsPerMotorRotation * -1.0)));
     Logger.recordOutput(
         "Hopper/Mechanism3d/Goal/Right",
         new Pose3d(
             Translation3d.kZero,
-            new Rotation3d(0.0, 0.0, hopperGoal * HopperConstants.radsPerMotorRotation)));
+            new Rotation3d(0.0, 0.0, hopperGoal * ClopperConstants.radsPerMotorRotation)));
 
     Logger.recordOutput(
         "Climber/Mechanism3d/Goal",

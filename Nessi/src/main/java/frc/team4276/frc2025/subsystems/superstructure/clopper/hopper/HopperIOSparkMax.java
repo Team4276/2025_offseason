@@ -1,6 +1,6 @@
-package frc.team4276.frc2025.subsystems.superstructure.hopper;
+package frc.team4276.frc2025.subsystems.superstructure.clopper.hopper;
 
-import static frc.team4276.frc2025.subsystems.superstructure.hopper.HopperConstants.*;
+import static frc.team4276.frc2025.subsystems.superstructure.clopper.ClopperConstants.*;
 import static frc.team4276.util.SparkUtil.ifOk;
 import static frc.team4276.util.SparkUtil.sparkStickyFault;
 import static frc.team4276.util.SparkUtil.tryUntilOk;
@@ -20,6 +20,9 @@ import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.DriverStation;
+import frc.team4276.util.dashboard.LoggedTunableProfile;
 import java.util.function.DoubleSupplier;
 
 public class HopperIOSparkMax implements HopperIO {
@@ -32,6 +35,9 @@ public class HopperIOSparkMax implements HopperIO {
   private final Debouncer connectedDebounce = new Debouncer(0.5);
 
   private boolean brakeModeEnabled = true;
+
+  private final LoggedTunableProfile profile = new LoggedTunableProfile("Hopper", 25.0, 25.0);
+  private TrapezoidProfile.State prevState = new TrapezoidProfile.State();
 
   public HopperIOSparkMax(int id, boolean inverted) {
     spark = new SparkMax(id, MotorType.kBrushless);
@@ -88,6 +94,10 @@ public class HopperIOSparkMax implements HopperIO {
 
     inputs.isCoast = !brakeModeEnabled;
     inputs.leaderMotorConnected = connectedDebounce.calculate(!sparkStickyFault);
+
+    if (DriverStation.isDisabled()) {
+      prevState = new TrapezoidProfile.State(inputs.position, 0.0);
+    }
   }
 
   @Override
@@ -97,8 +107,15 @@ public class HopperIOSparkMax implements HopperIO {
   }
 
   @Override
-  public void runSetpoint(double setpointRads) {
-    runSetpoint(setpointRads, 0.0);
+  public void runSetpoint(double setpoint) {
+    runSetpoint(setpoint, 0.0);
+  }
+
+  @Override
+  public void runMotionMagikSetpoint(double setpoint, double ff) {
+    prevState = profile.calculate(0.02, prevState, new TrapezoidProfile.State(setpoint, 0.0));
+    closedLoopController.setReference(
+        prevState.position, ControlType.kPosition, ClosedLoopSlot.kSlot0, ff, ArbFFUnits.kVoltage);
   }
 
   @Override

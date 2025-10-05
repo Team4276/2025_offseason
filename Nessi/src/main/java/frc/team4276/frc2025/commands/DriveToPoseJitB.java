@@ -57,7 +57,7 @@ public class DriveToPoseJitB extends Command {
     Translation2d trans = currentPose.getTranslation().minus(target.get().getTranslation());
     Translation2d linearOutput =
         new Translation2d(driveController.calculate(trans.getNorm(), 0.0), trans.getAngle());
-    if (trans.getNorm() < driveController.getPositionTolerance()) {
+    if (trans.getNorm() < driveController.getErrorTolerance()) {
       linearOutput = Translation2d.kZero;
     }
 
@@ -65,7 +65,7 @@ public class DriveToPoseJitB extends Command {
         MathUtil.angleModulus(
             currentPose.getRotation().minus(target.get().getRotation()).getRadians());
     double omega = thetaController.calculate(thetaError, 0.0);
-    if (Math.abs(thetaError) < thetaController.getPositionTolerance()) {
+    if (Math.abs(thetaError) < thetaController.getErrorTolerance()) {
       omega = 0.0;
     }
 

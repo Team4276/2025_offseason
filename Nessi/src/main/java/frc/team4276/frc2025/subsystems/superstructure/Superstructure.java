@@ -6,11 +6,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.team4276.frc2025.subsystems.superstructure.climber.Climber;
+import frc.team4276.frc2025.subsystems.superstructure.clopper.Clopper;
 import frc.team4276.frc2025.subsystems.superstructure.drive.Drive;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.Elevator;
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffector;
-import frc.team4276.frc2025.subsystems.superstructure.hopper.Hopper;
 import frc.team4276.frc2025.subsystems.vision.Vision;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
@@ -20,8 +19,7 @@ public class Superstructure extends SubsystemBase {
   private final Vision vision;
   private final Elevator elevator;
   private final EndEffector endeffector;
-  private final Hopper hopper;
-  private final Climber climber;
+  private final Clopper clopper;
 
   private SuperstructureConstants.AutomationLevel automationLevel = AutomationLevel.AUTO_RELEASE;
 
@@ -87,18 +85,12 @@ public class Superstructure extends SubsystemBase {
   private GamePieceState gamePieceState = GamePieceState.NO_BANANA;
 
   public Superstructure(
-      Drive drive,
-      Vision vision,
-      Elevator elevator,
-      EndEffector endeffector,
-      Hopper hopper,
-      Climber climber) {
+      Drive drive, Vision vision, Elevator elevator, EndEffector endeffector, Clopper clopper) {
     this.drive = drive;
     this.vision = vision;
     this.elevator = elevator;
     this.endeffector = endeffector;
-    this.hopper = hopper;
-    this.climber = climber;
+    this.clopper = clopper;
   }
 
   @Override
@@ -343,9 +335,13 @@ public class Superstructure extends SubsystemBase {
     }
   }
 
-  private void stopped() {}
+  private void stopped() {
+    clopper.setWantedState(Clopper.WantedState.IDLE);
+  }
 
-  private void stow() {}
+  private void stow() {
+    clopper.setWantedState(Clopper.WantedState.STOW);
+  }
 
   private void purgeGamePiece() {}
 
@@ -373,9 +369,13 @@ public class Superstructure extends SubsystemBase {
 
   private void reefAlgae() {}
 
-  private void climbPrep() {}
+  private void climbPrep() {
+    clopper.setWantedState(Clopper.WantedState.CLIMB_PREP);
+  }
 
-  private void climb() {}
+  private void climb() {
+    clopper.setWantedState(Clopper.WantedState.CLIMB);
+  }
 
   private void custom() {}
 
@@ -396,8 +396,7 @@ public class Superstructure extends SubsystemBase {
       BooleanSupplier climberOverride,
       BooleanSupplier hopperOverride) {
     elevator.setCoastOverride(elevatorOverride);
-    climber.setCoastOverride(climberOverride);
-    hopper.setCoastOverride(hopperOverride);
+    clopper.setCoastOverride(hopperOverride, climberOverride);
   }
 
   public void setWantedSuperState(WantedSuperState superState) {

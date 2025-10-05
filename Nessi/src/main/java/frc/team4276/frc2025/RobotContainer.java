@@ -17,9 +17,11 @@ import frc.team4276.frc2025.commands.auto.AutoBuilder;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure.CurrentSuperState;
 import frc.team4276.frc2025.subsystems.superstructure.Superstructure.WantedSuperState;
-import frc.team4276.frc2025.subsystems.superstructure.climber.Climber;
-import frc.team4276.frc2025.subsystems.superstructure.climber.ClimberIO;
-import frc.team4276.frc2025.subsystems.superstructure.climber.ClimberIOSparkMax;
+import frc.team4276.frc2025.subsystems.superstructure.clopper.Clopper;
+import frc.team4276.frc2025.subsystems.superstructure.clopper.climber.ClimberIO;
+import frc.team4276.frc2025.subsystems.superstructure.clopper.climber.ClimberIOSparkMax;
+import frc.team4276.frc2025.subsystems.superstructure.clopper.hopper.HopperIO;
+import frc.team4276.frc2025.subsystems.superstructure.clopper.hopper.HopperIOSparkMax;
 import frc.team4276.frc2025.subsystems.superstructure.drive.Drive;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.Elevator;
 import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorIO;
@@ -27,9 +29,6 @@ import frc.team4276.frc2025.subsystems.superstructure.elevator.ElevatorIOSparkMa
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffector;
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffectorIO;
 import frc.team4276.frc2025.subsystems.superstructure.endeffector.EndEffectorIOSparkMax;
-import frc.team4276.frc2025.subsystems.superstructure.hopper.Hopper;
-import frc.team4276.frc2025.subsystems.superstructure.hopper.HopperIO;
-import frc.team4276.frc2025.subsystems.superstructure.hopper.HopperIOSparkMax;
 import frc.team4276.frc2025.subsystems.vision.Vision;
 import frc.team4276.frc2025.subsystems.vision.VisionIO;
 import frc.team4276.frc2025.subsystems.vision.VisionIOPhotonVision;
@@ -58,8 +57,7 @@ public class RobotContainer {
   private Vision vision;
   private Elevator elevator;
   private EndEffector endEffector;
-  private Hopper hopper;
-  private Climber climber;
+  private Clopper clopper;
 
   private final Superstructure superstructure;
   private final AutoBuilder autoBuilder;
@@ -112,12 +110,11 @@ public class RobotContainer {
               new EndEffector(
                   new EndEffectorIOSparkMax(
                       Ports.ENDEFFECTOR_LEFT, Ports.ENDEFFECTOR_RIGHT, 40, false, true));
-          hopper =
-              new Hopper(
+          clopper =
+              new Clopper(
+                  new ClimberIOSparkMax(Ports.CLIMBER_WENCH, Ports.CLIMBER_WHEEL, 40, 40),
                   new HopperIOSparkMax(Ports.HOPPER_LEFT, true),
                   new HopperIOSparkMax(Ports.HOPPER_RIGHT, false));
-          climber =
-              new Climber(new ClimberIOSparkMax(Ports.CLIMBER_WENCH, Ports.CLIMBER_WHEEL, 40, 40));
         }
 
         case SIMBOT -> {
@@ -140,8 +137,7 @@ public class RobotContainer {
           }
           elevator = new Elevator(new ElevatorIO() {});
           endEffector = new EndEffector(new EndEffectorIO() {});
-          hopper = new Hopper(new HopperIO() {}, new HopperIO() {});
-          climber = new Climber(new ClimberIO() {});
+          clopper = new Clopper(new ClimberIO() {}, new HopperIO() {}, new HopperIO() {});
         }
       }
     }
@@ -157,12 +153,8 @@ public class RobotContainer {
               new ModuleIO() {});
     }
 
-    if (hopper == null) {
-      hopper = new Hopper(new HopperIO() {}, new HopperIO() {});
-    }
-
-    if (climber == null) {
-      climber = new Climber(new ClimberIO() {});
+    if (clopper == null) {
+      clopper = new Clopper(new ClimberIO() {}, new HopperIO() {}, new HopperIO() {});
     }
 
     if (vision == null) {
@@ -171,7 +163,7 @@ public class RobotContainer {
               RobotState.getInstance()::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
     }
 
-    superstructure = new Superstructure(drive, vision, elevator, endEffector, hopper, climber);
+    superstructure = new Superstructure(drive, vision, elevator, endEffector, clopper);
 
     superstructure.setCoastOverride(
         elevatorCoastOverride::get, climberCoastOverride::get, hopperCoastOverride::get);

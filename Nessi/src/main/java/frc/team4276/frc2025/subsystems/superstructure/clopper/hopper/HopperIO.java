@@ -1,4 +1,4 @@
-package frc.team4276.frc2025.subsystems.superstructure.hopper;
+package frc.team4276.frc2025.subsystems.superstructure.clopper.hopper;
 
 import org.littletonrobotics.junction.AutoLog;
 
@@ -26,6 +26,8 @@ public interface HopperIO {
 
   /** Run to setpoint angle in radians */
   public default void runSetpoint(double setpointRads) {}
+
+  public default void runMotionMagikSetpoint(double setpointRads, double ff) {}
 
   /** Run motors at volts */
   public default void runVolts(double volts) {}
