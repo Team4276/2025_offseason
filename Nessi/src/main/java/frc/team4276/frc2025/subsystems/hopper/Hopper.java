@@ -16,7 +16,7 @@ import org.littletonrobotics.junction.Logger;
 public class Hopper extends SubsystemBase {
   public enum Goal {
     IDLE(() -> 0.0),
-    CLIMB(new LoggedTunableNumber("Hopper/ClimbPosition", 20.0));
+    CLIMB(new LoggedTunableNumber("Hopper/ClimbPosition", 5.0));
 
     private final DoubleSupplier setpointSupplier;
 

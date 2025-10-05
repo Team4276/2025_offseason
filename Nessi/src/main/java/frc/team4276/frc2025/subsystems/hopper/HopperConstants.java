@@ -13,16 +13,16 @@ public class HopperConstants {
   public static final double encoderVelocityFactor = 1.0 / 60.0;
   public static final boolean invertEncoder = false;
 
-  public static final double kp = 0.01;
+  public static final double kp = 0.5;
   public static final double ki = 0.0;
   public static final double kd = 0.0;
 
   public static final DoubleSupplier kS_left = new LoggedTunableNumber("Hopper/kS_left", 0.5);
   public static final DoubleSupplier kS_right = new LoggedTunableNumber("Hopper/kS_right", 0.5);
 
-  public static final DoubleSupplier kV = new LoggedTunableNumber("Hopper/kV", 0.0020808);
-  public static final DoubleSupplier kG = new LoggedTunableNumber("Hopper/kG", 0);
-  public static final DoubleSupplier kA = new LoggedTunableNumber("Hopper/kA", 0);
+  public static final DoubleSupplier kV = new LoggedTunableNumber("Hopper/kV", 0.0);
+  public static final DoubleSupplier kG = new LoggedTunableNumber("Hopper/kG", 0.0);
+  public static final DoubleSupplier kA = new LoggedTunableNumber("Hopper/kA", 0.0);
 
   public static final int readFreq = 50;
 

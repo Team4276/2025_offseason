@@ -37,16 +37,18 @@ public class DriveCommands {
           Translation2d linearVelocity = Translation2d.kZero;
 
           if (linearMagnitude > 1e-6) {
-            linearVelocity = new Translation2d(
-                linearMagnitude,
-                new Rotation2d(xSupplier.getAsDouble(), ySupplier.getAsDouble()))
-                .times(LINEAR_VELOCITY_SCALAR);
+            linearVelocity =
+                new Translation2d(
+                        linearMagnitude,
+                        new Rotation2d(xSupplier.getAsDouble(), ySupplier.getAsDouble()))
+                    .times(LINEAR_VELOCITY_SCALAR);
           }
 
           // Square rotation value for more precise control
-          double omega = Math.copySign(
-              omegaSupplier.getAsDouble() * omegaSupplier.getAsDouble(),
-              omegaSupplier.getAsDouble());
+          double omega =
+              Math.copySign(
+                  omegaSupplier.getAsDouble() * omegaSupplier.getAsDouble(),
+                  omegaSupplier.getAsDouble());
 
           drive.runVelocity(
               ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -61,8 +63,8 @@ public class DriveCommands {
         drive);
   }
 
-  private static final LoggedTunablePID controller = new LoggedTunablePID(3.0, 0.0, 0.1, Units.degreesToRadians(1.0),
-      "DriveAtAngle");
+  private static final LoggedTunablePID controller =
+      new LoggedTunablePID(3.0, 0.0, 0.1, Units.degreesToRadians(1.0), "DriveAtAngle");
 
   public static Command joystickDriveAtHeading(
       Drive drive,
@@ -70,48 +72,50 @@ public class DriveCommands {
       DoubleSupplier ySupplier,
       Supplier<Rotation2d> headingSupplier) {
     return Commands.run(
-        () -> {
-          double linearMagnitude = Math.hypot(xSupplier.getAsDouble(), ySupplier.getAsDouble());
+            () -> {
+              double linearMagnitude = Math.hypot(xSupplier.getAsDouble(), ySupplier.getAsDouble());
 
-          // Square magnitude for more precise control
-          linearMagnitude = linearMagnitude * linearMagnitude;
+              // Square magnitude for more precise control
+              linearMagnitude = linearMagnitude * linearMagnitude;
 
-          Translation2d linearVelocity = Translation2d.kZero;
+              Translation2d linearVelocity = Translation2d.kZero;
 
-          if (linearMagnitude > 1e-6) {
-            linearVelocity = new Translation2d(
-                linearMagnitude,
-                new Rotation2d(xSupplier.getAsDouble(), ySupplier.getAsDouble()))
-                .times(LINEAR_VELOCITY_SCALAR);
-          }
+              if (linearMagnitude > 1e-6) {
+                linearVelocity =
+                    new Translation2d(
+                            linearMagnitude,
+                            new Rotation2d(xSupplier.getAsDouble(), ySupplier.getAsDouble()))
+                        .times(LINEAR_VELOCITY_SCALAR);
+              }
 
-          controller.enableContinuousInput(-Math.PI, Math.PI);
+              controller.enableContinuousInput(-Math.PI, Math.PI);
 
-          double target = headingSupplier.get().getRadians();
-          double error = MathUtil.angleModulus(
-              RobotState.getInstance()
-                  .getEstimatedPose()
-                  .getRotation()
-                  .minus(Rotation2d.fromRadians(headingSupplier.get().getRadians()))
-                  .getRadians());
+              double target = headingSupplier.get().getRadians();
+              double error =
+                  MathUtil.angleModulus(
+                      RobotState.getInstance()
+                          .getEstimatedPose()
+                          .getRotation()
+                          .minus(Rotation2d.fromRadians(headingSupplier.get().getRadians()))
+                          .getRadians());
 
-          double output = controller.calculate(error, 0.0);
+              double output = controller.calculate(error, 0.0);
 
-          Logger.recordOutput("DriveAtAngle/TargetHeading", target);
-          Logger.recordOutput("DriveAtAngle/Error", error);
-          Logger.recordOutput("DriveAtAngle/Output", output);
+              Logger.recordOutput("DriveAtAngle/TargetHeading", target);
+              Logger.recordOutput("DriveAtAngle/Error", error);
+              Logger.recordOutput("DriveAtAngle/Output", output);
 
-          drive.runVelocity(
-              ChassisSpeeds.fromFieldRelativeSpeeds(
-                  new ChassisSpeeds(
-                      linearVelocity.getX() * DriveConstants.maxSpeed,
-                      linearVelocity.getY() * DriveConstants.maxSpeed,
-                      output),
-                  AllianceFlipUtil.apply(
-                      RobotState.getInstance().getEstimatedPose().getRotation())),
-              DriveMode.TELEOP);
-        },
-        drive)
+              drive.runVelocity(
+                  ChassisSpeeds.fromFieldRelativeSpeeds(
+                      new ChassisSpeeds(
+                          linearVelocity.getX() * DriveConstants.maxSpeed,
+                          linearVelocity.getY() * DriveConstants.maxSpeed,
+                          output),
+                      AllianceFlipUtil.apply(
+                          RobotState.getInstance().getEstimatedPose().getRotation())),
+                  DriveMode.TELEOP);
+            },
+            drive)
         // Reset PID controller when command starts
         .beforeStarting(() -> controller.reset());
   }
