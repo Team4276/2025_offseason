@@ -2,7 +2,6 @@ package frc.team4276.frc2025.commands;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.frc2025.RobotState;
 import frc.team4276.frc2025.field.FieldConstants.Reef;
@@ -57,30 +56,31 @@ public class AutoScore {
                                 getSideFromTagId(RobotState.getInstance().getLastPriorityTag()),
                                 isLeft)));
 
-    return Commands.runOnce(() -> proceedScoring = false)
-        .andThen(
-            DriveCommands.joystickDrive(drive, xSupplier, ySupplier, headingSupplier)
-                .until(
-                    () ->
-                        RobotState.getInstance()
-                            .getPriorityReefTag()
-                            .map(tag -> getReefFromSide(getSideFromTagId(tag), isLeft))
-                            .isPresent()))
-        .andThen(
-            new DriveToPose(drive, () -> goal.get().get().getAlign(), robotPose)
-                .until(() -> proceedScoring()))
-        .andThen(
-            new DriveToPose(drive, () -> goal.get().get().getScore(), robotPose)
-                .alongWith(
-                    Commands.waitUntil(
-                            () ->
-                                // superstructure.atGoal()
-                                //     &&
-                                superstructure.getCurrentSuperState()
-                                        != Superstructure.CurrentSuperState.STOW
-                                    && DriveToPose.atGoal())
-                        .andThen(Commands.waitSeconds(0.5))))
-        .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
+    return Commands.none();
+    // return Commands.runOnce(() -> proceedScoring = false)
+    //     .andThen(
+    //         DriveCommands.joystickDrive(drive, xSupplier, ySupplier, headingSupplier)
+    //             .until(
+    //                 () ->
+    //                     RobotState.getInstance()
+    //                         .getPriorityReefTag()
+    //                         .map(tag -> getReefFromSide(getSideFromTagId(tag), isLeft))
+    //                         .isPresent()))
+    //     .andThen(
+    //         new DriveToPose(drive, () -> goal.get().get().getAlign(), robotPose)
+    //             .until(() -> proceedScoring()))
+    //     .andThen(
+    //         new DriveToPose(drive, () -> goal.get().get().getScore(), robotPose)
+    //             .alongWith(
+    //                 Commands.waitUntil(
+    //                         () ->
+    //                             // superstructure.atGoal()
+    //                             //     &&
+    //                             superstructure.getCurrentSuperState()
+    //                                     != Superstructure.CurrentSuperState.STOW
+    //                                 && DriveToPose.atGoal())
+    //                     .andThen(Commands.waitSeconds(0.5))))
+    //     .withInterruptBehavior(InterruptionBehavior.kCancelIncoming);
   }
 
   public static Command bargeScoreCommand() {

@@ -204,11 +204,6 @@ public class RobotState {
     return poseEstimatorOdom.getEstimatedPosition();
   }
 
-  @AutoLogOutput(key = "RobotState/EstimatedVisionPose")
-  public Pose2d getEstimatedVisionPose() {
-    return poseEstimator.getEstimatedPosition();
-  }
-
   public Optional<Integer> getPriorityReefTag() {
     boolean isRed = AllianceFlipUtil.shouldFlip();
 

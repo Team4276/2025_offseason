@@ -2,7 +2,7 @@ package frc.team4276.util.hid;
 
 import edu.wpi.first.wpilibj.Joystick;
 
-public class CowsController {
+public class CowsController implements JoystickOutputController {
   private double JOYSTICK_DEADBAND = 0.1;
 
   private final Joystick leftStick;
@@ -27,21 +27,7 @@ public class CowsController {
     return leftStick;
   }
 
-  public class JoystickOutput {
-    public final double x;
-    public final double y;
-
-    public JoystickOutput(double x, double y) {
-      this.x = x;
-      this.y = y;
-    }
-
-    public JoystickOutput() {
-      this.x = 0.0;
-      this.y = 0.0;
-    }
-  }
-
+  @Override
   public JoystickOutput getRightWithDeadband() {
     return Math.hypot(rightStick.getX(), rightStick.getY()) < JOYSTICK_DEADBAND
         ? new JoystickOutput()
@@ -49,16 +35,19 @@ public class CowsController {
   }
 
   /** No Deadband */
+  @Override
   public JoystickOutput getRight() {
     return new JoystickOutput(rightStick.getX(), rightStick.getY());
   }
 
+  @Override
   public JoystickOutput getLeftWithDeadband() {
     return Math.hypot(leftStick.getX(), leftStick.getY()) < JOYSTICK_DEADBAND
         ? new JoystickOutput()
         : getLeft();
   }
 
+  @Override
   public JoystickOutput getLeft() {
     return new JoystickOutput(leftStick.getX(), leftStick.getY());
   }

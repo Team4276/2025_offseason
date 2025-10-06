@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.frc2025.AutoSelector.AutoQuestion;
 import frc.team4276.frc2025.AutoSelector.AutoQuestionResponse;
-import frc.team4276.frc2025.commands.DriveCommands;
 import frc.team4276.frc2025.commands.auto.AutoBuilder;
 import frc.team4276.frc2025.subsystems.Superstructure;
 import frc.team4276.frc2025.subsystems.Superstructure.CurrentSuperState;
@@ -43,7 +42,6 @@ import frc.team4276.util.ios.ModuleIOSim;
 import frc.team4276.util.ios.ModuleIOSpark;
 import frc.team4276.util.ios.VisionIOPhotonVisionSim;
 import java.util.List;
-import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 /**
@@ -91,6 +89,7 @@ public class RobotContainer {
           // Real robot, instantiate hardware IO implementations
           drive =
               new Drive(
+                  Constants.isDemo ? demoController : driver,
                   new GyroIOADIS(),
                   new ModuleIOSpark(0),
                   new ModuleIOSpark(1),
@@ -118,6 +117,7 @@ public class RobotContainer {
           // Sim robot, instantiate physics sim IO implementations
           drive =
               new Drive(
+                  Constants.isDemo ? demoController : driver,
                   new GyroIO() {},
                   new ModuleIOSim(),
                   new ModuleIOSim(),
@@ -144,6 +144,7 @@ public class RobotContainer {
     if (drive == null) {
       drive =
           new Drive(
+              Constants.isDemo ? demoController : driver,
               new GyroIO() {},
               new ModuleIO() {},
               new ModuleIO() {},
@@ -321,12 +322,6 @@ public class RobotContainer {
   }
 
   private void configureControllerBindings() {
-    DoubleSupplier driverX = () -> -driver.getLeftWithDeadband().y;
-    DoubleSupplier driverY = () -> -driver.getLeftWithDeadband().x;
-    DoubleSupplier driverOmega = () -> -driver.getRightWithDeadband().x;
-
-    drive.setDefaultCommand(DriveCommands.joystickDrive(drive, driverX, driverY, driverOmega));
-
     driver
         .start()
         .onTrue(
@@ -445,12 +440,6 @@ public class RobotContainer {
   }
 
   private void configureDemoBindings() {
-    DoubleSupplier driverX = () -> -demoController.getLeftWithDeadband().y;
-    DoubleSupplier driverY = () -> -demoController.getLeftWithDeadband().x;
-    DoubleSupplier driverOmega = () -> -demoController.getRightWithDeadband().x;
-
-    drive.setDefaultCommand(DriveCommands.joystickDrive(drive, driverX, driverY, driverOmega));
-
     driver
         .start()
         .onTrue(

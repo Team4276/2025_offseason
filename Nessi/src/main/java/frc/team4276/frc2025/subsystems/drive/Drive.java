@@ -2,24 +2,38 @@ package frc.team4276.frc2025.subsystems.drive;
 
 import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
 
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.Constants;
 import frc.team4276.frc2025.RobotState;
+import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.ElasticUI;
+import frc.team4276.util.dashboard.LoggedTunableNumber;
+import frc.team4276.util.dashboard.LoggedTunablePID;
+import frc.team4276.util.hid.JoystickOutputController;
 import frc.team4276.util.ios.GyroIO;
 import frc.team4276.util.ios.GyroIOInputsAutoLogged;
 import frc.team4276.util.ios.ModuleIO;
 import frc.team4276.util.swerve.SwerveSetpointGenerator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -48,26 +62,6 @@ public class Drive extends SubsystemBase {
   private WantedState wantedState = WantedState.TELEOP;
   private SystemState systemState = SystemState.TELEOP;
 
-  public enum DriveMode {
-    /** Driving with input from driver joysticks. (Default) */
-    TELEOP,
-
-    /** Driving based on a trajectory. */
-    TRAJECTORY,
-
-    /** Driving with a heading on the field automatically. */
-    HEADING_ALIGN,
-
-    /** Driving to a location on the field automatically. */
-    AUTO_ALIGN,
-
-    /** Characterizing (modules oriented forwards, motor outputs supplied externally). */
-    CHARACTERIZATION,
-
-    /** Running wheel radius characterization routine (spinning in circle) */
-    WHEEL_RADIUS_CHARACTERIZATION
-  }
-
   static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
@@ -78,19 +72,85 @@ public class Drive extends SubsystemBase {
   private SwerveModulePosition[] lastModulePositions = null;
   private double lastTime = 0.0;
 
-  private boolean useSetpointGenerator = true;
+  public enum DriveSpeedScalar {
+    NORMAL(1.0, 0.65),
+    CLIMB(0.5, 0.65),
+    DEMO(0.1, 0.1);
+
+    private final double linearVelocityScalar;
+    private final double angularVelocityScalar;
+
+    private DriveSpeedScalar(double linearVelocityScalar, double angularVelocityScalar) {
+      this.linearVelocityScalar = linearVelocityScalar;
+      this.angularVelocityScalar = angularVelocityScalar;
+    }
+
+    public double linearVelocityScalar() {
+      return linearVelocityScalar;
+    }
+
+    public double angularVelocityScalar() {
+      return angularVelocityScalar;
+    }
+  }
+
+  private final JoystickOutputController controller;
+  private DriveSpeedScalar driveSpeedScalar =
+      Constants.isDemo ? DriveSpeedScalar.DEMO : DriveSpeedScalar.NORMAL;
+
   private final SwerveSetpointGenerator swerveSetpointGenerator =
       new SwerveSetpointGenerator(driveConfig, maxSteerVelocity);
   private SwerveSetpoint prevSetpoint;
-  private boolean disableTrajFF = true;
-  private final double[] dummyForces = {0.0, 0.0, 0.0, 0.0};
+
+  private final LoggedTunablePID teleopAutoAlignController =
+      new LoggedTunablePID(3.0, 0, 0, 0.01, "Drive/AutoAlign/TeleopTranslation");
+  private final LoggedTunablePID autoAutoAlignController =
+      new LoggedTunablePID(3.0, 0, 0, 0.01, "Drive/AutoAlign/AutoTranslation");
+  private final LoggedTunablePID headingAlignController =
+      new LoggedTunablePID(4.0, 0, 0, Units.degreesToRadians(1.0), "Drive/HeadingAlign");
+  private final LoggedTunableNumber autoAlignTranslationTolerance =
+      new LoggedTunableNumber("Drive/AutoAlign/TranslationTolerance", 0.1);
+
+  private Pose2d desiredAutoAlignPose = Pose2d.kZero;
+  private final double autoAlignStaticFrictionConstant = maxVelocityMPS * 0.04;
+
+  private Rotation2d desiredHeadingAlignRotation = Rotation2d.kZero;
+
+  private double maxAutoAlignDriveOutput = maxVelocityMPS * 0.67;
+
+  private final LoggedTunablePID trajectoryXController =
+      new LoggedTunablePID(4.0, 0, 0, 0.1, "Drive/Trajectory/TranslationX");
+  private final LoggedTunablePID trajectoryYController =
+      new LoggedTunablePID(4.0, 0, 0, 0.1, "Drive/Trajectory/TranslationY");
+  private final LoggedTunablePID trajectoryThetaController =
+      new LoggedTunablePID(3.0, 0, 0, Math.toRadians(1.0), "Drive/Trajectory/Rotation");
+
+  private final LoggedTunableNumber maxError =
+      new LoggedTunableNumber("Drive/Trajectory/maxError", 0.75);
+
+  private Trajectory<SwerveSample> choreoTrajectory;
+  private SwerveSample sampledTrajectoryState;
+
+  private double startTime = 0.0;
+  private double timeOffset = 0.0;
+
+  private boolean enableTrajectoryFeedforward = false;
+  private List<Vector<N2>> moduleForces =
+      List.of(
+          VecBuilder.fill(0.0, 0.0),
+          VecBuilder.fill(0.0, 0.0),
+          VecBuilder.fill(0.0, 0.0),
+          VecBuilder.fill(0.0, 0.0));
+  // private final double[] dummyForces = { 0.0, 0.0, 0.0, 0.0 };
 
   public Drive(
+      JoystickOutputController controller,
       GyroIO gyroIO,
       ModuleIO flModuleIO,
       ModuleIO frModuleIO,
       ModuleIO blModuleIO,
       ModuleIO brModuleIO) {
+    this.controller = controller;
     this.gyroIO = gyroIO;
     modules[0] = new Module(flModuleIO, 0);
     modules[1] = new Module(frModuleIO, 1);
@@ -101,10 +161,13 @@ public class Drive extends SubsystemBase {
     SparkOdometryThread.getInstance().start();
 
     prevSetpoint =
-        new SwerveSetpoint(getChassisSpeeds(), getModuleStates(), DriveFeedforwards.zeros(4));
+        new SwerveSetpoint(new ChassisSpeeds(), getModuleStates(), DriveFeedforwards.zeros(4));
 
     ElasticUI.putSwerveDrive(
         () -> getModuleStates(), () -> RobotState.getInstance().getEstimatedPose().getRotation());
+
+    trajectoryThetaController.enableContinuousInput(-Math.PI, Math.PI);
+    headingAlignController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
   @Override
@@ -124,7 +187,6 @@ public class Drive extends SubsystemBase {
       }
 
       // Log empty setpoint states when disabled
-      Logger.recordOutput("Drive/SwerveStates/Setpoints", new SwerveModuleState[] {});
       Logger.recordOutput("Drive/SwerveStates/OptimizedSetpoints", new SwerveModuleState[] {});
       Logger.recordOutput("Drive/SwerveStates/Torques", new SwerveModuleState[] {});
       if (Constants.isTuning) {
@@ -168,8 +230,8 @@ public class Drive extends SubsystemBase {
           double omega =
               modulePositions[j].angle.minus(lastModulePositions[j].angle).getRadians() / dt;
           // Check if delta is too large
-          if (Math.abs(omega) > DriveConstants.maxSpeed * 1.5
-              || Math.abs(velocity) > DriveConstants.maxAngularSpeed * 1.5) {
+          if (Math.abs(omega) > DriveConstants.maxVelocityMPS * 1.5
+              || Math.abs(velocity) > DriveConstants.maxAngularVelocity * 1.5) {
             includeMeasurement = false;
             break;
           }
@@ -185,7 +247,7 @@ public class Drive extends SubsystemBase {
                 gyroInputs.connected ? gyroInputs.yawPosition : null,
                 modulePositions);
         lastTime = sampleTimestamps[i];
-        RobotState.getInstance().addDriveSpeeds(getChassisSpeeds());
+        RobotState.getInstance().addDriveSpeeds(kinematics.toChassisSpeeds(getModuleStates()));
       }
     }
   }
@@ -193,7 +255,15 @@ public class Drive extends SubsystemBase {
   private SystemState handleStateTransition() {
     return switch (wantedState) {
       case TELEOP -> SystemState.TELEOP;
-      case TRAJECTORY -> SystemState.TRAJECTORY;
+      case TRAJECTORY -> {
+        if (systemState != SystemState.TRAJECTORY) {
+          resetTrajectoryTimer();
+        }
+
+        sampledTrajectoryState = choreoTrajectory.sampleAt(getTrajectoryTime(), false).get();
+
+        yield SystemState.TRAJECTORY;
+      }
       case HEADING_ALIGN -> SystemState.HEADING_ALIGN;
       case AUTO_ALIGN -> SystemState.AUTO_ALIGN;
       case CHARACTERIZATION -> SystemState.CHARACTERIZATION;
@@ -202,43 +272,7 @@ public class Drive extends SubsystemBase {
   }
 
   private void applyState() {
-    switch (systemState) {
-      case TELEOP:
-        break;
-
-      case TRAJECTORY:
-        break;
-
-      case HEADING_ALIGN:
-        break;
-
-      case AUTO_ALIGN:
-        break;
-
-      case IDLE:
-        break;
-
-      case CHARACTERIZATION:
-        break;
-    }
-  }
-
-  public void runVelocity(ChassisSpeeds speeds, DriveMode mode) {
-
-    // Calculate setpoints
-    ChassisSpeeds setpointSpeeds;
-    SwerveModuleState[] setpointStates;
-    if (useSetpointGenerator
-        && mode != DriveMode.TRAJECTORY
-        && mode != DriveMode.TELEOP
-        && mode != DriveMode.HEADING_ALIGN) {
-      prevSetpoint = swerveSetpointGenerator.generateSetpoint(prevSetpoint, speeds, 0.02);
-      setpointSpeeds = prevSetpoint.robotRelativeSpeeds();
-      setpointStates = prevSetpoint.moduleStates();
-    } else {
-      setpointSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
-      setpointStates = kinematics.toSwerveModuleStates(setpointSpeeds);
-    }
+    ChassisSpeeds requestedSpeeds = new ChassisSpeeds();
 
     SwerveModuleState[] setpointTorques =
         new SwerveModuleState[] {
@@ -247,6 +281,159 @@ public class Drive extends SubsystemBase {
           new SwerveModuleState(),
           new SwerveModuleState()
         };
+
+    Pose2d currentPose = RobotState.getInstance().getEstimatedPose();
+
+    switch (systemState) {
+      default:
+        break;
+
+      case TELEOP:
+        requestedSpeeds = getJoystickRequestedSpeeds();
+
+        break;
+
+      case TRAJECTORY:
+        if (sampledTrajectoryState
+                .getPose()
+                .getTranslation()
+                .getDistance(currentPose.getTranslation())
+            > maxError.getAsDouble()) {
+          timeOffset += 0.02;
+
+          // sampledTrajectoryState = new SwerveSample(
+          // sampledTrajectoryState.getTimestamp(),
+          // sampledTrajectoryState.x,
+          // sampledTrajectoryState.y,
+          // sampledTrajectoryState.heading,
+          // sampledTrajectoryState.vx,
+          // sampledTrajectoryState.vy,
+          // sampledTrajectoryState.omega,
+          // sampledTrajectoryState.ax,
+          // sampledTrajectoryState.ay,
+          // sampledTrajectoryState.alpha,
+          // dummyForces,
+          // dummyForces);
+        }
+
+        RobotState.getInstance().setTrajectorySetpoint(sampledTrajectoryState.getPose());
+
+        requestedSpeeds = sampledTrajectoryState.getChassisSpeeds();
+
+        requestedSpeeds.vxMetersPerSecond +=
+            trajectoryXController.calculate(
+                0.0, sampledTrajectoryState.x - currentPose.getTranslation().getX());
+        requestedSpeeds.vyMetersPerSecond +=
+            trajectoryYController.calculate(
+                0.0, sampledTrajectoryState.y - currentPose.getTranslation().getY());
+        requestedSpeeds.omegaRadiansPerSecond +=
+            trajectoryThetaController.calculate(
+                0.0,
+                MathUtil.angleModulus(
+                    sampledTrajectoryState
+                        .getPose()
+                        .getRotation()
+                        .minus(currentPose.getRotation())
+                        .getRadians()));
+
+        if (enableTrajectoryFeedforward) {
+          moduleForces = new ArrayList<>();
+          for (int i = 0; i < 4; i++) {
+            moduleForces.add(
+                VecBuilder.fill(
+                    sampledTrajectoryState.moduleForcesX()[i],
+                    sampledTrajectoryState.moduleForcesY()[i]));
+          }
+        }
+
+        Logger.recordOutput("Drive/Trajectory/SetpointPose", sampledTrajectoryState.getPose());
+        Logger.recordOutput(
+            "Drive/Trajectory/SetpointSpeeds", sampledTrajectoryState.getChassisSpeeds());
+        Logger.recordOutput("Drive/Trajectory/TrajectoryTime", getTrajectoryTime());
+
+        break;
+
+      case HEADING_ALIGN:
+        requestedSpeeds = getJoystickRequestedSpeeds();
+
+        double thetaError =
+            MathUtil.angleModulus(
+                currentPose.getRotation().minus(desiredHeadingAlignRotation).getRadians());
+        requestedSpeeds.omegaRadiansPerSecond = headingAlignController.calculate(thetaError, 0.0);
+
+        if (Math.abs(thetaError) < headingAlignController.getErrorTolerance()) {
+          requestedSpeeds.omegaRadiansPerSecond = 0.0;
+        }
+
+        Logger.recordOutput("Drive/HeadingAlign/TargetHeading", desiredHeadingAlignRotation);
+        Logger.recordOutput("Drive/HeadingAlign/Error", thetaError);
+        Logger.recordOutput("Drive/HeadingAlign/Output", requestedSpeeds.omegaRadiansPerSecond);
+
+        break;
+
+      case AUTO_ALIGN:
+        Translation2d translationError =
+            currentPose.getTranslation().minus(desiredAutoAlignPose.getTranslation());
+        double translationLinearError = translationError.getNorm();
+        double translationLinearOutput;
+
+        if (translationLinearError < autoAlignTranslationTolerance.getAsDouble()) {
+          translationLinearOutput = 0.0;
+
+        } else if (DriverStation.isAutonomous()) {
+          translationLinearOutput =
+              autoAutoAlignController.calculate(translationLinearError, 0.0)
+                  + autoAlignStaticFrictionConstant;
+
+        } else {
+          translationLinearOutput =
+              teleopAutoAlignController.calculate(translationLinearError, 0.0)
+                  + autoAlignStaticFrictionConstant;
+        }
+
+        translationLinearOutput = Math.min(translationLinearOutput, maxAutoAlignDriveOutput);
+
+        double vx = translationLinearOutput * translationError.getAngle().getCos();
+        double vy = translationLinearOutput * translationError.getAngle().getCos();
+
+        double autoAlignThetaError =
+            MathUtil.angleModulus(
+                currentPose.getRotation().minus(desiredAutoAlignPose.getRotation()).getRadians());
+        double omega = headingAlignController.calculate(autoAlignThetaError, 0.0);
+
+        if (Math.abs(autoAlignThetaError) < headingAlignController.getErrorTolerance()) {
+          omega = 0.0;
+        }
+
+        requestedSpeeds = new ChassisSpeeds(vx, vy, omega);
+
+        Logger.recordOutput("Drive/AutoAlign/Target", desiredAutoAlignPose);
+        Logger.recordOutput("Drive/AutoAlign/TranslationError", translationLinearError);
+        Logger.recordOutput("Drive/AutoAlign/ThetaError", autoAlignThetaError);
+        Logger.recordOutput("Drive/AutoAlign/Output", requestedSpeeds);
+        Logger.recordOutput("Drive/AutoAlign/LinearOutput", translationLinearOutput);
+
+        break;
+
+      case CHARACTERIZATION:
+        break;
+    }
+
+    requestedSpeeds =
+        ChassisSpeeds.fromFieldRelativeSpeeds(requestedSpeeds, currentPose.getRotation());
+
+    SwerveModuleState[] setpointStates;
+    ChassisSpeeds setpointSpeeds;
+
+    if (systemState == SystemState.AUTO_ALIGN) {
+      prevSetpoint = swerveSetpointGenerator.generateSetpoint(prevSetpoint, requestedSpeeds, 0.02);
+      setpointSpeeds = prevSetpoint.robotRelativeSpeeds();
+      setpointStates = prevSetpoint.moduleStates();
+
+    } else {
+      setpointSpeeds = ChassisSpeeds.discretize(requestedSpeeds, 0.02);
+      setpointStates = kinematics.toSwerveModuleStates(setpointSpeeds);
+    }
 
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {
@@ -254,64 +441,59 @@ public class Drive extends SubsystemBase {
     }
 
     // Log optimized setpoints (runSetpoint mutates each state)
+    Logger.recordOutput("Drive/RequestedSpeeds", requestedSpeeds);
     Logger.recordOutput("Drive/SetpointSpeeds", setpointSpeeds);
-    Logger.recordOutput("Drive/SwerveStates/OptimizedSetpoints", setpointStates);
-    Logger.recordOutput("Drive/SwerveStates/Torques", setpointTorques);
     Logger.recordOutput(
         "Drive/SwerveStates/UnoptimizedSetpoints",
-        kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(speeds, 0.02)));
-    Logger.recordOutput("Drive/DesiredSpeeds", speeds);
-    Logger.recordOutput("Drive/DriveMode", mode.toString());
-  }
-
-  public void runVelocity(ChassisSpeeds speeds, List<Vector<N2>> forces, DriveMode mode) {
-
-    // Calculate setpoints
-    ChassisSpeeds setpointSpeeds;
-    SwerveModuleState[] setpointStates;
-    if (useSetpointGenerator
-        && mode != DriveMode.TRAJECTORY
-        && mode != DriveMode.TELEOP
-        && mode != DriveMode.HEADING_ALIGN) {
-      prevSetpoint = swerveSetpointGenerator.generateSetpoint(prevSetpoint, speeds, 0.02);
-      setpointSpeeds = prevSetpoint.robotRelativeSpeeds();
-      setpointStates = prevSetpoint.moduleStates();
-    } else {
-      setpointSpeeds = ChassisSpeeds.discretize(speeds, 0.02);
-      setpointStates = kinematics.toSwerveModuleStates(setpointSpeeds);
-    }
-
-    SwerveModuleState[] setpointTorques =
-        new SwerveModuleState[] {
-          new SwerveModuleState(),
-          new SwerveModuleState(),
-          new SwerveModuleState(),
-          new SwerveModuleState()
-        };
-
-    // Send setpoints to modules
-    for (int i = 0; i < 4; i++) {
-      if (disableTrajFF) {
-        modules[i].runSetpoint(setpointStates[i]);
-
-      } else {
-        modules[i].runSetpoint(setpointStates[i], forces.get(i));
-      }
-    }
-
-    // Log optimized setpoints (runSetpoint mutates each state)
-    Logger.recordOutput("Drive/SetpointSpeeds", setpointSpeeds);
+        kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(requestedSpeeds, 0.02)));
     Logger.recordOutput("Drive/SwerveStates/OptimizedSetpoints", setpointStates);
     Logger.recordOutput("Drive/SwerveStates/Torques", setpointTorques);
-    Logger.recordOutput(
-        "Drive/SwerveStates/UnoptimizedSetpoints",
-        kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(speeds, 0.02)));
-    Logger.recordOutput("Drive/DesiredSpeeds", speeds);
   }
 
-  /** Stops the drive. */
-  public void stop() {
-    runVelocity(new ChassisSpeeds(), DriveMode.TELEOP);
+  private ChassisSpeeds getJoystickRequestedSpeeds() {
+    double linearMagnitude =
+        Math.hypot(controller.getLeftWithDeadband().x, controller.getLeftWithDeadband().y);
+
+    // Square magnitude for more precise control
+    linearMagnitude = linearMagnitude * linearMagnitude;
+
+    Translation2d linearVelocity = Translation2d.kZero;
+
+    if (linearMagnitude > 1e-6) {
+      linearVelocity =
+          new Translation2d(
+                  linearMagnitude,
+                  new Rotation2d(
+                      controller.getLeftWithDeadband().x, controller.getLeftWithDeadband().y))
+              .times(driveSpeedScalar.linearVelocityScalar);
+    }
+
+    // Square rotation value for more precise control
+    double omega =
+        Math.copySign(
+                controller.getRightWithDeadband().x * controller.getRightWithDeadband().x,
+                controller.getRightWithDeadband().x)
+            * driveSpeedScalar.angularVelocityScalar;
+
+    return ChassisSpeeds.fromFieldRelativeSpeeds(
+        new ChassisSpeeds(
+            linearVelocity.getX() * DriveConstants.maxVelocityMPS,
+            linearVelocity.getY() * DriveConstants.maxVelocityMPS,
+            omega * DriveConstants.maxAngularVelocity),
+        AllianceFlipUtil.apply(Rotation2d.kZero));
+  }
+
+  private double getTrajectoryTime() {
+    return Timer.getTimestamp() - startTime - timeOffset;
+  }
+
+  private void resetTrajectoryTimer() {
+    startTime = Timer.getTimestamp();
+    timeOffset = 0.0;
+  }
+
+  public boolean isTrajectoryFinished() {
+    return getTrajectoryTime() > choreoTrajectory.getTotalTime();
   }
 
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */
@@ -324,9 +506,11 @@ public class Drive extends SubsystemBase {
     return states;
   }
 
-  /** Returns the measured chassis speeds of the robot. */
-  @AutoLogOutput(key = "Drive/MeasuredSpeeds")
-  private ChassisSpeeds getChassisSpeeds() {
-    return kinematics.toChassisSpeeds(getModuleStates());
+  public void setWantedState(WantedState wantedState) {
+    this.wantedState = wantedState;
+  }
+
+  public void setDriveSpeedScalar(DriveSpeedScalar driveSpeedScalar) {
+    this.driveSpeedScalar = driveSpeedScalar;
   }
 }

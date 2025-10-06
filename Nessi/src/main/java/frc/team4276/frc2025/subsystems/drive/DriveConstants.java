@@ -24,10 +24,10 @@ public class DriveConstants {
   public static final SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(moduleTranslations);
 
-  public static final double maxSpeed = 5.3;
-  public static final double maxAccel = 6.4;
-  public static final double maxAngularSpeed = 11.4;
-  public static final double maxAngularAccel = 33.9;
+  public static final double maxVelocityMPS = 4.92;
+  public static final double maxAccelMPSS = 5.39;
+  public static final double maxAngularVelocity = 10.54;
+  public static final double maxAngularAccel = 36.72;
 
   // Zeroed rotation values for each module, see setup instructions
   public static final Rotation2d frontLeftZeroRotation = new Rotation2d(1.52507);
@@ -54,24 +54,16 @@ public class DriveConstants {
   // Drive motor configuration
   public static final int driveMotorCurrentLimit = 50;
   public static final double wheelRadiusMeters = Units.inchesToMeters(1.5);
-  public static final double drivingMotorPinionTeeth = 13.0;
-  public static final double driveMotorReduction =
-      (45.0 * 22.0) / (drivingMotorPinionTeeth * 15.0); // MAXSwerve
-  // with
-  // x pinion teeth
-  // and 22 spur teeth
+  public static final double drivingMotorPinionTeeth = 12.0;
+  public static final double driveMotorReduction = (45.0 * 22.0) / (drivingMotorPinionTeeth * 15.0);
+
   public static final DCMotor driveGearbox = DCMotor.getNeoVortex(1);
   public static final double maxSteerVelocity =
       driveGearbox.freeSpeedRadPerSec / driveMotorReduction;
 
-  // Drive encoder configuration
-  public static final double driveEncoderPositionFactor =
-      2 * Math.PI / driveMotorReduction; // Rotor Rotations ->
-  // Wheel Radians
+  public static final double driveEncoderPositionFactor = 2 * Math.PI / driveMotorReduction;
   public static final double driveEncoderVelocityFactor =
-      (2 * Math.PI) / 60.0 / driveMotorReduction; // Rotor RPM
-  // ->
-  // Wheel Rad/Sec
+      (2 * Math.PI) / 60.0 / driveMotorReduction;
 
   // Drive PID configuration
   public static final double driveKp = 0.005;
@@ -104,16 +96,16 @@ public class DriveConstants {
   public static final double turnPIDMaxInput = 2 * Math.PI; // Radians
 
   // PathPlanner configuration
-  public static final double robotMassKg = 56.699;
+  public static final double robotMassKg = 63;
   public static final double robotMOI = 5.267513460399;
-  public static final double wheelCOF = 1.2;
+  public static final double wheelCOF = 1.1;
   public static final RobotConfig driveConfig =
       new RobotConfig(
           robotMassKg,
           robotMOI,
           new ModuleConfig(
               wheelRadiusMeters,
-              maxSpeed,
+              maxVelocityMPS,
               wheelCOF,
               driveGearbox.withReduction(driveMotorReduction),
               driveMotorCurrentLimit,

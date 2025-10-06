@@ -246,7 +246,7 @@ public class SwerveSetpointGenerator {
     }
 
     // Enforce drive wheel acceleration limits
-    double maxVelStep = Math.abs(DriveConstants.maxAccel * dt);
+    double maxVelStep = Math.abs(DriveConstants.maxAccelMPSS * dt);
     for (int m = 0; m < config.numModules; m++) {
       if (min_s == 0.0) {
         // No need to carry on.
