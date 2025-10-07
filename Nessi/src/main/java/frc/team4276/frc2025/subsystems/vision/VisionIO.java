@@ -14,7 +14,7 @@ public interface VisionIO {
 
   /** Represents the angle to a simple target, used for trig based pose estimation. */
   public static record TargetObservation(
-      double timestamp, int tagId, int camera, double tx, double ty, double distance) {}
+      double timestamp, int tagId, int camera, double tx, double distance) {}
 
   /** Represents a robot pose sample used for pose estimation. */
   public static record PoseObservation(

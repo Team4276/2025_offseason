@@ -103,12 +103,28 @@ public class FieldConstants {
     }
   }
 
-  public static final Pose2d bargeScoreClose =
-      new Pose2d(
-          7.585,
-          6.15,
-          Rotation2d
-              .kZero); // Only use X and rotational components; allow alignment along the whole
-  // barge
-  public static final Pose2d bargeScoreFar = new Pose2d(9.975, 6.15, Rotation2d.kPi);
+  public enum ReefSide {
+    AB(Reef.A, Reef.B),
+    CD(Reef.C, Reef.D),
+    EF(Reef.F, Reef.E),
+    GH(Reef.H, Reef.G),
+    IJ(Reef.J, Reef.I),
+    KL(Reef.K, Reef.L);
+
+    private final Reef firstReef; // Left
+    private final Reef secondReef; // Right
+
+    private ReefSide(Reef firstReef, Reef secondReef) {
+      this.firstReef = firstReef;
+      this.secondReef = secondReef;
+    }
+
+    public Reef getFirstReef() {
+      return firstReef;
+    }
+
+    public Reef getSecondReef() {
+      return secondReef;
+    }
+  }
 }

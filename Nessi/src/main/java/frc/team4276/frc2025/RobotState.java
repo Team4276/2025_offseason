@@ -21,6 +21,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import frc.team4276.frc2025.field.FieldConstants;
+import frc.team4276.frc2025.field.FieldConstants.ReefSide;
 import frc.team4276.frc2025.subsystems.vision.VisionConstants;
 import frc.team4276.frc2025.subsystems.vision.VisionIO.TargetObservation;
 import frc.team4276.util.AllianceFlipUtil;
@@ -55,6 +56,8 @@ public class RobotState {
   private VikSwervePoseEstimator poseEstimator =
       new VikSwervePoseEstimator(kinematics, lastGyroAngle, lastWheelPositions, Pose2d.kZero);
   private VikSwervePoseEstimator poseEstimatorOdom =
+      new VikSwervePoseEstimator(kinematics, lastGyroAngle, lastWheelPositions, Pose2d.kZero);
+  private VikSwervePoseEstimator poseEstimatorTxty =
       new VikSwervePoseEstimator(kinematics, lastGyroAngle, lastWheelPositions, Pose2d.kZero);
   private TimeInterpolatableBuffer<Pose2d> odomPoseBuffer =
       TimeInterpolatableBuffer.createBuffer(2.0);
@@ -96,6 +99,7 @@ public class RobotState {
   public void resetPose(Pose2d pose) {
     poseEstimatorOdom.resetPose(pose);
     poseEstimator.resetPose(pose);
+    poseEstimatorTxty.resetPose(pose);
   }
 
   public void setTrajectorySetpoint(Pose2d setpoint) {
@@ -121,6 +125,7 @@ public class RobotState {
 
     poseEstimatorOdom.updateWithTime(timestamp, yaw, wheelPositions);
     poseEstimator.updateWithTime(timestamp, yaw, wheelPositions);
+    poseEstimatorTxty.updateWithTime(timestamp, yaw, wheelPositions);
     odomPoseBuffer.addSample(timestamp, poseEstimatorOdom.getEstimatedPosition());
   }
 
@@ -136,11 +141,6 @@ public class RobotState {
 
   /** Adds a new timestamped vision measurement. */
   public void addTxTyObservation(TargetObservation targetObs) {
-    if (txTyPoses.containsKey(targetObs.tagId())
-        && targetObs.timestamp() <= txTyPoses.get(targetObs.tagId()).timestamp()) {
-      return;
-    }
-
     // Get rotation at timestamp
     var sample = odomPoseBuffer.getSample(targetObs.timestamp());
     if (sample.isEmpty()) {
@@ -157,7 +157,7 @@ public class RobotState {
 
     // Use 3D distance and tag angles to find robot pose
     Translation2d camToTagTranslation =
-        new Pose3d(Translation3d.kZero, new Rotation3d(0, targetObs.ty(), -targetObs.tx()))
+        new Pose3d(Translation3d.kZero, new Rotation3d(0.0, 0.0, -targetObs.tx()))
             .transformBy(
                 new Transform3d(new Translation3d(targetObs.distance(), 0, 0), Rotation3d.kZero))
             .getTranslation()
@@ -188,10 +188,15 @@ public class RobotState {
     // Use gyro angle at time for robot rotation
     robotPose = new Pose2d(robotPose.getTranslation(), robotRotation);
 
-    // Add transform to current odometry based pose for latency correction
-    txTyPoses.put(
-        targetObs.tagId(),
-        new TxTyPoseRecord(robotPose, camToTagTranslation.getNorm(), targetObs.timestamp()));
+    poseEstimatorTxty.resetTranslation(robotPose.getTranslation());
+
+    if (!txTyPoses.containsKey(targetObs.tagId())
+        || targetObs.timestamp() > txTyPoses.get(targetObs.tagId()).timestamp()) {
+      // Add transform to current odometry based pose for latency correction
+      txTyPoses.put(
+          targetObs.tagId(),
+          new TxTyPoseRecord(robotPose, camToTagTranslation.getNorm(), targetObs.timestamp()));
+    }
   }
 
   @AutoLogOutput(key = "RobotState/EstimatedPose")
@@ -202,6 +207,31 @@ public class RobotState {
   @AutoLogOutput(key = "RobotState/EstimatedOdomPose")
   public Pose2d getEstimatedOdomPose() {
     return poseEstimatorOdom.getEstimatedPosition();
+  }
+
+  @AutoLogOutput(key = "RobotState/EstimatedTxtyPose")
+  public Pose2d getEstimatedTxtyPose() {
+    return poseEstimatorTxty.getEstimatedPosition();
+  }
+
+  public Optional<ReefSide> getSideFromTagId(int id) {
+    return switch (id) {
+      case 6 -> Optional.of(ReefSide.KL);
+      case 7 -> Optional.of(ReefSide.AB);
+      case 8 -> Optional.of(ReefSide.CD);
+      case 9 -> Optional.of(ReefSide.EF);
+      case 10 -> Optional.of(ReefSide.GH);
+      case 11 -> Optional.of(ReefSide.IJ);
+
+      case 17 -> Optional.of(ReefSide.CD);
+      case 18 -> Optional.of(ReefSide.AB);
+      case 19 -> Optional.of(ReefSide.KL);
+      case 20 -> Optional.of(ReefSide.IJ);
+      case 21 -> Optional.of(ReefSide.GH);
+      case 22 -> Optional.of(ReefSide.EF);
+
+      default -> Optional.empty();
+    };
   }
 
   public Optional<Integer> getPriorityReefTag() {
@@ -330,6 +360,7 @@ public class RobotState {
       tagPoses[i] = getTxTyPose(i).orElse(Pose2d.kZero);
     }
     Logger.recordOutput("RobotState/TxTyPoses", tagPoses);
+    getEstimatedTxtyPose();
   }
 
   public record TxTyPoseRecord(Pose2d pose, double distance, double timestamp) {}

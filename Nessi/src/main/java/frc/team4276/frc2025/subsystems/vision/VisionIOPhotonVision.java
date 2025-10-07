@@ -43,8 +43,7 @@ public class VisionIOPhotonVision implements VisionIO {
                     target.getFiducialId(),
                     index,
                     Units.degreesToRadians(target.getYaw()),
-                    Units.degreesToRadians(target.getPitch()),
-                    target.bestCameraToTarget.getTranslation().getNorm()));
+                    target.area));
           }
         }
       }

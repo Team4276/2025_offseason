@@ -10,7 +10,7 @@ import edu.wpi.first.math.util.Units;
 import frc.team4276.frc2025.Ports;
 
 public class DriveConstants {
-  public static final double odometryFrequency = 100.0; // Hz
+  public static final double odometryFrequency = 200.0; // Hz
   public static final double trackWidth = Units.inchesToMeters(26.0);
   public static final double wheelBase = Units.inchesToMeters(26.0);
   public static final Translation2d[] moduleTranslations =
