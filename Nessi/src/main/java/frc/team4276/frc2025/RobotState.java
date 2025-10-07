@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj.Timer;
 import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.field.FieldConstants.ReefSide;
 import frc.team4276.frc2025.subsystems.vision.VisionConstants;
-import frc.team4276.frc2025.subsystems.vision.VisionIO.TargetObservation;
+import frc.team4276.frc2025.subsystems.vision.VisionIO.TagObservation;
 import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.ElasticUI;
 import frc.team4276.util.dashboard.LoggedTunableNumber;
@@ -140,7 +140,7 @@ public class RobotState {
   }
 
   /** Adds a new timestamped vision measurement. */
-  public void addTxTyObservation(TargetObservation targetObs) {
+  public void addTxTyObservation(TagObservation targetObs) {
     // Get rotation at timestamp
     var sample = odomPoseBuffer.getSample(targetObs.timestamp());
     if (sample.isEmpty()) {

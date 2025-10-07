@@ -1,7 +1,5 @@
 package frc.team4276.frc2025.subsystems.vision;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.util.Units;
@@ -14,9 +12,7 @@ public class VisionConstants {
   public static final boolean enableInstanceLogging =
       forceEnableInstanceLogging || Constants.getMode() == Mode.REPLAY;
 
-  // AprilTag layout
-  public static AprilTagFieldLayout aprilTagLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+  public static final double tagHeight = Units.inchesToMeters(6.5);
 
   public static final CameraConfig[] configs =
       new CameraConfig[] {
@@ -30,7 +26,9 @@ public class VisionConstants {
                     Math.toRadians(5.2362),
                     -1.0 * Math.toRadians(20.0),
                     -1.0 * Math.toRadians(14.1327))),
-            1.25),
+            1.25,
+            48.0,
+            800),
         new CameraConfig(
             "Arducam_OV2311_USB_Camera",
             new Transform3d(
@@ -39,18 +37,8 @@ public class VisionConstants {
                 Units.inchesToMeters(17.274095),
                 new Rotation3d(
                     Math.toRadians(3.9671), Math.toRadians(15), Math.toRadians(15.5108))),
-            1.0)
+            1.0,
+            60.0,
+            1200)
       };
-
-  // Basic filtering thresholds
-  public static double maxAmbiguity = 0.2;
-  public static final double fieldBorderMargin = 0.5;
-  public static double maxZError = 0.75;
-  public static double maxDist = 2.0;
-  public static double maxTip = Units.degreesToRadians(20.0);
-
-  // Standard deviation baselines, for 1 meter distance and 1 tag
-  // (Adjusted automatically based on distance and # of tags)
-  public static double linearStdDevBaseline = 0.02; // Meters
-  public static double angularStdDevBaseline = 0.06; // Radians
 }

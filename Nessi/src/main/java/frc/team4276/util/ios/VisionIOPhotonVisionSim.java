@@ -1,6 +1,6 @@
 package frc.team4276.util.ios;
 
-import static frc.team4276.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
+import static frc.team4276.frc2025.field.FieldConstants.apriltagLayout;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.team4276.frc2025.subsystems.vision.VisionIOPhotonVision;
@@ -29,7 +29,7 @@ public class VisionIOPhotonVisionSim extends VisionIOPhotonVision {
     // Initialize vision sim
     if (visionSim == null) {
       visionSim = new VisionSystemSim("main");
-      visionSim.addAprilTags(aprilTagLayout);
+      visionSim.addAprilTags(apriltagLayout);
     }
 
     // Add sim camera
