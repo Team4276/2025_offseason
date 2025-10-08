@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.photonvision.PhotonCamera;
 
@@ -26,10 +27,10 @@ public class VisionIOPhotonVision implements VisionIO {
   private final double vFov;
   private final int verticalResolution;
 
-  private final List<TagObservation> txtyObservations;
-
-  private final ArrayList<Pair<Double, Double>> cornerListPairs;
   private final Set<Short> tagIds;
+
+  private final List<TagObservation> txtyObservations;
+  private final ArrayList<Pair<Double, Double>> cornerListPairs;
 
   public VisionIOPhotonVision(int index) {
     this.index = index;
@@ -56,7 +57,9 @@ public class VisionIOPhotonVision implements VisionIO {
       // Add tx/ty observation
       if (result.hasTargets()) {
         for (var target : result.getTargets()) {
-          if (target.getFiducialId() != -1) {
+          tagIds.add((short) target.fiducialId);
+
+          if (target.fiducialId != -1) {
             for (int i = 0; i < 4; i++) {
               cornerListPairs.add(
                   new Pair<>(target.detectedCorners.get(i).x, target.detectedCorners.get(i).y));
@@ -68,17 +71,23 @@ public class VisionIOPhotonVision implements VisionIO {
                         calculateTargetHeightInPixels(cornerListPairs)),
                     FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ());
 
-            txtyObservations.add(
-                new TagObservation(
+            var poseEstimate =
+                calculateRobotPose(
                     target.fiducialId,
-                    result.getTimestampSeconds(),
-                    index,
-                    Units.degreesToRadians(target.yaw),
                     distanceToTag,
-                    calculateRobotPose(
-                        target.fiducialId, distanceToTag, Rotation2d.fromDegrees(target.yaw))));
+                    Rotation2d.fromDegrees(target.yaw),
+                    result.getTimestampSeconds());
 
-            tagIds.add((short) target.fiducialId);
+            if (poseEstimate.isPresent()) {
+              txtyObservations.add(
+                  new TagObservation(
+                      target.fiducialId,
+                      result.getTimestampSeconds(),
+                      index,
+                      Units.degreesToRadians(target.yaw),
+                      distanceToTag,
+                      poseEstimate.get()));
+            }
           }
         }
       }
@@ -86,14 +95,15 @@ public class VisionIOPhotonVision implements VisionIO {
 
     // Save tag IDs to inputs objects
     inputs.tagIds = new int[tagIds.size()];
-    for (int i = 0; i < tagIds.size(); i++) {
-      inputs.tagIds[i++] = tagIds[i];
+    int i = 0;
+    for (int id : tagIds) {
+      inputs.tagIds[i++] = id;
     }
 
     // Save tx/ty observations to inputs object
     inputs.targetObservations = new TagObservation[txtyObservations.size()];
-    for (int i = 0; i < txtyObservations.size(); i++) {
-      inputs.targetObservations[i] = txtyObservations.get(i);
+    for (int j = 0; j < txtyObservations.size(); j++) {
+      inputs.targetObservations[j] = txtyObservations.get(j);
     }
   }
 
@@ -121,27 +131,35 @@ public class VisionIOPhotonVision implements VisionIO {
     return Math.abs((tagHeight + sqrtTerm) / (2 * tanOfTheta1));
   }
 
-  private Pose2d calculateRobotPose(
-      final int tagId, double distanceToTagMeters, Rotation2d horizontalAngleToTarget) {
+  private Optional<Pose2d> calculateRobotPose(
+      final int tagId,
+      double distanceToTagMeters,
+      Rotation2d horizontalAngleToTarget,
+      double timestamp) {
     var tagPose = FieldConstants.apriltagLayout.getTagPose(tagId).get().toPose2d();
 
-    var robotRotation = RobotState.getInstance().getEstimatedPose().getRotation();
+    var robotPoseAtTime = RobotState.getInstance().getEstimatedOdomPoseAtTime(timestamp);
 
-    var robotRotationWithLimelightCorrection =
-        robotRotation.plus(robotToCamera.getRotation().toRotation2d());
+    if (robotPoseAtTime.isEmpty()) {
+      return Optional.empty();
+    }
 
-    var scaledTx = Rotation2d.fromDegrees(-horizontalAngleToTarget.div(1.0).getDegrees());
+    var robotRotation = robotPoseAtTime.get().getRotation();
+
+    var correctedCameraRotation = robotRotation.plus(robotToCamera.getRotation().toRotation2d());
+
+    var scaledTx = Rotation2d.fromDegrees(horizontalAngleToTarget.div(1.0).getDegrees());
 
     var cameraToRobotCenter =
         this.robotToCamera.inverse().getTranslation().toTranslation2d().rotateBy(robotRotation);
 
-    var angleToTag = scaledTx.plus(robotRotationWithLimelightCorrection);
+    var angleToTag = correctedCameraRotation.minus(scaledTx);
 
     var translation = new Translation2d(distanceToTagMeters, angleToTag);
     var translatedPose = tagPose.getTranslation().minus(translation);
 
     var fieldRelativeRobotTranslation = translatedPose.plus(cameraToRobotCenter);
 
-    return new Pose2d(fieldRelativeRobotTranslation, robotRotation);
+    return Optional.of(new Pose2d(fieldRelativeRobotTranslation, robotRotation));
   }
 }

@@ -95,11 +95,7 @@ public class RobotContainer {
                   new ModuleIOSpark(1),
                   new ModuleIOSpark(2),
                   new ModuleIOSpark(3));
-          vision =
-              new Vision(
-                  RobotState.getInstance()::addVisionMeasurement,
-                  new VisionIOPhotonVision(0),
-                  new VisionIOPhotonVision(1));
+          vision = new Vision(new VisionIOPhotonVision(0), new VisionIOPhotonVision(1));
           elevator = new Elevator(new ElevatorIOSparkMax());
           endEffector =
               new EndEffector(
@@ -124,11 +120,10 @@ public class RobotContainer {
                   new ModuleIOSim(),
                   new ModuleIOSim());
           if (disableVisionSim) {
-            vision = new Vision(RobotState.getInstance()::addVisionMeasurement);
+            vision = new Vision();
           } else {
             vision =
                 new Vision(
-                    RobotState.getInstance()::addVisionMeasurement,
                     new VisionIOPhotonVisionSim(0, RobotState.getInstance()::getEstimatedPose),
                     new VisionIOPhotonVisionSim(1, RobotState.getInstance()::getEstimatedPose));
           }
@@ -157,9 +152,7 @@ public class RobotContainer {
     }
 
     if (vision == null) {
-      vision =
-          new Vision(
-              RobotState.getInstance()::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
+      vision = new Vision(new VisionIO() {}, new VisionIO() {});
     }
 
     if (toggles == null) {
