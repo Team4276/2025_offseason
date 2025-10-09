@@ -151,7 +151,9 @@ public class Elevator extends SubsystemBase {
   }
 
   public boolean atGoal() {
-    return MathUtil.isNear(wantedElevatorPose.getPositionMetres(), getPositionMetres(), tolerance);
+    return Constants.isSim
+        ? true
+        : MathUtil.isNear(wantedElevatorPose.getPositionMetres(), getPositionMetres(), tolerance);
   }
 
   public static double metresToRotations(double metres) {

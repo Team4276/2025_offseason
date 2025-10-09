@@ -8,9 +8,9 @@ public class EndEffectorConstants {
   public static final LoggedTunableNumber lagVolts =
       new LoggedTunableNumber("EndEffector/LagVolts", 2.0);
   public static final LoggedTunableNumber intakeVolts =
-      new LoggedTunableNumber("EndEffector/IntakeVolts", 3.0);
+      new LoggedTunableNumber("EndEffector/IntakeVolts", 5.0);
   public static final LoggedTunableNumber intakeSlowVolts =
-      new LoggedTunableNumber("EndEffector/SlowIntakeVolts", 2.0);
+      new LoggedTunableNumber("EndEffector/SlowIntakeVolts", 3.0);
   public static final LoggedTunableNumber scoreVolts =
       new LoggedTunableNumber("EndEffector/ScoreVolts", 4.0);
   public static final LoggedTunableNumber reverseVolts =

@@ -1,12 +1,15 @@
 package frc.team4276.frc2025.subsystems;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.RobotState;
 import frc.team4276.frc2025.RobotState.VisionMode;
+import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.field.FieldConstants.ReefSide;
 import frc.team4276.frc2025.subsystems.SuperstructureConstants.AutomationLevel;
 import frc.team4276.frc2025.subsystems.SuperstructureConstants.ReefSelectionMethod;
@@ -19,17 +22,24 @@ import frc.team4276.frc2025.subsystems.endeffector.EndEffector;
 import frc.team4276.frc2025.subsystems.toggles.TogglesIO;
 import frc.team4276.frc2025.subsystems.toggles.TogglesIOInputsAutoLogged;
 import frc.team4276.frc2025.subsystems.vision.Vision;
+import frc.team4276.util.AllianceFlipUtil;
+import frc.team4276.util.hid.ViXController;
 import org.littletonrobotics.junction.Logger;
 
 public class Superstructure extends SubsystemBase {
   private final Drive drive;
+
+  @SuppressWarnings("unused")
   private final Vision vision;
+
   private final Elevator elevator;
   private final EndEffector endeffector;
   private final Clopper clopper;
 
   private final TogglesIO togglesIO;
   private final TogglesIOInputsAutoLogged togglesInputs = new TogglesIOInputsAutoLogged();
+
+  private final ViXController controller = new ViXController(0);
 
   private SuperstructureConstants.AutomationLevel automationLevel = AutomationLevel.AUTO_RELEASE;
 
@@ -120,6 +130,10 @@ public class Superstructure extends SubsystemBase {
   public void periodic() {
     togglesIO.updateInputs(togglesInputs);
     Logger.processInputs("Toggles", togglesInputs);
+
+    if (gamePieceState == GamePieceState.NO_BANANA && endeffector.hasCoral()) {
+      controller.rumbleCommand(RumbleType.kBothRumble, 1.0, 1.0).schedule();
+    }
 
     gamePieceState = endeffector.hasCoral() ? GamePieceState.CORAL : GamePieceState.NO_BANANA;
 
@@ -383,7 +397,16 @@ public class Superstructure extends SubsystemBase {
 
   private void intakeCoral() {
     shouldEjectCoral = false;
-    drive.setWantedState(Drive.WantedState.TELEOP);
+
+    var rotation =
+        AllianceFlipUtil.apply(
+            AllianceFlipUtil.applyY(RobotState.getInstance().getEstimatedPose().getY())
+                    < FieldConstants.fieldWidth / 2
+                ? Rotation2d.fromDegrees(55.0)
+                : Rotation2d.fromDegrees(305.0));
+
+    drive.setHeadingAlignRotation(rotation);
+
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.INTAKE);
     endeffector.setWantedState(EndEffector.WantedState.INTAKE);
   }
@@ -560,7 +583,11 @@ public class Superstructure extends SubsystemBase {
   private void custom() {}
 
   private boolean driveToScoringPoseAndReturnIfObservationPresent(ScoringSide side) {
-    RobotState.getInstance().setVisionMode(VisionMode.ACCEPT_ALL);
+    RobotState.getInstance()
+        .setVisionMode(
+            reefSelectionMethod == ReefSelectionMethod.POSE
+                ? VisionMode.POSE_BASED
+                : VisionMode.ROTATION_BASED);
 
     var reefSide = getReefSide();
 
@@ -572,7 +599,11 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void driveToReturnPose(ScoringSide side) {
-    RobotState.getInstance().setVisionMode(VisionMode.ACCEPT_ALL);
+    RobotState.getInstance()
+        .setVisionMode(
+            reefSelectionMethod == ReefSelectionMethod.POSE
+                ? VisionMode.POSE_BASED
+                : VisionMode.ROTATION_BASED);
 
     var reefSide = getReefSide();
 
@@ -651,6 +682,13 @@ public class Superstructure extends SubsystemBase {
             setStateCommand(l1ModeCondition), setStateCommand(hasCoralCondition), () -> isL1Mode),
         setStateCommand(noPieceCondition),
         this::hasCoral);
+  }
+
+  public void toggleReefSelectionMethod() {
+    reefSelectionMethod =
+        (reefSelectionMethod == ReefSelectionMethod.POSE)
+            ? ReefSelectionMethod.ROTATION
+            : ReefSelectionMethod.POSE;
   }
 
   public void setL1ModeEnabled(boolean enabled) {

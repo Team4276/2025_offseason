@@ -103,13 +103,13 @@ public class Drive extends SubsystemBase {
   private SwerveSetpoint prevSetpoint;
 
   private final LoggedTunablePID teleopAutoAlignController =
-      new LoggedTunablePID(3.0, 0, 0, 0.01, "Drive/AutoAlign/TeleopTranslation");
+      new LoggedTunablePID(3.6, 0, 0, 0.1, "Drive/AutoAlign/TeleopTranslation");
   private final LoggedTunablePID autoAutoAlignController =
-      new LoggedTunablePID(3.0, 0, 0, 0.01, "Drive/AutoAlign/AutoTranslation");
+      new LoggedTunablePID(3.0, 0, 0, 0.1, "Drive/AutoAlign/AutoTranslation");
   private final LoggedTunablePID headingAlignController =
       new LoggedTunablePID(4.0, 0, 0, Units.degreesToRadians(1.0), "Drive/HeadingAlign");
   private final LoggedTunableNumber autoAlignTranslationTolerance =
-      new LoggedTunableNumber("Drive/AutoAlign/TranslationTolerance", 0.1);
+      new LoggedTunableNumber("Drive/AutoAlign/TranslationTolerance", 0.01);
   private final LoggedTunableNumber headingAlignTolerance =
       new LoggedTunableNumber("Drive/HeadingAlign/HeadingTolerance", 1.0);
 
@@ -287,6 +287,10 @@ public class Drive extends SubsystemBase {
 
     Pose2d currentPose = RobotState.getInstance().getEstimatedPose();
 
+    Logger.recordOutput("RobotState/EstimatedPose", currentPose);
+    Logger.recordOutput(
+        "RobotState/EstimatedOdomPose", RobotState.getInstance().getEstimatedOdomPose());
+
     switch (systemState) {
       default:
         break;
@@ -376,7 +380,7 @@ public class Drive extends SubsystemBase {
 
       case AUTO_ALIGN:
         Translation2d translationError =
-            currentPose.getTranslation().minus(desiredAutoAlignPose.getTranslation());
+            desiredAutoAlignPose.getTranslation().minus(currentPose.getTranslation());
         double translationLinearError = translationError.getNorm();
         double translationLinearOutput;
 
@@ -385,12 +389,12 @@ public class Drive extends SubsystemBase {
 
         } else if (DriverStation.isAutonomous()) {
           translationLinearOutput =
-              autoAutoAlignController.calculate(translationLinearError, 0.0)
+              Math.abs(autoAutoAlignController.calculate(translationLinearError, 0.0))
                   + autoAlignStaticFrictionConstant;
 
         } else {
           translationLinearOutput =
-              teleopAutoAlignController.calculate(translationLinearError, 0.0)
+              Math.abs(teleopAutoAlignController.calculate(translationLinearError, 0.0))
                   + autoAlignStaticFrictionConstant;
         }
 
@@ -398,7 +402,7 @@ public class Drive extends SubsystemBase {
             Math.min(translationLinearOutput, maxAutoAlignDriveTranslationOutput);
 
         double vx = translationLinearOutput * translationError.getAngle().getCos();
-        double vy = translationLinearOutput * translationError.getAngle().getCos();
+        double vy = translationLinearOutput * translationError.getAngle().getSin();
 
         double autoAlignThetaError =
             MathUtil.angleModulus(

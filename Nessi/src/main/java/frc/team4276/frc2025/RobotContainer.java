@@ -77,7 +77,7 @@ public class RobotContainer {
   private final Alert driverDisconnected =
       new Alert("Driver controller disconnected (port 0).", AlertType.kWarning);
 
-  @AutoLogOutput private boolean disableVisionSim = false;
+  @AutoLogOutput private boolean disableVisionSim = true;
 
   // Dashboard inputs
   private final AutoSelector autoSelector = new AutoSelector();
@@ -145,6 +145,14 @@ public class RobotContainer {
               new ModuleIO() {},
               new ModuleIO() {},
               new ModuleIO() {});
+    }
+
+    if (elevator == null) {
+      elevator = new Elevator(new ElevatorIO() {});
+    }
+
+    if (endEffector == null) {
+      endEffector = new EndEffector(new EndEffectorIO() {});
     }
 
     if (clopper == null) {

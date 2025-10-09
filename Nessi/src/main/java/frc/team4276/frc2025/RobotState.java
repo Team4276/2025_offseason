@@ -19,7 +19,6 @@ import frc.team4276.util.dashboard.ElasticUI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import org.littletonrobotics.junction.AutoLogOutput;
 
 public class RobotState {
   private SwerveModulePosition[] lastWheelPositions =
@@ -191,12 +190,10 @@ public class RobotState {
     setVisionMode(VisionMode.ACCEPT_SIDE);
   }
 
-  @AutoLogOutput(key = "RobotState/EstimatedPose")
   public Pose2d getEstimatedPose() {
     return useTrajectorySetpoint() ? trajectorySetpoint : poseEstimate;
   }
 
-  @AutoLogOutput(key = "RobotState/EstimatedOdomPose")
   public Pose2d getEstimatedOdomPose() {
     return odomPoseEstimate;
   }
@@ -246,7 +243,6 @@ public class RobotState {
     return trajectorySetpoint;
   }
 
-  @AutoLogOutput(key = "RobotState/FieldVelocity")
   public ChassisSpeeds getFieldVelocity() {
     return ChassisSpeeds.fromRobotRelativeSpeeds(robotVelocity, getEstimatedPose().getRotation());
   }
