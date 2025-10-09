@@ -103,9 +103,9 @@ public class Drive extends SubsystemBase {
   private SwerveSetpoint prevSetpoint;
 
   private final LoggedTunablePID teleopAutoAlignController =
-      new LoggedTunablePID(3.6, 0, 0, 0.1, "Drive/AutoAlign/TeleopTranslation");
+      new LoggedTunablePID(3.0, 0, 0.1, 0.1, "Drive/AutoAlign/TeleopTranslation");
   private final LoggedTunablePID autoAutoAlignController =
-      new LoggedTunablePID(3.0, 0, 0, 0.1, "Drive/AutoAlign/AutoTranslation");
+      new LoggedTunablePID(3.0, 0, 0.1, 0.1, "Drive/AutoAlign/AutoTranslation");
   private final LoggedTunablePID headingAlignController =
       new LoggedTunablePID(4.0, 0, 0, Units.degreesToRadians(1.0), "Drive/HeadingAlign");
   private final LoggedTunableNumber autoAlignTranslationTolerance =
@@ -114,7 +114,7 @@ public class Drive extends SubsystemBase {
       new LoggedTunableNumber("Drive/HeadingAlign/HeadingTolerance", 1.0);
 
   private Pose2d desiredAutoAlignPose = Pose2d.kZero;
-  private final double autoAlignStaticFrictionConstant = maxVelocityMPS * 0.04;
+  private final double autoAlignStaticFrictionConstant = maxVelocityMPS * 0.02;
 
   private Rotation2d desiredHeadingAlignRotation = Rotation2d.kZero;
 

@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.frc2025.AutoSelector.AutoQuestion;
 import frc.team4276.frc2025.AutoSelector.AutoQuestionResponse;
-import frc.team4276.frc2025.commands.auto.AutoBuilder;
+import frc.team4276.frc2025.auto.AutoBuilder;
 import frc.team4276.frc2025.subsystems.Superstructure;
 import frc.team4276.frc2025.subsystems.Superstructure.CurrentSuperState;
 import frc.team4276.frc2025.subsystems.Superstructure.WantedSuperState;
@@ -504,5 +504,9 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return autoSelector.getCommand();
+  }
+
+  public Superstructure getSuperstructure() {
+    return superstructure;
   }
 }

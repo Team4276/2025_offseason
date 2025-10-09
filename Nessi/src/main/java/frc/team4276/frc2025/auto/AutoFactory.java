@@ -1,24 +1,33 @@
-package frc.team4276.frc2025.commands.auto;
+package frc.team4276.frc2025.auto;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.team4276.frc2025.RobotContainer;
 import frc.team4276.frc2025.RobotState;
 import frc.team4276.frc2025.field.FieldConstants;
-import frc.team4276.frc2025.subsystems.Superstructure;
 import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.Elastic;
 import frc.team4276.util.dashboard.Elastic.Notification;
 import frc.team4276.util.dashboard.Elastic.Notification.NotificationLevel;
 
-public class AutoCommands {
-  private AutoCommands() {}
+public class AutoFactory {
+  private final RobotContainer robotContainer;
 
-  public static final double scoreWaitTime = 0.5;
-  public static final double intakeWaitTime = 1.5;
+  public AutoFactory(RobotContainer robotContainer) {
+    this.robotContainer = robotContainer;
+  }
 
   public static Command resetPose(Pose2d pose) {
     return Commands.runOnce(() -> RobotState.getInstance().resetPose(pose));
+  }
+
+  public static Command driveAndScoreCommand() {
+    return Commands.none();
+  }
+
+  public static Command driveAndIntakeFromStationCommand() {
+    return Commands.none();
   }
 
   /**
@@ -91,18 +100,5 @@ public class AutoCommands {
   public static Command notificationCommand(
       Notification notification) { // Jank but gud enough for now
     return Commands.runOnce(() -> Elastic.sendNotification(notification));
-  }
-
-  public static Command scoreCommand(Superstructure superstructure) {
-    return scoreCommand(superstructure, false);
-  }
-
-  public static Command scoreCommand(Superstructure superstructure, boolean isLeftL1) {
-    return Commands.none();
-    // superstructure
-    //     .scoreCommand(isLeftL1)
-    //     .alongWith(notificationCommand("Scoring"))
-    //     .withTimeout(scoreWaitTime)
-    //     .withName("Score");
   }
 }

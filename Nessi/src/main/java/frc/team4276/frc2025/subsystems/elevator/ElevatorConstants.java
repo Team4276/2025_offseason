@@ -20,9 +20,11 @@ public class ElevatorConstants {
   public static final LoggedTunableNumber l3 =
       new LoggedTunableNumber("Elevator/L3Position", Units.inchesToMeters(21.76));
   public static final LoggedTunableNumber lowAlgae =
-      new LoggedTunableNumber("Elevator/LoAlgae", Units.inchesToMeters(0.0));
+      new LoggedTunableNumber("Elevator/LoAlgae", Units.inchesToMeters(10.0));
   public static final LoggedTunableNumber highAlgae =
       new LoggedTunableNumber("Elevator/HiAlgae", Units.inchesToMeters(17.32));
+  public static final LoggedTunableNumber algaeChop =
+      new LoggedTunableNumber("Elevator/AlgaeChop", Units.inchesToMeters(0.5));
   public static final LoggedTunableNumber climb =
       new LoggedTunableNumber("Elevator/Climb", Units.inchesToMeters(0.0));
 
@@ -35,6 +37,7 @@ public class ElevatorConstants {
     L3(l3),
     LOW_ALGAE(lowAlgae),
     HIGH_ALGAE(highAlgae),
+    ALGAE_CHOP(algaeChop),
     CLIMB(climb);
 
     private final DoubleSupplier elevatorSetpointSupplier;

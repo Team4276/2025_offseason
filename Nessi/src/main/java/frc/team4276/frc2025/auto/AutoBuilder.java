@@ -1,6 +1,6 @@
-package frc.team4276.frc2025.commands.auto;
+package frc.team4276.frc2025.auto;
 
-import static frc.team4276.frc2025.commands.auto.AutoCommands.*;
+import static frc.team4276.frc2025.auto.AutoFactory.*;
 import static frc.team4276.util.path.PPUtil.*;
 
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
@@ -34,15 +34,16 @@ public class AutoBuilder {
 
   public Command taxiAuto(String name) {
     // Check if need to flip paths to barge side
-    // boolean mirrorLengthwise = autoSelector.getResponses().get(0) == AutoQuestionResponse.NO;
+    // boolean mirrorLengthwise = autoSelector.getResponses().get(0) ==
+    // AutoQuestionResponse.NO;
 
     // var traj = getPathPlannerTrajectoryFromChoreo(name, mirrorLengthwise);
 
     return Commands.none();
     // Commands.sequence(
-    //     resetPose(traj.getInitialPose()),
-    //     Commands.waitSeconds(autoSelector.getDelayInput()),
-    //     new DriveTrajectory(drive, traj));
+    // resetPose(traj.getInitialPose()),
+    // Commands.waitSeconds(autoSelector.getDelayInput()),
+    // new DriveTrajectory(drive, traj));
   }
 
   public Command sandyEggosAuto(
@@ -140,16 +141,16 @@ public class AutoBuilder {
         getPathPlannerTrajectoryFromChoreo("c_st_sc_" + reefs.get(0).toString(), mirrorLengthwise);
 
     // scoringCommand.addCommands(
-    //     Commands.sequence(
-    //             new DriveTrajectory(drive, traj1),
-    //             Commands.waitUntil(
-    //                 () ->
-    //                     superstructure.atGoal()
-    //                         && superstructure.getGoal() != WantedSuperState.STOW),
-    //             scoreCommand(superstructure))
-    //         .deadlineFor(
-    //             Commands.waitSeconds(traj1.getTotalTimeSeconds() - 0.75)
-    //                 .andThen(superstructure.setGoalCommand(toGoal(levels.get(0))))));
+    // Commands.sequence(
+    // new DriveTrajectory(drive, traj1),
+    // Commands.waitUntil(
+    // () ->
+    // superstructure.atGoal()
+    // && superstructure.getGoal() != WantedSuperState.STOW),
+    // scoreCommand(superstructure))
+    // .deadlineFor(
+    // Commands.waitSeconds(traj1.getTotalTimeSeconds() - 0.75)
+    // .andThen(superstructure.setGoalCommand(toGoal(levels.get(0))))));
 
     for (int i = 1; i < reefs.size(); i++) {
       var traj =
@@ -168,24 +169,24 @@ public class AutoBuilder {
   private Command speedyCoral(PathPlannerTrajectory traj, WantedSuperState goal) {
     return Commands.none();
     // Commands.sequence(
-    //         new DriveTrajectory(drive, traj)
-    //             .andThen(
-    //                 Commands.waitUntil(
-    //                     () ->
-    //                         superstructure.atGoal()
-    //                             && superstructure.getGoal() != WantedSuperState.STOW),
-    //                 scoreCommand(superstructure)))
-    //     .deadlineFor(
-    //         superstructure
-    //             .setGoalCommand(WantedSuperState.INTAKE_CORAL)
-    //             .withDeadline(
-    //                 Commands.either(
-    //                     Commands.waitSeconds(1.0),
-    //                     Commands.waitUntil(() -> superstructure.hasCoral()),
-    //                     () -> Constants.isSim))
-    //             .andThen(
-    //                 Commands.waitSeconds(traj.getTotalTimeSeconds() - 0.75)
-    //                     .andThen(superstructure.setGoalCommand(goal))));
+    // new DriveTrajectory(drive, traj)
+    // .andThen(
+    // Commands.waitUntil(
+    // () ->
+    // superstructure.atGoal()
+    // && superstructure.getGoal() != WantedSuperState.STOW),
+    // scoreCommand(superstructure)))
+    // .deadlineFor(
+    // superstructure
+    // .setGoalCommand(WantedSuperState.INTAKE_CORAL)
+    // .withDeadline(
+    // Commands.either(
+    // Commands.waitSeconds(1.0),
+    // Commands.waitUntil(() -> superstructure.hasCoral()),
+    // () -> Constants.isSim))
+    // .andThen(
+    // Commands.waitSeconds(traj.getTotalTimeSeconds() - 0.75)
+    // .andThen(superstructure.setGoalCommand(goal))));
   }
 
   public Command shrimpleOcrAuto(
@@ -229,24 +230,24 @@ public class AutoBuilder {
       PathPlannerTrajectory scTraj, PathPlannerTrajectory intTraj, WantedSuperState goal) {
     return Commands.none();
     // Commands.sequence(
-    //     Commands.sequence(
-    //             new DriveTrajectory(drive, scTraj),
-    //             Commands.waitUntil(
-    //                 () ->
-    //                     superstructure.atGoal()
-    //                         && superstructure.getGoal() != WantedSuperState.STOW),
-    //             scoreCommand(superstructure))
-    //         .deadlineFor(
-    //             Commands.waitSeconds(scTraj.getTotalTimeSeconds() - 0.75)
-    //                 .andThen(superstructure.setGoalCommand(goal))),
-    //     superstructure
-    //         .setGoalCommand(WantedSuperState.INTAKE_CORAL)
-    //         .withDeadline(
-    //             new DriveTrajectory(drive, intTraj)
-    //                 .andThen(
-    //                     Constants.isSim
-    //                         ? Commands.waitSeconds(intakeWaitTime)
-    //                         : Commands.waitUntil(() -> superstructure.hasCoral()))));
+    // Commands.sequence(
+    // new DriveTrajectory(drive, scTraj),
+    // Commands.waitUntil(
+    // () ->
+    // superstructure.atGoal()
+    // && superstructure.getGoal() != WantedSuperState.STOW),
+    // scoreCommand(superstructure))
+    // .deadlineFor(
+    // Commands.waitSeconds(scTraj.getTotalTimeSeconds() - 0.75)
+    // .andThen(superstructure.setGoalCommand(goal))),
+    // superstructure
+    // .setGoalCommand(WantedSuperState.INTAKE_CORAL)
+    // .withDeadline(
+    // new DriveTrajectory(drive, intTraj)
+    // .andThen(
+    // Constants.isSim
+    // ? Commands.waitSeconds(intakeWaitTime)
+    // : Commands.waitUntil(() -> superstructure.hasCoral()))));
   }
 
   public Command shrimpleOcrAuto(List<AutoQuestionResponse> reefs) {

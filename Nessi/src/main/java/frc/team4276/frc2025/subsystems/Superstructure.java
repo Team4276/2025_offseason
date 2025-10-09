@@ -3,6 +3,7 @@ package frc.team4276.frc2025.subsystems;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -97,7 +98,7 @@ public class Superstructure extends SubsystemBase {
   private boolean shouldEjectCoral = false;
 
   private SuperstructureConstants.ReefSelectionMethod reefSelectionMethod =
-      ReefSelectionMethod.ROTATION;
+      ReefSelectionMethod.POSE;
   private boolean isL1Mode = false;
 
   public enum GamePieceState {
@@ -419,6 +420,8 @@ public class Superstructure extends SubsystemBase {
     }
   }
 
+  private final Timer coralEjectTimer = new Timer();
+
   private void scoreTeleopL1(ScoringSide side) {
     driveToScoringPoseAndReturnIfObservationPresent(side);
 
@@ -437,8 +440,13 @@ public class Superstructure extends SubsystemBase {
       }
 
       if (!hasCoral()) {
+        coralEjectTimer.restart();
+      }
+
+      if (coralEjectTimer.get() > 0.25 && coralEjectTimer.isRunning()) {
         setWantedSuperState(WantedSuperState.STOW);
         driveToReturnPose(side);
+        coralEjectTimer.stop();
       }
     }
   }
@@ -547,7 +555,8 @@ public class Superstructure extends SubsystemBase {
 
   private void reefAlgae() {
     if (elevator.getWantedElevatorPose() != ElevatorPosition.HIGH_ALGAE
-        && elevator.getWantedElevatorPose() != ElevatorPosition.LOW_ALGAE) {
+        && elevator.getWantedElevatorPose() != ElevatorPosition.LOW_ALGAE
+        && elevator.getWantedElevatorPose() != ElevatorPosition.ALGAE_CHOP) {
       driveToReturnPose(ScoringSide.RIGHT); // TODO: make it work with left and right
 
       if (drive.isAtAutoAlignPose()) {
@@ -562,7 +571,7 @@ public class Superstructure extends SubsystemBase {
       }
 
       if (drive.isAtPose(getReefSide().getSecondReef().getScore())) {
-        elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.STOW);
+        elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.ALGAE_CHOP);
         driveToReturnPose(ScoringSide.RIGHT);
       }
     }
