@@ -17,6 +17,9 @@ public class Vision extends SubsystemBase {
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
 
+  private final List<Pose3d> allTagPoses = new LinkedList<>();
+  private final List<Pose3d> allRobotPoses = new LinkedList<>();
+
   public Vision(VisionIO... io) {
     this.io = io;
 
@@ -37,9 +40,9 @@ public class Vision extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // Initialize logging values
-    List<Pose3d> allTagPoses = new LinkedList<>();
-    List<Pose3d> allRobotPoses = new LinkedList<>();
+    allTagPoses.clear();
+    allRobotPoses.clear();
+
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
       io[cameraIndex].updateInputs(inputs[cameraIndex]);
       Logger.processInputs("Vision/Camera_" + Integer.toString(cameraIndex), inputs[cameraIndex]);
@@ -64,7 +67,8 @@ public class Vision extends SubsystemBase {
         robotPoses.add(new Pose3d(tagObs.robotPose()));
       }
 
-      RobotState.getInstance().addVisionObservation(inputs[cameraIndex].targetObservations);
+      RobotState.getInstance()
+          .addVisionObservation(cameraIndex, inputs[cameraIndex].targetObservations);
 
       if (enableInstanceLogging) {
         // Log camera datadata

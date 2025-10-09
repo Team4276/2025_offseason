@@ -1,11 +1,16 @@
 package frc.team4276.frc2025.subsystems;
 
-import static frc.team4276.frc2025.subsystems.SuperstructureConstants.*;
-
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.team4276.frc2025.RobotState;
+import frc.team4276.frc2025.RobotState.VisionMode;
+import frc.team4276.frc2025.field.FieldConstants.ReefSide;
+import frc.team4276.frc2025.subsystems.SuperstructureConstants.AutomationLevel;
+import frc.team4276.frc2025.subsystems.SuperstructureConstants.ReefSelectionMethod;
+import frc.team4276.frc2025.subsystems.SuperstructureConstants.ScoringSide;
 import frc.team4276.frc2025.subsystems.clopper.Clopper;
 import frc.team4276.frc2025.subsystems.drive.Drive;
 import frc.team4276.frc2025.subsystems.elevator.Elevator;
@@ -75,8 +80,11 @@ public class Superstructure extends SubsystemBase {
     CUSTOM
   }
 
-  private WantedSuperState wantedSuperState = WantedSuperState.STOPPED;
-  private CurrentSuperState currentSuperState = CurrentSuperState.STOPPED;
+  private WantedSuperState wantedSuperState = WantedSuperState.STOW;
+  private CurrentSuperState currentSuperState = CurrentSuperState.STOW;
+
+  private final double elevatorRaiseThreshold = 2.5;
+  private boolean shouldEjectCoral = false;
 
   private SuperstructureConstants.ReefSelectionMethod reefSelectionMethod =
       ReefSelectionMethod.ROTATION;
@@ -354,40 +362,150 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void stopped() {
+    drive.setWantedState(Drive.WantedState.IDLE);
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.STOW);
     endeffector.setWantedState(EndEffector.WantedState.IDLE);
     clopper.setWantedState(Clopper.WantedState.IDLE);
   }
 
   private void stow() {
+    drive.setWantedState(Drive.WantedState.TELEOP);
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.STOW);
     endeffector.setWantedState(EndEffector.WantedState.IDLE);
     clopper.setWantedState(Clopper.WantedState.STOW);
   }
 
   private void purgeGamePiece() {
+    drive.setWantedState(Drive.WantedState.TELEOP);
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.INTAKE);
     endeffector.setWantedState(EndEffector.WantedState.PURGE);
   }
 
   private void intakeCoral() {
+    shouldEjectCoral = false;
+    drive.setWantedState(Drive.WantedState.TELEOP);
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.INTAKE);
     endeffector.setWantedState(EndEffector.WantedState.INTAKE);
   }
 
-  private void scoreManualL1() {}
+  private void scoreManualL1() {
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L1);
 
-  private void scoreTeleopL1(ScoringSide side) {}
+    if (!hasCoral()) {
+      setWantedSuperState(WantedSuperState.STOW);
+    }
+  }
 
-  private void scoreTeleopL2(ScoringSide side) {}
+  private void scoreTeleopL1(ScoringSide side) {
+    driveToScoringPoseAndReturnIfObservationPresent(side);
 
-  private void scoreTeleopL3(ScoringSide side) {}
+    if (shouldRaiseToScoringPosition()) {
+      elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L1);
+    }
 
-  private void scoreAutoL1(ScoringSide side) {}
+    shouldEjectCoral = isReadyToEjectTeleopCoral();
 
-  private void scoreAutoL2() {}
+    if (shouldEjectCoral) {
+      if (automationLevel == AutomationLevel.AUTO_RELEASE) {
+        endeffector.setWantedState(
+            side == ScoringSide.LEFT
+                ? EndEffector.WantedState.SCORE_LEFT_L1
+                : EndEffector.WantedState.SCORE_RIGHT_L1);
+      }
 
-  private void scoreAutoL3() {}
+      if (!hasCoral()) {
+        setWantedSuperState(WantedSuperState.STOW);
+        driveToReturnPose(side);
+      }
+    }
+  }
+
+  private void scoreTeleopL2(ScoringSide side) {
+    driveToScoringPoseAndReturnIfObservationPresent(side);
+
+    if (shouldRaiseToScoringPosition()) {
+      elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L2);
+    }
+
+    shouldEjectCoral = isReadyToEjectTeleopCoral();
+
+    if (shouldEjectCoral) {
+      if (automationLevel == AutomationLevel.AUTO_RELEASE) {
+        endeffector.setWantedState(EndEffector.WantedState.SCORE);
+      }
+
+      if (!hasCoral()) {
+        setWantedSuperState(WantedSuperState.STOW);
+        driveToReturnPose(side);
+      }
+    }
+  }
+
+  private void scoreTeleopL3(ScoringSide side) {
+    driveToScoringPoseAndReturnIfObservationPresent(side);
+
+    if (shouldRaiseToScoringPosition()) {
+      elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L3);
+    }
+
+    shouldEjectCoral = isReadyToEjectTeleopCoral();
+
+    if (shouldEjectCoral) {
+      if (automationLevel == AutomationLevel.AUTO_RELEASE) {
+        endeffector.setWantedState(EndEffector.WantedState.SCORE);
+      }
+
+      if (!hasCoral()) {
+        setWantedSuperState(WantedSuperState.STOW);
+        driveToReturnPose(side);
+      }
+    }
+  }
+
+  private void scoreAutoL1(ScoringSide side) {
+    if (shouldRaiseToScoringPosition()) {
+      elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L1);
+    }
+
+    shouldEjectCoral = isReadyToEjectAutoCoral();
+
+    if (shouldEjectCoral) {
+      if (automationLevel == AutomationLevel.AUTO_RELEASE) {
+        endeffector.setWantedState(
+            side == ScoringSide.LEFT
+                ? EndEffector.WantedState.SCORE_LEFT_L1
+                : EndEffector.WantedState.SCORE_RIGHT_L1);
+      }
+    }
+  }
+
+  private void scoreAutoL2() {
+    if (shouldRaiseToScoringPosition()) {
+      elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L2);
+    }
+
+    shouldEjectCoral = isReadyToEjectAutoCoral();
+
+    if (shouldEjectCoral) {
+      if (automationLevel == AutomationLevel.AUTO_RELEASE) {
+        endeffector.setWantedState(EndEffector.WantedState.SCORE);
+      }
+    }
+  }
+
+  private void scoreAutoL3() {
+    if (shouldRaiseToScoringPosition()) {
+      elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L3);
+    }
+
+    shouldEjectCoral = isReadyToEjectAutoCoral();
+
+    if (shouldEjectCoral) {
+      if (automationLevel == AutomationLevel.AUTO_RELEASE) {
+        endeffector.setWantedState(EndEffector.WantedState.SCORE);
+      }
+    }
+  }
 
   private void manualL1(ScoringSide side) {
     endeffector.setWantedState(
@@ -404,19 +522,91 @@ public class Superstructure extends SubsystemBase {
     endeffector.setWantedState(EndEffector.WantedState.SCORE);
   }
 
-  private void reefAlgae() {}
+  private void reefAlgae() {
+    if (elevator.getWantedElevatorPose() != ElevatorPosition.HIGH_ALGAE
+        && elevator.getWantedElevatorPose() != ElevatorPosition.LOW_ALGAE) {
+      driveToReturnPose(ScoringSide.RIGHT); // TODO: make it work with left and right
+
+      if (drive.isAtAutoAlignPose()) {
+        elevator.setWantedState(
+            Elevator.WantedState.MOVE_TO_POSITION,
+            isHighAlgaePickup() ? ElevatorPosition.HIGH_ALGAE : ElevatorPosition.LOW_ALGAE);
+      }
+
+    } else {
+      if (elevator.atGoal()) {
+        driveToScoringPoseAndReturnIfObservationPresent(ScoringSide.RIGHT);
+      }
+
+      if (drive.isAtPose(getReefSide().getSecondReef().getScore())) {
+        elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.STOW);
+        driveToReturnPose(ScoringSide.RIGHT);
+      }
+    }
+  }
 
   private void climbPrep() {
+    drive.setWantedState(Drive.WantedState.TELEOP);
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.CLIMB);
     clopper.setWantedState(Clopper.WantedState.CLIMB_PREP);
   }
 
   private void climb() {
+    drive.setWantedState(Drive.WantedState.TELEOP);
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.CLIMB);
     clopper.setWantedState(Clopper.WantedState.CLIMB);
   }
 
   private void custom() {}
+
+  private boolean driveToScoringPoseAndReturnIfObservationPresent(ScoringSide side) {
+    RobotState.getInstance().setVisionMode(VisionMode.ACCEPT_ALL);
+
+    var reefSide = getReefSide();
+
+    var reef = side == ScoringSide.LEFT ? reefSide.getFirstReef() : reefSide.getSecondReef();
+
+    drive.setAutoAlignPose(reef.getScore());
+
+    return false;
+  }
+
+  private void driveToReturnPose(ScoringSide side) {
+    RobotState.getInstance().setVisionMode(VisionMode.ACCEPT_ALL);
+
+    var reefSide = getReefSide();
+
+    var reef = side == ScoringSide.LEFT ? reefSide.getFirstReef() : reefSide.getSecondReef();
+
+    drive.setAutoAlignPose(reef.getAlign());
+  }
+
+  private ReefSide getReefSide() {
+    return RobotState.getInstance()
+        .getSideFromTagId(RobotState.getInstance().getTagIdFromClosestPoseSide())
+        .get();
+  }
+
+  private boolean shouldRaiseToScoringPosition() {
+    return drive.isAtAutoAlignPose(elevatorRaiseThreshold);
+  }
+
+  private boolean isReadyToEjectTeleopCoral() {
+    return elevator.atGoal() && drive.isAtAutoAlignPose();
+  }
+
+  private boolean isReadyToEjectAutoCoral() {
+    return elevator.atGoal() && drive.isAtAutoAlignPose();
+  }
+
+  private boolean isHighAlgaePickup() {
+    var reefSide =
+        RobotState.getInstance()
+            .getSideFromTagId(RobotState.getInstance().getTagIdFromClosestPoseSide())
+            .get();
+
+    return reefSide == ReefSide.AB || reefSide == ReefSide.EF || reefSide == ReefSide.IJ;
+  }
 
   public CurrentSuperState getCurrentSuperState() {
     return currentSuperState;
@@ -456,20 +646,11 @@ public class Superstructure extends SubsystemBase {
       WantedSuperState noPieceCondition,
       WantedSuperState l1ModeCondition) {
 
-    return switch (gamePieceState) {
-      case CORAL:
-        {
-          if (isL1Mode) {
-            yield setStateCommand(l1ModeCondition);
-          }
-
-          yield setStateCommand(hasCoralCondition);
-        }
-      case NO_BANANA:
-        {
-          yield setStateCommand(noPieceCondition);
-        }
-    };
+    return Commands.either(
+        Commands.either(
+            setStateCommand(l1ModeCondition), setStateCommand(hasCoralCondition), () -> isL1Mode),
+        setStateCommand(noPieceCondition),
+        this::hasCoral);
   }
 
   public void setL1ModeEnabled(boolean enabled) {

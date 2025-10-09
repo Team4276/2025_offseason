@@ -110,13 +110,16 @@ public class Drive extends SubsystemBase {
       new LoggedTunablePID(4.0, 0, 0, Units.degreesToRadians(1.0), "Drive/HeadingAlign");
   private final LoggedTunableNumber autoAlignTranslationTolerance =
       new LoggedTunableNumber("Drive/AutoAlign/TranslationTolerance", 0.1);
+  private final LoggedTunableNumber headingAlignTolerance =
+      new LoggedTunableNumber("Drive/HeadingAlign/HeadingTolerance", 1.0);
 
   private Pose2d desiredAutoAlignPose = Pose2d.kZero;
   private final double autoAlignStaticFrictionConstant = maxVelocityMPS * 0.04;
 
   private Rotation2d desiredHeadingAlignRotation = Rotation2d.kZero;
 
-  private double maxAutoAlignDriveOutput = maxVelocityMPS * 0.67;
+  private double maxAutoAlignDriveTranslationOutput = maxVelocityMPS * 0.67;
+  private double maxAutoAlignDriveRotationOutput = maxAngularVelocity * 0.67;
 
   private final LoggedTunablePID trajectoryXController =
       new LoggedTunablePID(4.0, 0, 0, 0.1, "Drive/Trajectory/TranslationX");
@@ -391,7 +394,8 @@ public class Drive extends SubsystemBase {
                   + autoAlignStaticFrictionConstant;
         }
 
-        translationLinearOutput = Math.min(translationLinearOutput, maxAutoAlignDriveOutput);
+        translationLinearOutput =
+            Math.min(translationLinearOutput, maxAutoAlignDriveTranslationOutput);
 
         double vx = translationLinearOutput * translationError.getAngle().getCos();
         double vy = translationLinearOutput * translationError.getAngle().getCos();
@@ -399,7 +403,10 @@ public class Drive extends SubsystemBase {
         double autoAlignThetaError =
             MathUtil.angleModulus(
                 currentPose.getRotation().minus(desiredAutoAlignPose.getRotation()).getRadians());
-        double omega = headingAlignController.calculate(autoAlignThetaError, 0.0);
+        double omega =
+            Math.min(
+                headingAlignController.calculate(autoAlignThetaError, 0.0),
+                maxAutoAlignDriveRotationOutput);
 
         if (Math.abs(autoAlignThetaError) < headingAlignController.getErrorTolerance()) {
           omega = 0.0;
@@ -452,7 +459,7 @@ public class Drive extends SubsystemBase {
 
   private ChassisSpeeds getJoystickRequestedSpeeds() {
     double linearMagnitude =
-        Math.hypot(controller.getLeftWithDeadband().x, controller.getLeftWithDeadband().y);
+        Math.hypot(-controller.getLeftWithDeadband().y, -controller.getLeftWithDeadband().x);
 
     // Square magnitude for more precise control
     linearMagnitude = linearMagnitude * linearMagnitude;
@@ -464,7 +471,7 @@ public class Drive extends SubsystemBase {
           new Translation2d(
                   linearMagnitude,
                   new Rotation2d(
-                      controller.getLeftWithDeadband().x, controller.getLeftWithDeadband().y))
+                      controller.getLeftWithDeadband().y, controller.getLeftWithDeadband().x))
               .times(driveSpeedScalar.linearVelocityScalar);
     }
 
@@ -472,7 +479,7 @@ public class Drive extends SubsystemBase {
     double omega =
         Math.copySign(
                 controller.getRightWithDeadband().x * controller.getRightWithDeadband().x,
-                controller.getRightWithDeadband().x)
+                -controller.getRightWithDeadband().x)
             * driveSpeedScalar.angularVelocityScalar;
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -480,7 +487,7 @@ public class Drive extends SubsystemBase {
             linearVelocity.getX() * DriveConstants.maxVelocityMPS,
             linearVelocity.getY() * DriveConstants.maxVelocityMPS,
             omega * DriveConstants.maxAngularVelocity),
-        AllianceFlipUtil.apply(Rotation2d.kZero));
+        AllianceFlipUtil.apply(Rotation2d.k180deg));
   }
 
   private double getTrajectoryTime() {
@@ -494,6 +501,34 @@ public class Drive extends SubsystemBase {
 
   public boolean isTrajectoryFinished() {
     return getTrajectoryTime() > choreoTrajectory.getTotalTime();
+  }
+
+  public boolean isAtAutoAlignPose() {
+    return isAtAutoAlignPose(autoAlignTranslationTolerance.getAsDouble());
+  }
+
+  public boolean isAtAutoAlignPose(double tolerance) {
+    return isAtPose(desiredAutoAlignPose, tolerance);
+  }
+
+  public boolean isAtPose(Pose2d pose) {
+    return isAtPose(pose, autoAlignTranslationTolerance.getAsDouble());
+  }
+
+  public boolean isAtPose(Pose2d pose, double tolerance) {
+    return Math.abs(
+            RobotState.getInstance().getEstimatedPose().minus(pose).getTranslation().getNorm())
+        < tolerance;
+  }
+
+  public boolean isAtHeadingAlignPose() {
+    return Math.abs(
+            RobotState.getInstance()
+                .getEstimatedPose()
+                .getRotation()
+                .minus(desiredHeadingAlignRotation)
+                .getDegrees())
+        < headingAlignTolerance.getAsDouble();
   }
 
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */
@@ -512,5 +547,15 @@ public class Drive extends SubsystemBase {
 
   public void setDriveSpeedScalar(DriveSpeedScalar driveSpeedScalar) {
     this.driveSpeedScalar = driveSpeedScalar;
+  }
+
+  public void setAutoAlignPose(Pose2d pose) {
+    setWantedState(WantedState.AUTO_ALIGN);
+    desiredAutoAlignPose = pose;
+  }
+
+  public void setHeadingAlignRotation(Rotation2d rotation) {
+    setWantedState(WantedState.HEADING_ALIGN);
+    desiredHeadingAlignRotation = rotation;
   }
 }

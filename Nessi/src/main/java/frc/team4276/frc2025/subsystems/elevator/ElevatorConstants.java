@@ -78,10 +78,10 @@ public class ElevatorConstants {
 
   public static final double maxPosition = Units.inchesToMeters(25.5); // m
 
-  public static final double tolerance = 0.05; // m
+  public static final double tolerance = 0.01; // m
 
-  public static final LoggedTunableNumber kS = new LoggedTunableNumber("Elevator/kS", 0.20);
-  public static final LoggedTunableNumber kV = new LoggedTunableNumber("Elevator/kV", 7.8);
-  public static final LoggedTunableNumber kG = new LoggedTunableNumber("Elevator/kG", 0.15);
-  public static final LoggedTunableNumber kA = new LoggedTunableNumber("Elevator/kA", 0.01);
+  public static final LoggedTunableNumber kS = new LoggedTunableNumber("Elevator/kS", 0.0);
+  public static final LoggedTunableNumber kV = new LoggedTunableNumber("Elevator/kV", 4.38);
+  public static final LoggedTunableNumber kG = new LoggedTunableNumber("Elevator/kG", 0.52);
+  public static final LoggedTunableNumber kA = new LoggedTunableNumber("Elevator/kA", 0.08);
 }

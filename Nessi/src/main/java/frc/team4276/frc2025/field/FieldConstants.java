@@ -104,19 +104,23 @@ public class FieldConstants {
   }
 
   public enum ReefSide {
-    AB(Reef.A, Reef.B),
-    CD(Reef.C, Reef.D),
-    EF(Reef.F, Reef.E),
-    GH(Reef.H, Reef.G),
-    IJ(Reef.J, Reef.I),
-    KL(Reef.K, Reef.L);
+    AB(Reef.A, Reef.B, 0, 0),
+    CD(Reef.C, Reef.D, 0, 0),
+    EF(Reef.F, Reef.E, 0, 0),
+    GH(Reef.H, Reef.G, 0, 0),
+    IJ(Reef.J, Reef.I, 0, 0),
+    KL(Reef.K, Reef.L, 0, 0);
 
     private final Reef firstReef; // Left
     private final Reef secondReef; // Right
+    private final int redTagId;
+    private final int blueTagId;
 
-    private ReefSide(Reef firstReef, Reef secondReef) {
+    private ReefSide(Reef firstReef, Reef secondReef, int redTagId, int blueTagId) {
       this.firstReef = firstReef;
       this.secondReef = secondReef;
+      this.redTagId = redTagId;
+      this.blueTagId = blueTagId;
     }
 
     public Reef getFirstReef() {
@@ -125,6 +129,10 @@ public class FieldConstants {
 
     public Reef getSecondReef() {
       return secondReef;
+    }
+
+    public int getTagId() {
+      return AllianceFlipUtil.shouldFlip() ? redTagId : blueTagId;
     }
   }
 }

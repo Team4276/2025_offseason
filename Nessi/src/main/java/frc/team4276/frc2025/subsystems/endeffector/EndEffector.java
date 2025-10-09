@@ -74,13 +74,18 @@ public class EndEffector extends SubsystemBase {
     return switch (wantedState) {
       case INTAKE:
         {
-          if (inputs.backTripped && inputs.frontRead) {
+          if ((inputs.backTripped && inputs.frontRead && systemState == SystemState.REVERSING)
+              || (systemState == SystemState.IDLE && hasCoral())) {
             yield SystemState.IDLE;
 
-          } else if (inputs.backCleared) {
+          } else if ((inputs.backCleared && systemState == SystemState.INTAKING_SLOW)
+              || systemState == SystemState.REVERSING) {
             yield SystemState.REVERSING;
 
-          } else if (inputs.backTripped && !inputs.frontRead) {
+          } else if ((inputs.backTripped
+                  && !inputs.frontRead
+                  && systemState == SystemState.INTAKING)
+              || systemState == SystemState.INTAKING_SLOW) {
             yield SystemState.INTAKING_SLOW;
 
           } else {

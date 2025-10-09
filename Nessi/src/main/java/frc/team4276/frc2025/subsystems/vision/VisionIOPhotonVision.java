@@ -51,6 +51,7 @@ public class VisionIOPhotonVision implements VisionIO {
 
     tagIds.clear();
     txtyObservations.clear();
+    cornerListPairs.clear();
 
     // Read new camera observations
     for (var result : camera.getAllUnreadResults()) {
@@ -60,6 +61,7 @@ public class VisionIOPhotonVision implements VisionIO {
           tagIds.add((short) target.fiducialId);
 
           if (target.fiducialId != -1) {
+            cornerListPairs.clear();
             for (int i = 0; i < 4; i++) {
               cornerListPairs.add(
                   new Pair<>(target.detectedCorners.get(i).x, target.detectedCorners.get(i).y));
@@ -148,12 +150,12 @@ public class VisionIOPhotonVision implements VisionIO {
 
     var correctedCameraRotation = robotRotation.plus(robotToCamera.getRotation().toRotation2d());
 
-    var scaledTx = Rotation2d.fromDegrees(horizontalAngleToTarget.div(1.0).getDegrees());
+    var scaledTx = Rotation2d.fromDegrees(-horizontalAngleToTarget.div(1.0).getDegrees());
 
     var cameraToRobotCenter =
         this.robotToCamera.inverse().getTranslation().toTranslation2d().rotateBy(robotRotation);
 
-    var angleToTag = correctedCameraRotation.minus(scaledTx);
+    var angleToTag = scaledTx.plus(correctedCameraRotation);
 
     var translation = new Translation2d(distanceToTagMeters, angleToTag);
     var translatedPose = tagPose.getTranslation().minus(translation);

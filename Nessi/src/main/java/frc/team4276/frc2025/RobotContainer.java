@@ -429,7 +429,8 @@ public class RobotContainer {
         .povDown()
         .onTrue(
             Commands.runOnce(() -> superstructure.setL1ModeEnabled(false))
-                .alongWith(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW)));
+                .alongWith(
+                    superstructure.setStateCommand(Superstructure.WantedSuperState.STOW, true)));
   }
 
   private void configureDemoBindings() {
