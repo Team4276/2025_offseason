@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.field.FieldConstants.ReefSide;
 import frc.team4276.frc2025.subsystems.vision.VisionIO.TagObservation;
-import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.ElasticUI;
 import java.util.HashMap;
 import java.util.Map;
@@ -149,7 +148,7 @@ public class RobotState {
         yield observationTagId == getTagIdFromClosestPoseSide();
 
       case ACCEPT_SIDE:
-        yield observationTagId == reefSideToAccept.getTagId();
+        yield observationTagId == FieldConstants.getTagIdFromSide(reefSideToAccept);
     };
   }
 
@@ -200,37 +199,6 @@ public class RobotState {
 
   public Optional<Pose2d> getEstimatedOdomPoseAtTime(double timestamp) {
     return odomPoseBuffer.getSample(timestamp);
-  }
-
-  public int getTagIdFromSide(ReefSide side) {
-    return switch (side) {
-      case AB -> AllianceFlipUtil.shouldFlip() ? 7 : 18;
-      case CD -> AllianceFlipUtil.shouldFlip() ? 8 : 17;
-      case EF -> AllianceFlipUtil.shouldFlip() ? 9 : 22;
-      case GH -> AllianceFlipUtil.shouldFlip() ? 10 : 21;
-      case IJ -> AllianceFlipUtil.shouldFlip() ? 11 : 20;
-      case KL -> AllianceFlipUtil.shouldFlip() ? 6 : 19;
-    };
-  }
-
-  public Optional<ReefSide> getSideFromTagId(int id) {
-    return switch (id) {
-      case 6 -> Optional.of(ReefSide.KL);
-      case 7 -> Optional.of(ReefSide.AB);
-      case 8 -> Optional.of(ReefSide.CD);
-      case 9 -> Optional.of(ReefSide.EF);
-      case 10 -> Optional.of(ReefSide.GH);
-      case 11 -> Optional.of(ReefSide.IJ);
-
-      case 17 -> Optional.of(ReefSide.CD);
-      case 18 -> Optional.of(ReefSide.AB);
-      case 19 -> Optional.of(ReefSide.KL);
-      case 20 -> Optional.of(ReefSide.IJ);
-      case 21 -> Optional.of(ReefSide.GH);
-      case 22 -> Optional.of(ReefSide.EF);
-
-      default -> Optional.empty();
-    };
   }
 
   private boolean useTrajectorySetpoint() {

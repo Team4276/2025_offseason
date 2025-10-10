@@ -1,33 +1,71 @@
 package frc.team4276.frc2025.auto;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.frc2025.RobotContainer;
 import frc.team4276.frc2025.RobotState;
 import frc.team4276.frc2025.field.FieldConstants;
+import frc.team4276.frc2025.field.FieldConstants.ReefSide;
+import frc.team4276.frc2025.subsystems.Superstructure.WantedSuperState;
+import frc.team4276.frc2025.subsystems.SuperstructureConstants.ScoringSide;
 import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.Elastic;
 import frc.team4276.util.dashboard.Elastic.Notification;
 import frc.team4276.util.dashboard.Elastic.Notification.NotificationLevel;
 
+@SuppressWarnings("unused")
 public class AutoFactory {
   private final RobotContainer robotContainer;
 
-  public AutoFactory(RobotContainer robotContainer) {
+  public AutoFactory(final RobotContainer robotContainer) {
     this.robotContainer = robotContainer;
   }
 
-  public static Command resetPose(Pose2d pose) {
+  Command idle() {
+    return resetPose(
+        new Pose2d(
+            RobotState.getInstance().getEstimatedPose().getTranslation(),
+            AllianceFlipUtil.apply(Rotation2d.kZero)));
+  }
+
+  private Command resetPose(Pose2d pose) {
     return Commands.runOnce(() -> RobotState.getInstance().resetPose(pose));
   }
 
-  public static Command driveAndScoreCommand() {
-    return Commands.none();
+  private Command driveToPoint(Pose2d pose) {
+    return Commands.runOnce(() -> robotContainer.getDrive().setAutoAlignPose(pose))
+        .until(() -> robotContainer.getDrive().isAtAutoAlignPose());
   }
 
-  public static Command driveAndIntakeFromStationCommand() {
-    return Commands.none();
+  private Command setState(WantedSuperState state) {
+    return robotContainer.getSuperstructure().setStateCommand(state);
+  }
+
+  private Command waitForCoralIntake() {
+    return Commands.waitUntil(() -> !robotContainer.getSuperstructure().hasCoral());
+  }
+
+  private Command driveAndScore(ReefSide reefSide, WantedSuperState state) {
+    var side =
+        (state == WantedSuperState.SCORE_LEFT_L1
+                || state == WantedSuperState.SCORE_LEFT_L2
+                || state == WantedSuperState.SCORE_LEFT_L3)
+            ? ScoringSide.LEFT
+            : ScoringSide.RIGHT;
+
+    return driveToPoint(FieldConstants.getCoralScorePose(reefSide, side))
+        .alongWith(setState(state))
+        .andThen(waitForCoralIntake().raceWith(Commands.waitSeconds(1.0)))
+        .andThen(Commands.waitSeconds(0.25));
+  }
+
+  private Command driveAndIntakeFromStation(Pose2d intakePose) {
+    return (driveToPoint(intakePose)
+            .alongWith(setState(WantedSuperState.INTAKE_CORAL))
+            .andThen(Commands.waitSeconds(3.0)))
+        .raceWith(waitForCoralIntake());
   }
 
   /**
@@ -37,7 +75,7 @@ public class AutoFactory {
    * @param towardsCenterline Whether to wait until passed x coordinate towards center line or away
    *     from center line
    */
-  public static boolean xCrossed(double xPosition, boolean towardsCenterline) {
+  private boolean xCrossed(double xPosition, boolean towardsCenterline) {
     Pose2d robotPose = RobotState.getInstance().getTrajectorySetpoint();
     if (AllianceFlipUtil.shouldFlip()) {
       if (towardsCenterline) {
@@ -55,7 +93,7 @@ public class AutoFactory {
   }
 
   /** Command that waits for x boundary to be crossed. See {@link #xCrossed(double, boolean)} */
-  public static Command waitUntilXCrossed(double xPosition, boolean towardsCenterline) {
+  private Command waitUntilXCrossed(double xPosition, boolean towardsCenterline) {
     return Commands.waitUntil(() -> xCrossed(xPosition, towardsCenterline));
   }
 
@@ -66,7 +104,7 @@ public class AutoFactory {
    * @param towardsCenterline Whether to wait until passed y coordinate towards center line or away
    *     from center line
    */
-  public static boolean yCrossed(double yPosition, boolean towardsCenterline) {
+  private boolean yCrossed(double yPosition, boolean towardsCenterline) {
     Pose2d robotPose = RobotState.getInstance().getTrajectorySetpoint();
     if (AllianceFlipUtil.shouldFlip()) {
       if (towardsCenterline) {
@@ -84,21 +122,20 @@ public class AutoFactory {
   }
 
   /** Command that waits for y boundary to be crossed. See {@link #yCrossed(double, boolean)} */
-  public static Command waitUntilYCrossed(double yPosition, boolean towardsCenterline) {
+  private Command waitUntilYCrossed(double yPosition, boolean towardsCenterline) {
     return Commands.waitUntil(() -> yCrossed(yPosition, towardsCenterline));
   }
 
-  public static Command printCommand(String text) {
+  private Command printCommand(String text) {
     return Commands.runOnce(() -> System.out.println(text));
   }
 
-  public static Command notificationCommand(String notification) {
+  private Command notificationCommand(String notification) {
     return notificationCommand(
         new Notification(NotificationLevel.INFO, "Auto Action", notification, 3000));
   }
 
-  public static Command notificationCommand(
-      Notification notification) { // Jank but gud enough for now
+  private Command notificationCommand(Notification notification) { // Jank but gud enough for now
     return Commands.runOnce(() -> Elastic.sendNotification(notification));
   }
 }

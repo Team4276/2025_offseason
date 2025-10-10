@@ -1,4 +1,4 @@
-package frc.team4276.frc2025;
+package frc.team4276.frc2025.auto;
 
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;

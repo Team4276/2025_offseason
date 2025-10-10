@@ -9,9 +9,7 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.team4276.frc2025.AutoSelector.AutoQuestion;
-import frc.team4276.frc2025.AutoSelector.AutoQuestionResponse;
-import frc.team4276.frc2025.auto.AutoBuilder;
+import frc.team4276.frc2025.auto.AutoSelector;
 import frc.team4276.frc2025.subsystems.Superstructure;
 import frc.team4276.frc2025.subsystems.Superstructure.CurrentSuperState;
 import frc.team4276.frc2025.subsystems.Superstructure.WantedSuperState;
@@ -41,7 +39,6 @@ import frc.team4276.util.ios.ModuleIO;
 import frc.team4276.util.ios.ModuleIOSim;
 import frc.team4276.util.ios.ModuleIOSpark;
 import frc.team4276.util.ios.VisionIOPhotonVisionSim;
-import java.util.List;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 /**
@@ -60,7 +57,6 @@ public class RobotContainer {
   private TogglesIO toggles;
 
   private final Superstructure superstructure;
-  private final AutoBuilder autoBuilder;
 
   // Controller
   private enum BindSetting {
@@ -169,7 +165,6 @@ public class RobotContainer {
 
     superstructure = new Superstructure(drive, vision, elevator, endEffector, clopper, toggles);
 
-    autoBuilder = new AutoBuilder(superstructure, autoSelector);
     configureAutos();
     configureButtonBindings();
 
@@ -177,125 +172,7 @@ public class RobotContainer {
     DriverStation.silenceJoystickConnectionWarning(true);
   }
 
-  private void configureAutos() {
-    // Set up auto routines
-    autoSelector.addRoutine(
-        "RP Shrimple OCR Auto",
-        List.of(
-            new AutoQuestion(
-                "Is Processor Side?", List.of(AutoQuestionResponse.YES, AutoQuestionResponse.NO))),
-        () -> autoBuilder.rpShrimpleOcrAuto());
-    autoSelector.addRoutine(
-        "(FBAE) Shrimple OCR Auto",
-        List.of(
-            new AutoQuestion(
-                "Is Processor Side?", List.of(AutoQuestionResponse.YES, AutoQuestionResponse.NO))),
-        () ->
-            autoBuilder.shrimpleOcrAuto(
-                List.of(
-                    AutoQuestionResponse.F,
-                    AutoQuestionResponse.B,
-                    AutoQuestionResponse.A,
-                    AutoQuestionResponse.E)));
-    autoSelector.addRoutine(
-        "Sandy Eggos Auto",
-        List.of(
-            new AutoQuestion(
-                "Is Processor Side?", List.of(AutoQuestionResponse.YES, AutoQuestionResponse.NO)),
-            new AutoQuestion(
-                "Is Sweaty Start?", List.of(AutoQuestionResponse.YES, AutoQuestionResponse.NO)),
-            new AutoQuestion(
-                "Is Close Intake?", List.of(AutoQuestionResponse.YES, AutoQuestionResponse.NO)),
-            new AutoQuestion("[Empty Question]", List.of(AutoQuestionResponse.EMPTY)),
-            new AutoQuestion("[Empty Question]", List.of(AutoQuestionResponse.EMPTY)),
-            new AutoQuestion(
-                "1st Reef?",
-                List.of(
-                    AutoQuestionResponse.EMPTY,
-                    AutoQuestionResponse.E,
-                    AutoQuestionResponse.F,
-                    AutoQuestionResponse.G)),
-            new AutoQuestion(
-                "2nd Reef?",
-                List.of(
-                    AutoQuestionResponse.EMPTY,
-                    AutoQuestionResponse.A,
-                    AutoQuestionResponse.B,
-                    AutoQuestionResponse.C,
-                    AutoQuestionResponse.D,
-                    AutoQuestionResponse.E,
-                    AutoQuestionResponse.F)),
-            new AutoQuestion(
-                "3rd Reef?",
-                List.of(
-                    AutoQuestionResponse.EMPTY,
-                    AutoQuestionResponse.A,
-                    AutoQuestionResponse.B,
-                    AutoQuestionResponse.C,
-                    AutoQuestionResponse.D,
-                    AutoQuestionResponse.E,
-                    AutoQuestionResponse.F)),
-            new AutoQuestion(
-                "4th Reef?",
-                List.of(
-                    AutoQuestionResponse.EMPTY,
-                    AutoQuestionResponse.A,
-                    AutoQuestionResponse.B,
-                    AutoQuestionResponse.C,
-                    AutoQuestionResponse.D,
-                    AutoQuestionResponse.E,
-                    AutoQuestionResponse.F))),
-        () -> autoBuilder.sandyEggosAuto());
-    autoSelector.addRoutine(
-        "Shrimple OCR Auto",
-        List.of(
-            new AutoQuestion(
-                "Is Processor Side?", List.of(AutoQuestionResponse.YES, AutoQuestionResponse.NO)),
-            new AutoQuestion(
-                "1st Reef?",
-                List.of(
-                    AutoQuestionResponse.EMPTY,
-                    AutoQuestionResponse.E,
-                    AutoQuestionResponse.F,
-                    AutoQuestionResponse.G)),
-            new AutoQuestion(
-                "2nd Reef?",
-                List.of(
-                    AutoQuestionResponse.EMPTY,
-                    AutoQuestionResponse.A,
-                    AutoQuestionResponse.B,
-                    AutoQuestionResponse.C,
-                    AutoQuestionResponse.D,
-                    AutoQuestionResponse.E,
-                    AutoQuestionResponse.F)),
-            new AutoQuestion(
-                "3rd Reef?",
-                List.of(
-                    AutoQuestionResponse.EMPTY,
-                    AutoQuestionResponse.A,
-                    AutoQuestionResponse.B,
-                    AutoQuestionResponse.C,
-                    AutoQuestionResponse.D,
-                    AutoQuestionResponse.E,
-                    AutoQuestionResponse.F)),
-            new AutoQuestion(
-                "4th Reef?",
-                List.of(
-                    AutoQuestionResponse.EMPTY,
-                    AutoQuestionResponse.A,
-                    AutoQuestionResponse.B,
-                    AutoQuestionResponse.C,
-                    AutoQuestionResponse.D,
-                    AutoQuestionResponse.E,
-                    AutoQuestionResponse.F))),
-        () -> autoBuilder.shrimpleOcrAuto());
-    autoSelector.addRoutine(
-        "Taxi Wall",
-        List.of(
-            new AutoQuestion(
-                "Is Processor Side?", List.of(AutoQuestionResponse.YES, AutoQuestionResponse.NO))),
-        () -> autoBuilder.taxiAuto("t_WALL"));
-  }
+  private void configureAutos() {}
 
   /**
    * Use this method to define your button->command mappings. Buttons can be created by
@@ -508,5 +385,9 @@ public class RobotContainer {
 
   public Superstructure getSuperstructure() {
     return superstructure;
+  }
+
+  public Drive getDrive() {
+    return drive;
   }
 }

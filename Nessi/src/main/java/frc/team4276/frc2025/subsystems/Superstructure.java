@@ -25,6 +25,7 @@ import frc.team4276.frc2025.subsystems.toggles.TogglesIOInputsAutoLogged;
 import frc.team4276.frc2025.subsystems.vision.Vision;
 import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.hid.ViXController;
+import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
 public class Superstructure extends SubsystemBase {
@@ -399,14 +400,16 @@ public class Superstructure extends SubsystemBase {
   private void intakeCoral() {
     shouldEjectCoral = false;
 
-    var rotation =
-        AllianceFlipUtil.apply(
-            AllianceFlipUtil.applyY(RobotState.getInstance().getEstimatedPose().getY())
-                    < FieldConstants.fieldWidth / 2
-                ? Rotation2d.fromDegrees(55.0)
-                : Rotation2d.fromDegrees(305.0));
+    if (DriverStation.isTeleop()) {
+      var rotation =
+          AllianceFlipUtil.apply(
+              AllianceFlipUtil.applyY(RobotState.getInstance().getEstimatedPose().getY())
+                      < FieldConstants.fieldWidth / 2
+                  ? Rotation2d.fromDegrees(55.0)
+                  : Rotation2d.fromDegrees(305.0));
 
-    drive.setHeadingAlignRotation(rotation);
+      drive.setHeadingAlignRotation(rotation);
+    }
 
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.INTAKE);
     endeffector.setWantedState(EndEffector.WantedState.INTAKE);
@@ -445,7 +448,7 @@ public class Superstructure extends SubsystemBase {
 
       if (coralEjectTimer.get() > 0.25 && coralEjectTimer.isRunning()) {
         setWantedSuperState(WantedSuperState.STOW);
-        driveToReturnPose(side);
+        driveToReturnPose();
         coralEjectTimer.stop();
       }
     }
@@ -466,8 +469,13 @@ public class Superstructure extends SubsystemBase {
       }
 
       if (!hasCoral()) {
+        coralEjectTimer.restart();
+      }
+
+      if (coralEjectTimer.get() > 0.25 && coralEjectTimer.isRunning()) {
         setWantedSuperState(WantedSuperState.STOW);
-        driveToReturnPose(side);
+        driveToReturnPose();
+        coralEjectTimer.stop();
       }
     }
   }
@@ -487,8 +495,13 @@ public class Superstructure extends SubsystemBase {
       }
 
       if (!hasCoral()) {
+        coralEjectTimer.restart();
+      }
+
+      if (coralEjectTimer.get() > 0.25 && coralEjectTimer.isRunning()) {
         setWantedSuperState(WantedSuperState.STOW);
-        driveToReturnPose(side);
+        driveToReturnPose();
+        coralEjectTimer.stop();
       }
     }
   }
@@ -501,12 +514,10 @@ public class Superstructure extends SubsystemBase {
     shouldEjectCoral = isReadyToEjectAutoCoral();
 
     if (shouldEjectCoral) {
-      if (automationLevel == AutomationLevel.AUTO_RELEASE) {
-        endeffector.setWantedState(
-            side == ScoringSide.LEFT
-                ? EndEffector.WantedState.SCORE_LEFT_L1
-                : EndEffector.WantedState.SCORE_RIGHT_L1);
-      }
+      endeffector.setWantedState(
+          side == ScoringSide.LEFT
+              ? EndEffector.WantedState.SCORE_LEFT_L1
+              : EndEffector.WantedState.SCORE_RIGHT_L1);
     }
   }
 
@@ -518,9 +529,7 @@ public class Superstructure extends SubsystemBase {
     shouldEjectCoral = isReadyToEjectAutoCoral();
 
     if (shouldEjectCoral) {
-      if (automationLevel == AutomationLevel.AUTO_RELEASE) {
-        endeffector.setWantedState(EndEffector.WantedState.SCORE);
-      }
+      endeffector.setWantedState(EndEffector.WantedState.SCORE);
     }
   }
 
@@ -532,9 +541,7 @@ public class Superstructure extends SubsystemBase {
     shouldEjectCoral = isReadyToEjectAutoCoral();
 
     if (shouldEjectCoral) {
-      if (automationLevel == AutomationLevel.AUTO_RELEASE) {
-        endeffector.setWantedState(EndEffector.WantedState.SCORE);
-      }
+      endeffector.setWantedState(EndEffector.WantedState.SCORE);
     }
   }
 
@@ -557,7 +564,7 @@ public class Superstructure extends SubsystemBase {
     if (elevator.getWantedElevatorPose() != ElevatorPosition.HIGH_ALGAE
         && elevator.getWantedElevatorPose() != ElevatorPosition.LOW_ALGAE
         && elevator.getWantedElevatorPose() != ElevatorPosition.ALGAE_CHOP) {
-      driveToReturnPose(ScoringSide.RIGHT); // TODO: make it work with left and right
+      driveToReturnPose();
 
       if (drive.isAtAutoAlignPose()) {
         elevator.setWantedState(
@@ -567,12 +574,12 @@ public class Superstructure extends SubsystemBase {
 
     } else {
       if (elevator.atGoal()) {
-        driveToScoringPoseAndReturnIfObservationPresent(ScoringSide.RIGHT);
+        driveToAlgaePickupPose();
       }
 
       if (drive.isAtPose(getReefSide().getSecondReef().getScore())) {
         elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.ALGAE_CHOP);
-        driveToReturnPose(ScoringSide.RIGHT);
+        driveToReturnPose();
       }
     }
   }
@@ -607,7 +614,7 @@ public class Superstructure extends SubsystemBase {
     return false;
   }
 
-  private void driveToReturnPose(ScoringSide side) {
+  private boolean driveToAlgaePickupPose() {
     RobotState.getInstance()
         .setVisionMode(
             reefSelectionMethod == ReefSelectionMethod.POSE
@@ -616,14 +623,39 @@ public class Superstructure extends SubsystemBase {
 
     var reefSide = getReefSide();
 
-    var reef = side == ScoringSide.LEFT ? reefSide.getFirstReef() : reefSide.getSecondReef();
+    var reef =
+        RobotState.getInstance()
+            .getEstimatedPose()
+            .nearest(
+                List.of(
+                    reefSide.getFirstReef().getAlgaePickup(),
+                    reefSide.getSecondReef().getAlgaePickup()));
 
-    drive.setAutoAlignPose(reef.getAlign());
+    drive.setAutoAlignPose(reef);
+
+    return false;
+  }
+
+  private void driveToReturnPose() {
+    RobotState.getInstance()
+        .setVisionMode(
+            reefSelectionMethod == ReefSelectionMethod.POSE
+                ? VisionMode.POSE_BASED
+                : VisionMode.ROTATION_BASED);
+
+    var reefSide = getReefSide();
+
+    var reef =
+        RobotState.getInstance()
+            .getEstimatedPose()
+            .nearest(
+                List.of(reefSide.getFirstReef().getAlign(), reefSide.getSecondReef().getAlign()));
+
+    drive.setAutoAlignPose(reef);
   }
 
   private ReefSide getReefSide() {
-    return RobotState.getInstance()
-        .getSideFromTagId(RobotState.getInstance().getTagIdFromClosestPoseSide())
+    return FieldConstants.getSideFromTagId(RobotState.getInstance().getTagIdFromClosestPoseSide())
         .get();
   }
 
@@ -641,8 +673,7 @@ public class Superstructure extends SubsystemBase {
 
   private boolean isHighAlgaePickup() {
     var reefSide =
-        RobotState.getInstance()
-            .getSideFromTagId(RobotState.getInstance().getTagIdFromClosestPoseSide())
+        FieldConstants.getSideFromTagId(RobotState.getInstance().getTagIdFromClosestPoseSide())
             .get();
 
     return reefSide == ReefSide.AB || reefSide == ReefSide.EF || reefSide == ReefSide.IJ;
