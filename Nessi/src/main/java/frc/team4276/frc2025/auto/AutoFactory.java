@@ -1,5 +1,7 @@
 package frc.team4276.frc2025.auto;
 
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -10,10 +12,12 @@ import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.field.FieldConstants.ReefSide;
 import frc.team4276.frc2025.subsystems.Superstructure.WantedSuperState;
 import frc.team4276.frc2025.subsystems.SuperstructureConstants.ScoringSide;
+import frc.team4276.frc2025.subsystems.elevator.ElevatorConstants.ElevatorPosition;
 import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.Elastic;
 import frc.team4276.util.dashboard.Elastic.Notification;
 import frc.team4276.util.dashboard.Elastic.Notification.NotificationLevel;
+import frc.team4276.util.path.ChoreoUtil;
 
 @SuppressWarnings("unused")
 public class AutoFactory {
@@ -28,6 +32,17 @@ public class AutoFactory {
         new Pose2d(
             RobotState.getInstance().getEstimatedPose().getTranslation(),
             AllianceFlipUtil.apply(Rotation2d.kZero)));
+  }
+
+  Command taxiCommand(boolean isProcessorSide) {
+    Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("t_WALL", !isProcessorSide);
+
+    return resetPose(traj.getInitialPose(false).get());
+  }
+
+  Command poofsProcessorSide() {
+    return resetPose(AllianceFlipUtil.apply(FieldConstants.blueProcessorSideStart))
+        .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2));
   }
 
   private Command resetPose(Pose2d pose) {
@@ -66,6 +81,28 @@ public class AutoFactory {
             .alongWith(setState(WantedSuperState.INTAKE_CORAL))
             .andThen(Commands.waitSeconds(3.0)))
         .raceWith(waitForCoralIntake());
+  }
+
+  private Command driveAndAlgaePickup(ReefSide reefSide, ScoringSide side) {
+    return driveToPoint(FieldConstants.getClearReefPose(reefSide, side))
+        .andThen(setState(WantedSuperState.REEF_ALGAE))
+        .andThen(
+            Commands.waitUntil(
+                () ->
+                    robotContainer.getElevator().getWantedElevatorPose()
+                        == ElevatorPosition.ALGAE_CHOP))
+        .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isAtAutoAlignPose()))
+        .andThen(
+            Commands.runOnce(
+                () ->
+                    robotContainer
+                        .getDrive()
+                        .setHeadingAlignRotation(
+                            FieldConstants.getClearReefPose(reefSide, side)
+                                .getRotation()
+                                .plus(
+                                    Rotation2d.fromDegrees(
+                                        side == ScoringSide.LEFT ? -90.0 : 90.0)))));
   }
 
   /**

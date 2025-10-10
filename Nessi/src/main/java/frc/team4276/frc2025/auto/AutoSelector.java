@@ -121,7 +121,9 @@ public class AutoSelector extends VirtualSubsystem {
 
   /** Returns the selected auto command. */
   public Command getCommand() {
-    return prevErrorMsg == validAutoText ? lastRoutine.command().get() : Commands.none();
+    return prevErrorMsg == validAutoText
+        ? lastRoutine.command().get().beforeStarting(Commands.waitSeconds(getDelayInput()))
+        : Commands.none();
   }
 
   /** Returns the name of the selected routine. */

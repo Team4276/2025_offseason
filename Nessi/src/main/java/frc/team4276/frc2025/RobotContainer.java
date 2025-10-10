@@ -390,4 +390,8 @@ public class RobotContainer {
   public Drive getDrive() {
     return drive;
   }
+
+  public Elevator getElevator() {
+    return elevator;
+  }
 }

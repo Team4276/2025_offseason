@@ -153,7 +153,7 @@ public class RobotState {
   }
 
   public int getTagIdFromClosestRotationSide() {
-    return -1;
+    return 8;
   }
 
   public int getTagIdFromClosestPoseSide() {

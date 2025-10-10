@@ -216,4 +216,7 @@ public class FieldConstants {
     return AllianceFlipUtil.apply(
         blueReefCenter.plus(new Transform2d(reefToPose.rotateBy(angle), angle)));
   }
+
+  public static final Pose2d blueProcessorSideStart =
+      new Pose2d(7.1415, 1.905, Rotation2d.kCCW_90deg);
 }

@@ -447,7 +447,6 @@ public class Superstructure extends SubsystemBase {
       }
 
       if (coralEjectTimer.get() > 0.25 && coralEjectTimer.isRunning()) {
-        setWantedSuperState(WantedSuperState.STOW);
         driveToReturnPose();
         coralEjectTimer.stop();
       }
@@ -473,7 +472,6 @@ public class Superstructure extends SubsystemBase {
       }
 
       if (coralEjectTimer.get() > 0.25 && coralEjectTimer.isRunning()) {
-        setWantedSuperState(WantedSuperState.STOW);
         driveToReturnPose();
         coralEjectTimer.stop();
       }
@@ -499,7 +497,6 @@ public class Superstructure extends SubsystemBase {
       }
 
       if (coralEjectTimer.get() > 0.25 && coralEjectTimer.isRunning()) {
-        setWantedSuperState(WantedSuperState.STOW);
         driveToReturnPose();
         coralEjectTimer.stop();
       }
@@ -573,7 +570,7 @@ public class Superstructure extends SubsystemBase {
       }
 
     } else {
-      if (elevator.atGoal()) {
+      if (elevator.atGoal() && elevator.getWantedElevatorPose() != ElevatorPosition.ALGAE_CHOP) {
         driveToAlgaePickupPose();
       }
 
@@ -605,11 +602,7 @@ public class Superstructure extends SubsystemBase {
                 ? VisionMode.POSE_BASED
                 : VisionMode.ROTATION_BASED);
 
-    var reefSide = getReefSide();
-
-    var reef = side == ScoringSide.LEFT ? reefSide.getFirstReef() : reefSide.getSecondReef();
-
-    drive.setAutoAlignPose(reef.getScore());
+    drive.setAutoAlignPose(FieldConstants.getCoralScorePose(getReefSide(), side));
 
     return false;
   }
@@ -655,7 +648,10 @@ public class Superstructure extends SubsystemBase {
   }
 
   private ReefSide getReefSide() {
-    return FieldConstants.getSideFromTagId(RobotState.getInstance().getTagIdFromClosestPoseSide())
+    return FieldConstants.getSideFromTagId(
+            reefSelectionMethod == ReefSelectionMethod.POSE
+                ? RobotState.getInstance().getTagIdFromClosestPoseSide()
+                : RobotState.getInstance().getTagIdFromClosestRotationSide())
         .get();
   }
 
