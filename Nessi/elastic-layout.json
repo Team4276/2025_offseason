@@ -437,243 +437,14 @@
         "layouts": [],
         "containers": [
           {
-            "title": "DriveMode",
-            "x": 384.0,
-            "y": 544.0,
-            "width": 192.0,
-            "height": 160.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "/AdvantageKit/RealOutputs/Drive/DriveMode",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "Swerve Drive",
-            "x": 1280.0,
-            "y": 192.0,
-            "width": 256.0,
-            "height": 256.0,
-            "type": "SwerveDrive",
-            "properties": {
-              "topic": "/SmartDashboard/Swerve Drive",
-              "period": 0.06,
-              "show_robot_rotation": true,
-              "rotation_unit": "Radians"
-            }
-          },
-          {
-            "title": "CurrentGoal (S)",
-            "x": 192.0,
-            "y": 544.0,
-            "width": 192.0,
-            "height": 160.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "/AdvantageKit/RealOutputs/Superstructure/CurrentGoal",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "L1",
-            "x": 768.0,
-            "y": 576.0,
-            "width": 320.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/ScoringHelper/L1",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4294902010,
-              "false_color": 4278190080,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "L2",
-            "x": 768.0,
+            "title": "Drive Mode",
+            "x": 480.0,
             "y": 448.0,
-            "width": 320.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/ScoringHelper/L2",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4294902010,
-              "false_color": 4278190080,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "L3",
-            "x": 768.0,
-            "y": 320.0,
-            "width": 320.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/ScoringHelper/L3",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4294902010,
-              "false_color": 4278190080,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "HasCoral",
-            "x": 1280.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 192.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/AdvantageKit/RealOutputs/Superstructure/HasCoral",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4278255360,
-              "false_color": 4294901760,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "Match Time",
-            "x": 768.0,
-            "y": 0.0,
-            "width": 320.0,
-            "height": 192.0,
-            "type": "Match Time",
-            "properties": {
-              "topic": "/SmartDashboard/Match Time",
-              "period": 0.06,
-              "data_type": "double",
-              "time_display_mode": "Minutes and Seconds",
-              "red_start_time": 15,
-              "yellow_start_time": 30
-            }
-          },
-          {
-            "title": "Heading Align Enabled",
-            "x": 0.0,
-            "y": 544.0,
-            "width": 192.0,
-            "height": 160.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Heading Align Enabled",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4278255360,
-              "false_color": 4294901760,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "Drive Align Enabled",
-            "x": 576.0,
-            "y": 544.0,
-            "width": 192.0,
-            "height": 160.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Drive Align Enabled",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4278255360,
-              "false_color": 4294901760,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
-            "title": "Field",
-            "x": 1088.0,
-            "y": 448.0,
-            "width": 448.0,
+            "width": 480.0,
             "height": 256.0,
-            "type": "Field",
-            "properties": {
-              "topic": "/SmartDashboard/Field",
-              "period": 0.06,
-              "field_game": "Reefscape",
-              "robot_width": 0.85,
-              "robot_length": 0.85,
-              "show_other_objects": true,
-              "show_trajectories": true,
-              "field_rotation": 0.0,
-              "robot_color": 4291163190,
-              "trajectory_color": 4294967295
-            }
-          },
-          {
-            "title": "USB Camera 0",
-            "x": 0.0,
-            "y": 0.0,
-            "width": 768.0,
-            "height": 544.0,
-            "type": "Camera Stream",
-            "properties": {
-              "topic": "/CameraPublisher/USB Camera 0",
-              "period": 0.02,
-              "rotation_turns": 2
-            }
-          },
-          {
-            "title": "SelectedReef",
-            "x": 1088.0,
-            "y": 0.0,
-            "width": 192.0,
-            "height": 448.0,
             "type": "Large Text Display",
             "properties": {
-              "topic": "/AdvantageKit/RealOutputs/ScoringHelper/SelectedReef",
-              "period": 0.02,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "Net",
-            "x": 768.0,
-            "y": 192.0,
-            "width": 320.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/ScoringHelper/Net",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4278255513,
-              "false_color": 4278190080,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "Teleop (Exp)",
-      "grid_layout": {
-        "layouts": [],
-        "containers": [
-          {
-            "title": "DriveMode",
-            "x": 384.0,
-            "y": 544.0,
-            "width": 384.0,
-            "height": 160.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "/AdvantageKit/RealOutputs/Drive/DriveMode",
+              "topic": "/AdvantageKit/RealOutputs/Drive/SystemState",
               "period": 0.06,
               "data_type": "string"
             }
@@ -683,7 +454,7 @@
             "x": 1216.0,
             "y": 0.0,
             "width": 320.0,
-            "height": 320.0,
+            "height": 352.0,
             "type": "SwerveDrive",
             "properties": {
               "topic": "/SmartDashboard/Swerve Drive",
@@ -693,24 +464,24 @@
             }
           },
           {
-            "title": "CurrentGoal (S)",
+            "title": "Current Super State",
             "x": 0.0,
-            "y": 544.0,
-            "width": 384.0,
-            "height": 160.0,
+            "y": 448.0,
+            "width": 480.0,
+            "height": 256.0,
             "type": "Large Text Display",
             "properties": {
-              "topic": "/AdvantageKit/RealOutputs/Superstructure/CurrentGoal",
+              "topic": "/AdvantageKit/RealOutputs/Superstructure/CurrentSuperState",
               "period": 0.06,
               "data_type": "string"
             }
           },
           {
             "title": "HasCoral",
-            "x": 992.0,
-            "y": 0.0,
-            "width": 224.0,
-            "height": 320.0,
+            "x": 960.0,
+            "y": 352.0,
+            "width": 576.0,
+            "height": 352.0,
             "type": "Boolean Box",
             "properties": {
               "topic": "/AdvantageKit/RealOutputs/Superstructure/HasCoral",
@@ -724,10 +495,10 @@
           },
           {
             "title": "Match Time",
-            "x": 768.0,
+            "x": 960.0,
             "y": 0.0,
-            "width": 224.0,
-            "height": 320.0,
+            "width": 256.0,
+            "height": 352.0,
             "type": "Match Time",
             "properties": {
               "topic": "/SmartDashboard/Match Time",
@@ -740,10 +511,10 @@
           },
           {
             "title": "Field",
-            "x": 768.0,
-            "y": 320.0,
-            "width": 768.0,
-            "height": 384.0,
+            "x": 0.0,
+            "y": 0.0,
+            "width": 960.0,
+            "height": 448.0,
             "type": "Field",
             "properties": {
               "topic": "/SmartDashboard/Field",
@@ -756,19 +527,6 @@
               "field_rotation": 0.0,
               "robot_color": 4291163190,
               "trajectory_color": 4294967295
-            }
-          },
-          {
-            "title": "USB Camera 0",
-            "x": 0.0,
-            "y": 0.0,
-            "width": 768.0,
-            "height": 544.0,
-            "type": "Camera Stream",
-            "properties": {
-              "topic": "/CameraPublisher/USB Camera 0",
-              "period": 0.02,
-              "rotation_turns": 2
             }
           }
         ]

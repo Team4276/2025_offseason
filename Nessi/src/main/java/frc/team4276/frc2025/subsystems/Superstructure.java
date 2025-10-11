@@ -1,5 +1,6 @@
 package frc.team4276.frc2025.subsystems;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -27,6 +28,7 @@ import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.hid.ViXController;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 public class Superstructure extends SubsystemBase {
   private final Drive drive;
@@ -51,6 +53,8 @@ public class Superstructure extends SubsystemBase {
     PURGE_GAMEPIECE,
     INTAKE_CORAL,
     SCORE_MANUAL_L1,
+    SCORE_MANUAL_L2,
+    SCORE_MANUAL_L3,
     SCORE_LEFT_L1,
     SCORE_LEFT_L2,
     SCORE_LEFT_L3,
@@ -59,6 +63,7 @@ public class Superstructure extends SubsystemBase {
     SCORE_RIGHT_L3,
     MANUAL_SCORE,
     REEF_ALGAE,
+    MANUAL_REEF_ALGAE,
     CLIMB_PREP,
     CLIMB,
     CUSTOM
@@ -70,6 +75,8 @@ public class Superstructure extends SubsystemBase {
     PURGE_GAMEPIECE,
     INTAKE_CORAL,
     SCORE_MANUAL_L1,
+    SCORE_MANUAL_L2,
+    SCORE_MANUAL_L3,
     SCORE_LEFT_TELEOP_L1,
     SCORE_LEFT_TELEOP_L2,
     SCORE_LEFT_TELEOP_L3,
@@ -87,6 +94,7 @@ public class Superstructure extends SubsystemBase {
     MANUAL_L2,
     MANUAL_L3,
     REEF_ALGAE,
+    MANUAL_REEF_ALGAE,
     CLIMB_PREP,
     CLIMB,
     CUSTOM
@@ -109,6 +117,9 @@ public class Superstructure extends SubsystemBase {
 
   private GamePieceState gamePieceState = GamePieceState.NO_BANANA;
 
+  private LoggedNetworkBoolean isManualMode =
+      new LoggedNetworkBoolean("Superstructure/isManualMode", false);
+
   public Superstructure(
       Drive drive,
       Vision vision,
@@ -126,6 +137,7 @@ public class Superstructure extends SubsystemBase {
     elevator.setCoastOverride(() -> togglesInputs.elevatorCoastOverride);
     clopper.setCoastOverride(
         () -> togglesInputs.hopperCoastOverride, () -> togglesInputs.climberCoastOverride);
+    drive.setGyroCalibrationSwitch(() -> togglesInputs.gyroCalibrationSwitch);
   }
 
   @Override
@@ -166,6 +178,21 @@ public class Superstructure extends SubsystemBase {
 
       case INTAKE_CORAL:
         currentSuperState = CurrentSuperState.INTAKE_CORAL;
+
+        break;
+
+      case SCORE_MANUAL_L1:
+        currentSuperState = CurrentSuperState.SCORE_MANUAL_L1;
+
+        break;
+
+      case SCORE_MANUAL_L2:
+        currentSuperState = CurrentSuperState.SCORE_MANUAL_L2;
+
+        break;
+
+      case SCORE_MANUAL_L3:
+        currentSuperState = CurrentSuperState.SCORE_MANUAL_L3;
 
         break;
 
@@ -219,6 +246,11 @@ public class Superstructure extends SubsystemBase {
 
       case MANUAL_SCORE:
         switch (currentSuperState) {
+          case SCORE_MANUAL_L1:
+            currentSuperState = CurrentSuperState.MANUAL_LEFT_L1;
+
+            break;
+
           case SCORE_LEFT_TELEOP_L1:
             currentSuperState = CurrentSuperState.MANUAL_LEFT_L1;
 
@@ -231,12 +263,14 @@ public class Superstructure extends SubsystemBase {
 
           case SCORE_RIGHT_TELEOP_L2:
           case SCORE_LEFT_TELEOP_L2:
+          case SCORE_MANUAL_L2:
             currentSuperState = CurrentSuperState.MANUAL_L2;
 
             break;
 
           case SCORE_RIGHT_TELEOP_L3:
           case SCORE_LEFT_TELEOP_L3:
+          case SCORE_MANUAL_L3:
             currentSuperState = CurrentSuperState.MANUAL_L3;
 
             break;
@@ -286,6 +320,14 @@ public class Superstructure extends SubsystemBase {
 
       case SCORE_MANUAL_L1:
         scoreManualL1();
+        break;
+
+      case SCORE_MANUAL_L2:
+        scoreManualL2();
+        break;
+
+      case SCORE_MANUAL_L3:
+        scoreManualL3();
         break;
 
       case SCORE_LEFT_TELEOP_L1:
@@ -378,6 +420,8 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void stopped() {
+    RobotState.getInstance().setVisionMode(VisionMode.REJECT_ALL);
+    RobotState.getInstance().setSideToAccept(ScoringSide.BOTH);
     drive.setWantedState(Drive.WantedState.IDLE);
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.STOW);
     endeffector.setWantedState(EndEffector.WantedState.IDLE);
@@ -385,6 +429,8 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void stow() {
+    RobotState.getInstance().setVisionMode(VisionMode.POSE_BASED);
+    RobotState.getInstance().setSideToAccept(ScoringSide.BOTH);
     drive.setWantedState(Drive.WantedState.TELEOP);
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.STOW);
     endeffector.setWantedState(EndEffector.WantedState.IDLE);
@@ -398,9 +444,12 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void intakeCoral() {
+    RobotState.getInstance().setVisionMode(VisionMode.POSE_BASED);
+    RobotState.getInstance().setSideToAccept(ScoringSide.BOTH);
+
     shouldEjectCoral = false;
 
-    if (DriverStation.isTeleop()) {
+    if (DriverStation.isTeleop() && !isManualMode.get()) {
       var rotation =
           AllianceFlipUtil.apply(
               AllianceFlipUtil.applyY(RobotState.getInstance().getEstimatedPose().getY())
@@ -419,14 +468,47 @@ public class Superstructure extends SubsystemBase {
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L1);
 
     if (!hasCoral()) {
-      setWantedSuperState(WantedSuperState.STOW);
+      coralEjectTimer.restart();
+    }
+
+    if (coralEjectTimer.get() > 0.25 && coralEjectTimer.isRunning()) {
+      driveToReturnPose();
+      coralEjectTimer.stop();
+    }
+  }
+
+  private void scoreManualL2() {
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L2);
+
+    if (!hasCoral()) {
+      coralEjectTimer.restart();
+    }
+
+    if (coralEjectTimer.get() > 0.25 && coralEjectTimer.isRunning()) {
+      driveToReturnPose();
+      coralEjectTimer.stop();
+    }
+  }
+
+  private void scoreManualL3() {
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L3);
+
+    if (!hasCoral()) {
+      coralEjectTimer.restart();
+    }
+
+    if (coralEjectTimer.get() > 0.25 && coralEjectTimer.isRunning()) {
+      driveToReturnPose();
+      coralEjectTimer.stop();
     }
   }
 
   private final Timer coralEjectTimer = new Timer();
 
   private void scoreTeleopL1(ScoringSide side) {
-    driveToScoringPoseAndReturnIfObservationPresent(side);
+    if (hasCoral()) {
+      driveToScoringPoseAndReturnIfObservationIsPresent(side);
+    }
 
     if (shouldRaiseToScoringPosition()) {
       elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L1);
@@ -454,7 +536,9 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void scoreTeleopL2(ScoringSide side) {
-    driveToScoringPoseAndReturnIfObservationPresent(side);
+    if (hasCoral()) {
+      driveToScoringPoseAndReturnIfObservationIsPresent(side);
+    }
 
     if (shouldRaiseToScoringPosition()) {
       elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L2);
@@ -479,7 +563,9 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void scoreTeleopL3(ScoringSide side) {
-    driveToScoringPoseAndReturnIfObservationPresent(side);
+    if (hasCoral()) {
+      driveToScoringPoseAndReturnIfObservationIsPresent(side);
+    }
 
     if (shouldRaiseToScoringPosition()) {
       elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L3);
@@ -504,6 +590,13 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void scoreAutoL1(ScoringSide side) {
+    RobotState.getInstance()
+        .setVisionMode(
+            reefSelectionMethod == ReefSelectionMethod.POSE
+                ? VisionMode.POSE_BASED
+                : VisionMode.ROTATION_BASED);
+    RobotState.getInstance().setSideToAccept(side);
+
     if (shouldRaiseToScoringPosition()) {
       elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L1);
     }
@@ -519,6 +612,12 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void scoreAutoL2() {
+    RobotState.getInstance()
+        .setVisionMode(
+            reefSelectionMethod == ReefSelectionMethod.POSE
+                ? VisionMode.POSE_BASED
+                : VisionMode.ROTATION_BASED);
+
     if (shouldRaiseToScoringPosition()) {
       elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L2);
     }
@@ -531,6 +630,12 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void scoreAutoL3() {
+    RobotState.getInstance()
+        .setVisionMode(
+            reefSelectionMethod == ReefSelectionMethod.POSE
+                ? VisionMode.POSE_BASED
+                : VisionMode.ROTATION_BASED);
+
     if (shouldRaiseToScoringPosition()) {
       elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L3);
     }
@@ -574,7 +679,7 @@ public class Superstructure extends SubsystemBase {
         driveToAlgaePickupPose();
       }
 
-      if (drive.isAtPose(getReefSide().getSecondReef().getScore())) {
+      if (drive.isAtPose(getClosestAlgaePickup())) {
         elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.ALGAE_CHOP);
         driveToReturnPose();
       }
@@ -595,12 +700,13 @@ public class Superstructure extends SubsystemBase {
 
   private void custom() {}
 
-  private boolean driveToScoringPoseAndReturnIfObservationPresent(ScoringSide side) {
+  private boolean driveToScoringPoseAndReturnIfObservationIsPresent(ScoringSide side) {
     RobotState.getInstance()
         .setVisionMode(
             reefSelectionMethod == ReefSelectionMethod.POSE
                 ? VisionMode.POSE_BASED
                 : VisionMode.ROTATION_BASED);
+    RobotState.getInstance().setSideToAccept(side);
 
     drive.setAutoAlignPose(FieldConstants.getCoralScorePose(getReefSide(), side));
 
@@ -614,19 +720,18 @@ public class Superstructure extends SubsystemBase {
                 ? VisionMode.POSE_BASED
                 : VisionMode.ROTATION_BASED);
 
-    var reefSide = getReefSide();
-
-    var reef =
-        RobotState.getInstance()
-            .getEstimatedPose()
-            .nearest(
-                List.of(
-                    reefSide.getFirstReef().getAlgaePickup(),
-                    reefSide.getSecondReef().getAlgaePickup()));
-
-    drive.setAutoAlignPose(reef);
+    drive.setAutoAlignPose(getClosestAlgaePickup());
 
     return false;
+  }
+
+  private Pose2d getClosestAlgaePickup() {
+    return RobotState.getInstance()
+        .getEstimatedPose()
+        .nearest(
+            List.of(
+                getReefSide().getLeftReef().getAlgaePickup(),
+                getReefSide().getRightReef().getAlgaePickup()));
   }
 
   private void driveToReturnPose() {
@@ -642,7 +747,7 @@ public class Superstructure extends SubsystemBase {
         RobotState.getInstance()
             .getEstimatedPose()
             .nearest(
-                List.of(reefSide.getFirstReef().getAlign(), reefSide.getSecondReef().getAlign()));
+                List.of(reefSide.getLeftReef().getAlign(), reefSide.getRightReef().getAlign()));
 
     drive.setAutoAlignPose(reef);
   }
@@ -683,6 +788,10 @@ public class Superstructure extends SubsystemBase {
     return gamePieceState == GamePieceState.CORAL;
   }
 
+  public boolean isManualMode() {
+    return isManualMode.get();
+  }
+
   public boolean isL1Mode() {
     return isL1Mode;
   }
@@ -711,21 +820,26 @@ public class Superstructure extends SubsystemBase {
   public Command configureButtonBinding(
       WantedSuperState hasCoralCondition,
       WantedSuperState noPieceCondition,
-      WantedSuperState l1ModeCondition) {
+      WantedSuperState l1ModeCondition,
+      WantedSuperState manualCondition) {
 
     return Commands.either(
         Commands.either(
-            setStateCommand(l1ModeCondition), setStateCommand(hasCoralCondition), () -> isL1Mode),
-        setStateCommand(noPieceCondition),
-        this::hasCoral);
+            Commands.either(
+                setStateCommand(l1ModeCondition),
+                setStateCommand(hasCoralCondition),
+                () -> isL1Mode),
+            setStateCommand(noPieceCondition),
+            this::hasCoral),
+        setStateCommand(manualCondition),
+        () -> isManualMode.get());
   }
 
-  public void toggleReefSelectionMethod() {
-    reefSelectionMethod =
-        (reefSelectionMethod == ReefSelectionMethod.POSE)
-            ? ReefSelectionMethod.ROTATION
-            : ReefSelectionMethod.POSE;
-  }
+  // public void toggleReefSelectionMethod() {
+  // reefSelectionMethod = (reefSelectionMethod == ReefSelectionMethod.POSE)
+  // ? ReefSelectionMethod.ROTATION
+  // : ReefSelectionMethod.POSE;
+  // }
 
   public void setL1ModeEnabled(boolean enabled) {
     isL1Mode = enabled;

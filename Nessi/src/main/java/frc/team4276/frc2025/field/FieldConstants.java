@@ -138,20 +138,20 @@ public class FieldConstants {
     IJ(Reef.J, Reef.I),
     KL(Reef.K, Reef.L);
 
-    private final Reef firstReef; // Left
-    private final Reef secondReef; // Right
+    private final Reef leftReef; // Left
+    private final Reef rightReef; // Right
 
     private ReefSide(Reef firstReef, Reef secondReef) {
-      this.firstReef = firstReef;
-      this.secondReef = secondReef;
+      this.leftReef = firstReef;
+      this.rightReef = secondReef;
     }
 
-    public Reef getFirstReef() {
-      return firstReef;
+    public Reef getLeftReef() {
+      return leftReef;
     }
 
-    public Reef getSecondReef() {
-      return secondReef;
+    public Reef getRightReef() {
+      return rightReef;
     }
   }
 
@@ -211,17 +211,27 @@ public class FieldConstants {
 
     var reefToPose =
         new Translation2d(
-            -1.0 * (reefCenterToTag + offset), tagToReef * (side == ScoringSide.LEFT ? 1 : -1));
+            -1.0 * (reefCenterToTag + offset),
+            tagToReef
+                * (side == ScoringSide.LEFT
+                    ? ((reefSide.ordinal() < 3 || reefSide.ordinal() == 5) ? 1 : -1)
+                    : ((reefSide.ordinal() > 2 && reefSide.ordinal() < 5) ? 1 : -1)));
 
     return AllianceFlipUtil.apply(
         blueReefCenter.plus(new Transform2d(reefToPose.rotateBy(angle), angle)));
   }
 
+  public static boolean isReefTag(int tagId) {
+    return (tagId >= 6 && tagId <= 11) || (tagId >= 17 && tagId <= 22);
+  }
+
   public static final Pose2d blueProcessorSideStart =
       new Pose2d(7.1415, 1.905, Rotation2d.kCCW_90deg);
+  public static final Pose2d blueJITBProcessorSideStart =
+      new Pose2d(7.1415, 0.815, Rotation2d.kZero);
 
   public static final Pose2d blueOutsideStationIntake =
       new Pose2d(1.55, 0.72, Rotation2d.fromDegrees(55));
   public static final Pose2d blueInsideStationIntake =
-      new Pose2d(0.69, 1.33, Rotation2d.fromDegrees(55d));
+      new Pose2d(0.69, 1.33, Rotation2d.fromDegrees(55));
 }

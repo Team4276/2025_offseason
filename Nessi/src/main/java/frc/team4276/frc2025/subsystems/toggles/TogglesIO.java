@@ -6,6 +6,7 @@ public interface TogglesIO {
   @AutoLog
   public static class TogglesIOInputs {
     public boolean elevatorCoastOverride = false;
+    public boolean gyroCalibrationSwitch = false;
     public boolean climberCoastOverride = false;
     public boolean hopperCoastOverride = false;
   }

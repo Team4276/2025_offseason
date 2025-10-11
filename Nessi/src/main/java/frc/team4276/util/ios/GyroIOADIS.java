@@ -3,6 +3,7 @@ package frc.team4276.util.ios;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
+import edu.wpi.first.wpilibj.ADIS16470_IMU.CalibrationTime;
 import frc.team4276.frc2025.subsystems.drive.SparkOdometryThread;
 import java.util.Queue;
 
@@ -15,6 +16,7 @@ public class GyroIOADIS implements GyroIO {
   public GyroIOADIS() {
     yawTimestampQueue = SparkOdometryThread.getInstance().makeTimestampQueue();
     yawPositionQueue = SparkOdometryThread.getInstance().registerSignal(gyro::getAngle);
+    gyro.configCalTime(CalibrationTime._8s);
   }
 
   @Override
@@ -35,5 +37,10 @@ public class GyroIOADIS implements GyroIO {
             .toArray(Rotation2d[]::new);
     yawTimestampQueue.clear();
     yawPositionQueue.clear();
+  }
+
+  @Override
+  public void recalibrate() {
+    gyro.calibrate();
   }
 }

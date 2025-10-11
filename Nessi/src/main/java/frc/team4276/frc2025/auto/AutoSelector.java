@@ -22,32 +22,10 @@ public class AutoSelector extends VirtualSubsystem {
   public static enum AutoQuestionResponse {
     EMPTY,
     YES,
-    NO,
-    MIDDLE,
-    LEFT,
-    RIGHT,
-    FAR,
-    CLOSE,
-    A,
-    B,
-    C,
-    D,
-    E,
-    F,
-    G,
-    H,
-    I,
-    J,
-    K,
-    L,
-    L1_LEFT,
-    L1_RIGHT,
-    L2,
-    L3,
-    PROCESSOR
+    NO
   }
 
-  private static final int maxQuestions = 10;
+  private static final int maxQuestions = 1;
 
   private static final AutoRoutine defaultRoutine =
       new AutoRoutine("Do Nothing", List.of(), () -> Commands.none());
@@ -63,24 +41,11 @@ public class AutoSelector extends VirtualSubsystem {
   private final String validAutoText = "We Happy";
   private String prevErrorMsg = validAutoText;
 
-  private final LoggedNetworkNumber coralInput;
   private final LoggedNetworkNumber delayInput;
-  private int prevCoralInput = 1;
   private double prevDelayInput = 0.0;
 
   private AutoRoutine lastRoutine;
-  private List<AutoQuestionResponse> lastResponses =
-      List.of(
-          AutoQuestionResponse.EMPTY,
-          AutoQuestionResponse.EMPTY,
-          AutoQuestionResponse.EMPTY,
-          AutoQuestionResponse.EMPTY,
-          AutoQuestionResponse.EMPTY,
-          AutoQuestionResponse.EMPTY,
-          AutoQuestionResponse.EMPTY,
-          AutoQuestionResponse.EMPTY,
-          AutoQuestionResponse.EMPTY,
-          AutoQuestionResponse.EMPTY);
+  private List<AutoQuestionResponse> lastResponses = List.of(AutoQuestionResponse.EMPTY);
 
   public AutoSelector() {
     routineChooser = new LoggedDashboardChooser<>("Comp/Auto/RoutineChooser");
@@ -103,7 +68,6 @@ public class AutoSelector extends VirtualSubsystem {
               "Comp/Auto/Question #" + Integer.toString(i + 1) + " Chooser"));
     }
 
-    coralInput = new LoggedNetworkNumber("Comp/Auto/Coral Input", 1);
     delayInput = new LoggedNetworkNumber("Comp/Auto/Delay", 0.0);
 
     errorNotificationTimer.restart();
@@ -136,10 +100,6 @@ public class AutoSelector extends VirtualSubsystem {
     return lastResponses;
   }
 
-  public int getCoralInput() {
-    return (int) coralInput.get();
-  }
-
   public double getDelayInput() {
     return delayInput.get();
   }
@@ -152,7 +112,6 @@ public class AutoSelector extends VirtualSubsystem {
       return;
     }
 
-    SmartDashboard.putNumber("Comp/Auto/Num Coral Submitted ", getCoralInput());
     SmartDashboard.putNumber("Comp/Auto/Delay Input Submitted ", getDelayInput());
 
     // Update the list of questions
@@ -185,17 +144,7 @@ public class AutoSelector extends VirtualSubsystem {
     lastRoutine = selectedRoutine;
     var cachedResponses =
         lastResponses.isEmpty() || autoChanged
-            ? List.of(
-                AutoQuestionResponse.EMPTY,
-                AutoQuestionResponse.EMPTY,
-                AutoQuestionResponse.EMPTY,
-                AutoQuestionResponse.EMPTY,
-                AutoQuestionResponse.EMPTY,
-                AutoQuestionResponse.EMPTY,
-                AutoQuestionResponse.EMPTY,
-                AutoQuestionResponse.EMPTY,
-                AutoQuestionResponse.EMPTY,
-                AutoQuestionResponse.EMPTY)
+            ? List.of(AutoQuestionResponse.EMPTY)
             : lastResponses;
     lastResponses = new ArrayList<>();
     for (int i = 0; i < lastRoutine.questions().size(); i++) {
@@ -210,11 +159,10 @@ public class AutoSelector extends VirtualSubsystem {
               : responseString);
     }
 
-    if (getCoralInput() != prevCoralInput || getDelayInput() != prevDelayInput) {
+    if (getDelayInput() != prevDelayInput) {
       autoChanged = true;
     }
 
-    prevCoralInput = getCoralInput();
     prevDelayInput = getDelayInput();
 
     if (AllianceFlipUtil.shouldFlip() != wasRed) {
@@ -247,13 +195,6 @@ public class AutoSelector extends VirtualSubsystem {
   }
 
   private String checkLogic() {
-    if (getSelectedName() == "Sandy Eggos Auto") {
-      if (getResponses().get(5) == AutoQuestionResponse.G
-          && getResponses().get(2) == AutoQuestionResponse.YES) {
-        return "Using CLOSE Intake with G Start";
-      }
-    }
-
     return validAutoText;
   }
 

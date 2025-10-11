@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -65,9 +66,12 @@ public class Drive extends SubsystemBase {
   static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-  private final Module[] modules = new Module[4]; // FL, FR, BL, BR
   private final Alert gyroDisconnectedAlert =
       new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
+  private final Module[] modules = new Module[4]; // FL, FR, BL, BR
+
+  private BooleanSupplier gyroCalibrationSwitch;
+  private final Timer gyroCalibrationTimer = new Timer();
 
   private SwerveModulePosition[] lastModulePositions = null;
   private double lastTime = 0.0;
@@ -198,6 +202,15 @@ public class Drive extends SubsystemBase {
           states[i] = modules[i].getZeroHelperModuleState();
         }
         Logger.recordOutput("Drive/SwerveStates/ZeroHelper", states);
+      }
+
+      if (gyroCalibrationSwitch.getAsBoolean()) {
+        gyroCalibrationTimer.restart();
+      }
+
+      if (gyroCalibrationTimer.isRunning() && gyroCalibrationTimer.get() > 1.0) {
+        gyroIO.recalibrate();
+        gyroCalibrationTimer.stop();
       }
     }
 
@@ -553,6 +566,11 @@ public class Drive extends SubsystemBase {
     this.driveSpeedScalar = driveSpeedScalar;
   }
 
+  public void setChoreoTrajectory(Trajectory<SwerveSample> trajectory) {
+    setWantedState(WantedState.TRAJECTORY);
+    choreoTrajectory = trajectory;
+  }
+
   public void setAutoAlignPose(Pose2d pose) {
     setWantedState(WantedState.AUTO_ALIGN);
     desiredAutoAlignPose = pose;
@@ -561,5 +579,9 @@ public class Drive extends SubsystemBase {
   public void setHeadingAlignRotation(Rotation2d rotation) {
     setWantedState(WantedState.HEADING_ALIGN);
     desiredHeadingAlignRotation = rotation;
+  }
+
+  public void setGyroCalibrationSwitch(BooleanSupplier calibrationSwitch) {
+    this.gyroCalibrationSwitch = calibrationSwitch;
   }
 }

@@ -10,15 +10,15 @@ public class ElevatorConstants {
   public static final LoggedTunableNumber stow =
       new LoggedTunableNumber("Elevator/StowPosition", Units.inchesToMeters(0.5));
   public static final LoggedTunableNumber intake =
-      new LoggedTunableNumber("Elevator/IntakePosition", Units.inchesToMeters(0.5));
+      new LoggedTunableNumber("Elevator/IntakePosition", Units.inchesToMeters(0.0));
   public static final LoggedTunableNumber unjam =
       new LoggedTunableNumber("Elevator/UnjamPosition", Units.inchesToMeters(15.0));
   public static final LoggedTunableNumber l1 =
       new LoggedTunableNumber("Elevator/L1Position", Units.inchesToMeters(0.0));
   public static final LoggedTunableNumber l2 =
-      new LoggedTunableNumber("Elevator/L2Position", Units.inchesToMeters(6.69));
+      new LoggedTunableNumber("Elevator/L2Position", Units.inchesToMeters(6.85));
   public static final LoggedTunableNumber l3 =
-      new LoggedTunableNumber("Elevator/L3Position", Units.inchesToMeters(21.76));
+      new LoggedTunableNumber("Elevator/L3Position", Units.inchesToMeters(22.5));
   public static final LoggedTunableNumber lowAlgae =
       new LoggedTunableNumber("Elevator/LoAlgae", Units.inchesToMeters(10.0));
   public static final LoggedTunableNumber highAlgae =

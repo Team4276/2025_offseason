@@ -9,10 +9,10 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.team4276.frc2025.auto.AutoFactory;
 import frc.team4276.frc2025.auto.AutoSelector;
 import frc.team4276.frc2025.subsystems.Superstructure;
 import frc.team4276.frc2025.subsystems.Superstructure.CurrentSuperState;
-import frc.team4276.frc2025.subsystems.Superstructure.WantedSuperState;
 import frc.team4276.frc2025.subsystems.clopper.Clopper;
 import frc.team4276.frc2025.subsystems.clopper.climber.ClimberIO;
 import frc.team4276.frc2025.subsystems.clopper.climber.ClimberIOSparkMax;
@@ -75,8 +75,13 @@ public class RobotContainer {
 
   @AutoLogOutput private boolean disableVisionSim = true;
 
-  // Dashboard inputs
+  // Auto
   private final AutoSelector autoSelector = new AutoSelector();
+  private final AutoFactory autoFactory =
+      new AutoFactory(
+          this); // TODO: add auto selection; figure out if this is ok; check logic; run thru sim in
+  // both manual and normal mode
+  //TODO: add manual toggle in dashboard
 
   public RobotContainer() {
     if (Constants.getMode() != Constants.Mode.REPLAY) {
@@ -220,7 +225,8 @@ public class RobotContainer {
             superstructure.configureButtonBinding(
                 Superstructure.WantedSuperState.SCORE_RIGHT_L3,
                 Superstructure.WantedSuperState.INTAKE_CORAL,
-                Superstructure.WantedSuperState.SCORE_RIGHT_L1))
+                Superstructure.WantedSuperState.SCORE_RIGHT_L1,
+                Superstructure.WantedSuperState.MANUAL_SCORE))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
@@ -230,7 +236,8 @@ public class RobotContainer {
             superstructure.configureButtonBinding(
                 Superstructure.WantedSuperState.SCORE_LEFT_L3,
                 Superstructure.WantedSuperState.INTAKE_CORAL,
-                Superstructure.WantedSuperState.SCORE_LEFT_L1))
+                Superstructure.WantedSuperState.SCORE_LEFT_L1,
+                Superstructure.WantedSuperState.INTAKE_CORAL))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
@@ -240,7 +247,8 @@ public class RobotContainer {
             superstructure.configureButtonBinding(
                 Superstructure.WantedSuperState.SCORE_RIGHT_L2,
                 Superstructure.WantedSuperState.STOW,
-                Superstructure.WantedSuperState.STOW))
+                Superstructure.WantedSuperState.STOW,
+                Superstructure.WantedSuperState.PURGE_GAMEPIECE))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
@@ -250,7 +258,8 @@ public class RobotContainer {
             superstructure.configureButtonBinding(
                 Superstructure.WantedSuperState.SCORE_LEFT_L2,
                 Superstructure.WantedSuperState.STOW,
-                Superstructure.WantedSuperState.STOW))
+                Superstructure.WantedSuperState.STOW,
+                Superstructure.WantedSuperState.PURGE_GAMEPIECE))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
@@ -259,6 +268,7 @@ public class RobotContainer {
         .onTrue(
             superstructure.configureButtonBinding(
                 Superstructure.WantedSuperState.SCORE_RIGHT_L1,
+                Superstructure.WantedSuperState.STOW,
                 Superstructure.WantedSuperState.STOW,
                 Superstructure.WantedSuperState.STOW))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
@@ -270,6 +280,7 @@ public class RobotContainer {
             superstructure.configureButtonBinding(
                 Superstructure.WantedSuperState.SCORE_LEFT_L1,
                 Superstructure.WantedSuperState.STOW,
+                Superstructure.WantedSuperState.STOW,
                 Superstructure.WantedSuperState.STOW))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
@@ -279,8 +290,19 @@ public class RobotContainer {
             superstructure.configureButtonBinding(
                 Superstructure.WantedSuperState.MANUAL_SCORE,
                 Superstructure.WantedSuperState.PURGE_GAMEPIECE,
-                Superstructure.WantedSuperState.MANUAL_SCORE))
+                Superstructure.WantedSuperState.MANUAL_SCORE,
+                Superstructure.WantedSuperState.SCORE_MANUAL_L1))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
+
+    driver
+        .y()
+        .and(() -> superstructure.isManualMode())
+        .toggleOnTrue(
+            superstructure
+                .setStateCommand(Superstructure.WantedSuperState.MANUAL_REEF_ALGAE)
+                .finallyDo(
+                    () ->
+                        superstructure.setWantedSuperState(Superstructure.WantedSuperState.STOW)));
 
     // Purge Gamepiece(s)
     driver
@@ -289,12 +311,18 @@ public class RobotContainer {
             superstructure.configureButtonBinding(
                 Superstructure.WantedSuperState.PURGE_GAMEPIECE,
                 Superstructure.WantedSuperState.PURGE_GAMEPIECE,
-                Superstructure.WantedSuperState.PURGE_GAMEPIECE))
+                Superstructure.WantedSuperState.PURGE_GAMEPIECE,
+                Superstructure.WantedSuperState.SCORE_MANUAL_L3))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
         .x()
-        .onTrue(superstructure.setStateCommand(WantedSuperState.REEF_ALGAE))
+        .onTrue(
+            superstructure.configureButtonBinding(
+                Superstructure.WantedSuperState.REEF_ALGAE,
+                Superstructure.WantedSuperState.REEF_ALGAE,
+                Superstructure.WantedSuperState.REEF_ALGAE,
+                Superstructure.WantedSuperState.SCORE_MANUAL_L2))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     // Climb
@@ -338,22 +366,22 @@ public class RobotContainer {
 
     driver
         .a()
-        .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_LEFT_L1))
-        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
-
-    driver
-        .x()
-        .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_LEFT_L2))
+        .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_MANUAL_L1))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
         .b()
-        .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_LEFT_L3))
+        .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_MANUAL_L2))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
     driver
-        .a()
-        .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.INTAKE_CORAL))
+        .x()
+        .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.SCORE_MANUAL_L3))
+        .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
+
+    driver
+        .rightTrigger()
+        .onTrue(superstructure.setStateCommand(Superstructure.WantedSuperState.MANUAL_SCORE))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
   }
 

@@ -127,9 +127,14 @@ public class VisionIOPhotonVision implements VisionIO {
                 Math.pow(tagHeight, 2)
                     - (4
                         * tanOfTheta1
-                        * (tagHeightOffGround - robotToCamera.getZ() + tagHeight)
+                        * (tagHeightOffGround
+                            - robotToCamera.getZ()
+                            - Units.inchesToMeters(3.25)
+                            + tagHeight)
                         * tanOfTheta1
-                        * (tagHeightOffGround - robotToCamera.getZ()))));
+                        * (tagHeightOffGround
+                            - robotToCamera.getZ()
+                            - Units.inchesToMeters(3.25)))));
     return Math.abs((tagHeight + sqrtTerm) / (2 * tanOfTheta1));
   }
 

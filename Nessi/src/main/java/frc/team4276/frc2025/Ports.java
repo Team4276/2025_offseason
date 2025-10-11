@@ -25,7 +25,7 @@ public class Ports {
 
   /* DIOs */
   public static final int ELEVATOR_COAST_OVERRIDE = 0;
-  public static final int ARM_COAST_OVERRIDE = 1;
+  public static final int GYRO_CALIBRATION_SWITCH = 1;
   public static final int HOPPER_COAST_OVERRIDE = 2;
   public static final int CLIMBER_COAST_OVERRIDE = 9;
 

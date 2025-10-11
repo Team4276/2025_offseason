@@ -9,7 +9,8 @@ public class SuperstructureConstants {
 
   public static enum ScoringSide {
     LEFT,
-    RIGHT
+    RIGHT,
+    BOTH
   }
 
   public static enum ReefSelectionMethod {

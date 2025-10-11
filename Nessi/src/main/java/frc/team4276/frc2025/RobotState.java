@@ -13,6 +13,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.field.FieldConstants.ReefSide;
+import frc.team4276.frc2025.subsystems.SuperstructureConstants.ScoringSide;
 import frc.team4276.frc2025.subsystems.vision.VisionIO.TagObservation;
 import frc.team4276.util.dashboard.ElasticUI;
 import java.util.HashMap;
@@ -48,6 +49,7 @@ public class RobotState {
 
   private VisionMode visionMode = VisionMode.ACCEPT_ALL;
   private ReefSide reefSideToAccept = ReefSide.AB;
+  private ScoringSide scoringSideToAccept = ScoringSide.BOTH;
 
   private ChassisSpeeds robotVelocity = new ChassisSpeeds();
 
@@ -112,6 +114,16 @@ public class RobotState {
   /** Adds a new timestamped vision measurement. */
   public void addVisionObservation(int camera, TagObservation... observations) {
     for (var obs : observations) {
+      if (scoringSideToAccept == ScoringSide.LEFT) {
+        if (camera == 1) {
+          continue;
+        }
+      } else if (scoringSideToAccept == ScoringSide.RIGHT) {
+        if (camera == 0) {
+          continue;
+        }
+      }
+
       if (!shouldAcceptTagEstimate(obs.tagId())) continue;
 
       if (priorityTagObservations.containsKey(obs.tagId())
@@ -134,9 +146,7 @@ public class RobotState {
   }
 
   private boolean shouldAcceptTagEstimate(int observationTagId) {
-    if (observationTagId < 6
-        || (observationTagId > 11 && observationTagId < 17)
-        || observationTagId > 22) {
+    if (!FieldConstants.isReefTag(observationTagId)) {
       return false;
     }
 
@@ -159,7 +169,7 @@ public class RobotState {
   }
 
   public int getTagIdFromClosestRotationSide() {
-    return 8;
+    return 7;
   }
 
   public int getTagIdFromClosestPoseSide() {
@@ -167,7 +177,7 @@ public class RobotState {
     double minDistance = Double.POSITIVE_INFINITY;
     double currDistance = 0.0;
     for (AprilTag tag : FieldConstants.apriltagLayout.getTags()) {
-      if ((tag.ID >= 1 && tag.ID < 6) || (tag.ID >= 12 && tag.ID < 17)) {
+      if (!FieldConstants.isReefTag(tag.ID)) {
         continue;
       }
 
@@ -190,7 +200,11 @@ public class RobotState {
     this.visionMode = visionMode;
   }
 
-  public void setSideToAccept(ReefSide reefSideToAccept) {
+  public void setSideToAccept(ScoringSide scoringSideToAccept) {
+    this.scoringSideToAccept = scoringSideToAccept;
+  }
+
+  public void setReefSideToAccept(ReefSide reefSideToAccept) {
     this.reefSideToAccept = reefSideToAccept;
     setVisionMode(VisionMode.ACCEPT_SIDE);
   }
