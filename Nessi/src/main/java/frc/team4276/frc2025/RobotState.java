@@ -5,7 +5,6 @@ import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
@@ -15,6 +14,7 @@ import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.field.FieldConstants.ReefSide;
 import frc.team4276.frc2025.subsystems.SuperstructureConstants.ScoringSide;
 import frc.team4276.frc2025.subsystems.vision.VisionIO.TagObservation;
+import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.ElasticUI;
 import java.util.HashMap;
 import java.util.Map;
@@ -141,7 +141,9 @@ public class RobotState {
       }
 
       // Use gyro angle at time for robot rotation
-      poseEstimate = obs.robotPose().transformBy(new Transform2d(sample.get(), odomPoseEstimate));
+      // poseEstimate = obs.robotPose().transformBy(new Transform2d(sample.get(),
+      // odomPoseEstimate));
+      poseEstimate = obs.robotPose();
     }
   }
 
@@ -178,7 +180,9 @@ public class RobotState {
     double currDistance = 0.0;
     for (AprilTag tag : FieldConstants.apriltagLayout.getTags()) {
       if (!FieldConstants.isReefTag(tag.ID)) {
-        continue;
+        if (AllianceFlipUtil.shouldFlip() && tag.ID > 11) {
+          continue;
+        }
       }
 
       currDistance =

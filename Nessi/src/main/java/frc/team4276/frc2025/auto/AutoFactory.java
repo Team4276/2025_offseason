@@ -4,6 +4,7 @@ import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.frc2025.RobotContainer;
@@ -22,10 +23,12 @@ import frc.team4276.util.path.PathUtil;
 
 @SuppressWarnings("unused")
 public class AutoFactory {
-  private final RobotContainer robotContainer;
+  private static RobotContainer robotContainer;
 
-  public AutoFactory(final RobotContainer robotContainer) {
-    this.robotContainer = robotContainer;
+  public AutoFactory() {}
+
+  public static void addContainer(RobotContainer robotContrContainer) {
+    robotContainer = robotContrContainer;
   }
 
   Command idle() {
@@ -35,10 +38,17 @@ public class AutoFactory {
             AllianceFlipUtil.apply(Rotation2d.kZero)));
   }
 
-  Command taxiCommand(boolean isProcessorSide) {
+  public static Command taxiCommand(boolean isProcessorSide) {
     Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("t_WALL", !isProcessorSide);
 
-    return resetPose(traj.getInitialPose(false).get());
+    return resetPose(traj.getInitialPose(false).get())
+        .andThen(
+            driveToPoint(
+                traj.getInitialPose(false)
+                    .get()
+                    .transformBy(
+                        new Transform2d(
+                            AllianceFlipUtil.shouldFlip() ? -1.0 : 1.0, 0.0, Rotation2d.kZero))));
   }
 
   Command jitbProcessorSide() {
@@ -139,7 +149,7 @@ public class AutoFactory {
         .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake));
   }
 
-  Command EBA() {
+  public static Command EBA() {
     return resetPose(AllianceFlipUtil.apply(FieldConstants.blueProcessorSideStart))
         .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2))
         .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake))
@@ -159,29 +169,29 @@ public class AutoFactory {
         .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake));
   }
 
-  private Command resetPose(Pose2d pose) {
+  private static Command resetPose(Pose2d pose) {
     return Commands.runOnce(() -> RobotState.getInstance().resetPose(pose));
   }
 
-  private Command driveTrajectory(Trajectory<SwerveSample> traj) {
+  private static Command driveTrajectory(Trajectory<SwerveSample> traj) {
     return Commands.runOnce(() -> robotContainer.getDrive().setChoreoTrajectory(traj))
-        .until(() -> robotContainer.getDrive().isAtAutoAlignPose());
+        .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isTrajectoryFinished()));
   }
 
-  private Command driveToPoint(Pose2d pose) {
+  private static Command driveToPoint(Pose2d pose) {
     return Commands.runOnce(() -> robotContainer.getDrive().setAutoAlignPose(pose))
-        .until(() -> robotContainer.getDrive().isAtAutoAlignPose());
+        .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isAtAutoAlignPose()));
   }
 
-  private Command setState(WantedSuperState state) {
+  private static Command setState(WantedSuperState state) {
     return robotContainer.getSuperstructure().setStateCommand(state);
   }
 
-  private Command waitForCoralIntake() {
+  private static Command waitForCoralIntake() {
     return Commands.waitUntil(() -> !robotContainer.getSuperstructure().hasCoral());
   }
 
-  private Command driveAndScore(ReefSide reefSide, WantedSuperState state) {
+  private static Command driveAndScore(ReefSide reefSide, WantedSuperState state) {
     var side =
         (state == WantedSuperState.SCORE_LEFT_L1
                 || state == WantedSuperState.SCORE_LEFT_L2
@@ -195,7 +205,7 @@ public class AutoFactory {
         .andThen(Commands.waitSeconds(0.25));
   }
 
-  private Command driveAndIntakeFromStation(Pose2d intakePose) {
+  private static Command driveAndIntakeFromStation(Pose2d intakePose) {
     return (driveToPoint(intakePose)
             .alongWith(setState(WantedSuperState.INTAKE_CORAL))
             .andThen(Commands.waitSeconds(3.0)))

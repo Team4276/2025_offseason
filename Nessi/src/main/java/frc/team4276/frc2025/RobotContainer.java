@@ -78,10 +78,11 @@ public class RobotContainer {
   // Auto
   private final AutoSelector autoSelector = new AutoSelector();
   private final AutoFactory autoFactory =
-      new AutoFactory(
-          this); // TODO: add auto selection; figure out if this is ok; check logic; run thru sim in
+      new AutoFactory(); // TODO: add auto selection; figure out if this is ok;
+  // check logic; run thru sim
+  // in
   // both manual and normal mode
-  //TODO: add manual toggle in dashboard
+  // TODO: add manual toggle in dashboard
 
   public RobotContainer() {
     if (Constants.getMode() != Constants.Mode.REPLAY) {
@@ -408,7 +409,10 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return autoSelector.getCommand();
+    if (autoFactory != null) {
+      return AutoFactory.taxiCommand(false);
+    }
+    return Commands.none();
   }
 
   public Superstructure getSuperstructure() {

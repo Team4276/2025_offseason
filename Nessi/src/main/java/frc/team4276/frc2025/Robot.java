@@ -8,7 +8,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.team4276.frc2025.auto.AutoSelector;
+import frc.team4276.frc2025.auto.AutoFactory;
 import frc.team4276.util.dashboard.Elastic;
 import frc.team4276.util.dashboard.ElasticUI;
 import frc.team4276.util.drivers.VirtualSubsystem;
@@ -122,6 +122,7 @@ public class Robot extends LoggedRobot {
     // and put our autonomous chooser on the dashboard.
     RobotState.getInstance();
     robotContainer = new RobotContainer();
+    AutoFactory.addContainer(robotContainer);
 
     // CameraServer.startAutomaticCapture();
 
@@ -167,9 +168,9 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void disabledPeriodic() {
-    if (AutoSelector.hasAutoChanged()) {
-      autonomousCommand = robotContainer.getAutonomousCommand();
-    }
+    // if (AutoSelector.hasAutoChanged()) {
+    autonomousCommand = robotContainer.getAutonomousCommand();
+    // }
   }
 
   @Override

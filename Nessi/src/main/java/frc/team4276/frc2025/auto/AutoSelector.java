@@ -35,7 +35,7 @@ public class AutoSelector extends VirtualSubsystem {
   private final List<StringPublisher> questionPublishers;
   private final List<LoggedDashboardChooser<AutoQuestionResponse>> questionChoosers;
 
-  private static boolean autoChanged = true;
+  private static boolean autoChanged = false;
 
   private final Timer errorNotificationTimer = new Timer();
   private final String validAutoText = "We Happy";
@@ -182,8 +182,8 @@ public class AutoSelector extends VirtualSubsystem {
 
     } else {
       if (autoChanged) {
-        Elastic.sendNotification(
-            new Notification(NotificationLevel.INFO, "Auto Confirm", "Auto Is Valid", 3000));
+        // Elastic.sendNotification(level.INFO, "Auto Confirm", "Auto Is Valid",
+        // 3000));
       }
 
       errorNotificationTimer.restart();
