@@ -18,6 +18,7 @@ import frc.team4276.util.dashboard.Elastic;
 import frc.team4276.util.dashboard.Elastic.Notification;
 import frc.team4276.util.dashboard.Elastic.Notification.NotificationLevel;
 import frc.team4276.util.path.ChoreoUtil;
+import frc.team4276.util.path.PathUtil;
 
 @SuppressWarnings("unused")
 public class AutoFactory {
@@ -42,7 +43,34 @@ public class AutoFactory {
 
   Command poofsProcessorSide() {
     return resetPose(AllianceFlipUtil.apply(FieldConstants.blueProcessorSideStart))
-        .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2));
+        .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2))
+        .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake))
+        .andThen(driveAndAlgaePickup(ReefSide.CD, ScoringSide.LEFT))
+        .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_LEFT_L3))
+        .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake))
+        .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_RIGHT_L3))
+        .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake))
+        .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_LEFT_L2))
+        .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake))
+        .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_RIGHT_L2))
+        .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake));
+  }
+
+  Command poofsBargeSide() {
+    return resetPose(
+            PathUtil.mirrorLengthwise(
+                AllianceFlipUtil.apply(FieldConstants.blueProcessorSideStart)))
+        .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_LEFT_L2))
+        .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake))
+        .andThen(driveAndAlgaePickup(ReefSide.KL, ScoringSide.RIGHT))
+        .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_RIGHT_L3))
+        .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake))
+        .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_LEFT_L3))
+        .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake))
+        .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_RIGHT_L2))
+        .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake))
+        .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_LEFT_L2))
+        .andThen(driveAndIntakeFromStation(FieldConstants.blueOutsideStationIntake));
   }
 
   private Command resetPose(Pose2d pose) {

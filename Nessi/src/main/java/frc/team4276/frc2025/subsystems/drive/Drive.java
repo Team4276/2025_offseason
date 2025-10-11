@@ -107,7 +107,7 @@ public class Drive extends SubsystemBase {
   private final LoggedTunablePID autoAutoAlignController =
       new LoggedTunablePID(2.0, 0, 0.0, 0.1, "Drive/AutoAlign/AutoTranslation");
   private final LoggedTunablePID headingAlignController =
-      new LoggedTunablePID(4.0, 0, 0, Units.degreesToRadians(1.0), "Drive/HeadingAlign");
+      new LoggedTunablePID(5.0, 0, 0, Units.degreesToRadians(1.0), "Drive/HeadingAlign");
   private final LoggedTunableNumber autoAlignTranslationTolerance =
       new LoggedTunableNumber("Drive/AutoAlign/TranslationTolerance", 0.01);
   private final LoggedTunableNumber headingAlignTolerance =

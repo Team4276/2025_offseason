@@ -42,11 +42,11 @@ public class VisionConstants {
           Units.inchesToMeters(10.5),
           Units.inchesToMeters(11.25) * -1.0,
           Units.inchesToMeters(9.5),
-          new Rotation3d(Math.toRadians(0.0), Math.toRadians(15), Math.toRadians(0.0)));
+          new Rotation3d(Math.toRadians(0.0), -1.0 * Math.toRadians(15), Math.toRadians(0.0)));
 
   public static final CameraConfig[] configs =
       new CameraConfig[] {
-        new CameraConfig("Arducam_OV9281_USB_Camera", ov9281RobotToCameraOld, 1.25, 48.0, 800),
+        new CameraConfig("Arducam_OV9281_USB_Camera", ov9281RobotToCameraNew, 1.25, 48.0, 800),
         new CameraConfig("Arducam_OV2311_USB_Camera", ov2311RobotToCameraOld, 1.0, 60.0, 1200)
       };
 }

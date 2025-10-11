@@ -27,7 +27,7 @@ public class FieldConstants {
       new Pose2d(fieldCenter.minus(new Translation2d(reefToFieldCenter, 0.0)), Rotation2d.kZero);
 
   public static final double clearReefOffset = Units.inchesToMeters(13.0);
-  public static final double scoringOffset = Units.inchesToMeters(19.625);
+  public static final double scoringOffset = Units.inchesToMeters(18.625);
   public static final double algaePickupOffset = Units.inchesToMeters(1.0);
   public static final double reefCenterToTag = Units.inchesToMeters(32.746);
   public static final double tagToReef = Units.inchesToMeters(6.468853);
@@ -219,4 +219,9 @@ public class FieldConstants {
 
   public static final Pose2d blueProcessorSideStart =
       new Pose2d(7.1415, 1.905, Rotation2d.kCCW_90deg);
+
+  public static final Pose2d blueOutsideStationIntake =
+      new Pose2d(1.55, 0.72, Rotation2d.fromDegrees(55));
+  public static final Pose2d blueInsideStationIntake =
+      new Pose2d(0.69, 1.33, Rotation2d.fromDegrees(55d));
 }

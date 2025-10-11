@@ -134,6 +134,12 @@ public class RobotState {
   }
 
   private boolean shouldAcceptTagEstimate(int observationTagId) {
+    if (observationTagId < 6
+        || (observationTagId > 11 && observationTagId < 17)
+        || observationTagId > 22) {
+      return false;
+    }
+
     return switch (visionMode) {
       case ACCEPT_ALL:
         yield true;
