@@ -15,61 +15,9 @@
         "layouts": [],
         "containers": [
           {
-            "title": "Question #1 Chooser",
-            "x": 288.0,
-            "y": 0.0,
-            "width": 224.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/Question #1 Chooser",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
-            "title": "Question #2 Chooser",
-            "x": 288.0,
-            "y": 128.0,
-            "width": 224.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/Question #2 Chooser",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
-            "title": "Question #3 Chooser",
-            "x": 288.0,
-            "y": 256.0,
-            "width": 224.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/Question #3 Chooser",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
-            "title": "Question #4 Chooser",
-            "x": 288.0,
-            "y": 384.0,
-            "width": 224.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/Question #4 Chooser",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
             "title": "Delay",
-            "x": 1088.0,
-            "y": 512.0,
+            "x": 608.0,
+            "y": 288.0,
             "width": 192.0,
             "height": 128.0,
             "type": "Text Display",
@@ -82,9 +30,9 @@
           },
           {
             "title": "RoutineChooser",
-            "x": 1088.0,
-            "y": 256.0,
-            "width": 416.0,
+            "x": 96.0,
+            "y": 32.0,
+            "width": 384.0,
             "height": 128.0,
             "type": "ComboBox Chooser",
             "properties": {
@@ -94,61 +42,9 @@
             }
           },
           {
-            "title": "Question #1",
-            "x": 0.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "Comp/Auto/Question #1",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "Question #2",
-            "x": 0.0,
-            "y": 128.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "Comp/Auto/Question #2",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "Question #3",
-            "x": 0.0,
-            "y": 256.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "Comp/Auto/Question #3",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "Question #4",
-            "x": 0.0,
-            "y": 384.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "Comp/Auto/Question #4",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
             "title": "Delay Input Submitted ",
-            "x": 1280.0,
-            "y": 512.0,
+            "x": 800.0,
+            "y": 288.0,
             "width": 224.0,
             "height": 128.0,
             "type": "Large Text Display",
@@ -159,218 +55,15 @@
             }
           },
           {
-            "title": "Question #5 Chooser",
-            "x": 288.0,
-            "y": 512.0,
-            "width": 224.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/Question #5 Chooser",
-              "period": 0.02,
-              "sort_options": false
-            }
-          },
-          {
-            "title": "Question #5",
-            "x": 0.0,
-            "y": 512.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "Comp/Auto/Question #5",
-              "period": 0.02,
-              "data_type": "string"
-            }
-          },
-          {
             "title": "FMSInfo",
-            "x": 1088.0,
-            "y": 384.0,
+            "x": 608.0,
+            "y": 32.0,
             "width": 416.0,
             "height": 128.0,
             "type": "FMSInfo",
             "properties": {
               "topic": "/FMSInfo",
               "period": 0.02
-            }
-          },
-          {
-            "title": "Question #6",
-            "x": 544.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "Comp/Auto/Question #6",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "Question #7",
-            "x": 544.0,
-            "y": 128.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "Comp/Auto/Question #7",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "Question #8",
-            "x": 544.0,
-            "y": 256.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "Comp/Auto/Question #8",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "Question #9",
-            "x": 544.0,
-            "y": 384.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "Comp/Auto/Question #9",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "Question #10",
-            "x": 544.0,
-            "y": 512.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "Comp/Auto/Question #10",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "Question #6 Chooser",
-            "x": 832.0,
-            "y": 0.0,
-            "width": 224.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/Question #6 Chooser",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
-            "title": "Question #7 Chooser",
-            "x": 832.0,
-            "y": 128.0,
-            "width": 224.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/Question #7 Chooser",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
-            "title": "Question #8 Chooser",
-            "x": 832.0,
-            "y": 256.0,
-            "width": 224.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/Question #8 Chooser",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
-            "title": "Question #9 Chooser",
-            "x": 832.0,
-            "y": 384.0,
-            "width": 224.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/Question #9 Chooser",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
-            "title": "Question #10 Chooser",
-            "x": 832.0,
-            "y": 512.0,
-            "width": 224.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/Question #10 Chooser",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
-            "title": "ErrorMsg",
-            "x": 1216.0,
-            "y": 0.0,
-            "width": 320.0,
-            "height": 256.0,
-            "type": "Large Text Display",
-            "properties": {
-              "topic": "Comp/Auto/ErrorMsg",
-              "period": 0.06,
-              "data_type": "string"
-            }
-          },
-          {
-            "title": "ErrorStatus",
-            "x": 1056.0,
-            "y": 0.0,
-            "width": 160.0,
-            "height": 256.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/ErrorStatus",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "X"
-            }
-          },
-          {
-            "title": "ErrorStatus",
-            "x": 0.0,
-            "y": 640.0,
-            "width": 1536.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Comp/Auto/ErrorStatus",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4278255360,
-              "false_color": 4294901760,
-              "true_icon": "None",
-              "false_icon": "None"
             }
           }
         ]
@@ -452,7 +145,7 @@
           {
             "title": "Swerve Drive",
             "x": 1216.0,
-            "y": 0.0,
+            "y": 224.0,
             "width": 320.0,
             "height": 352.0,
             "type": "SwerveDrive",
@@ -479,9 +172,9 @@
           {
             "title": "HasCoral",
             "x": 960.0,
-            "y": 352.0,
+            "y": 0.0,
             "width": 576.0,
-            "height": 352.0,
+            "height": 224.0,
             "type": "Boolean Box",
             "properties": {
               "topic": "/AdvantageKit/RealOutputs/Superstructure/HasCoral",
@@ -496,7 +189,7 @@
           {
             "title": "Match Time",
             "x": 960.0,
-            "y": 0.0,
+            "y": 224.0,
             "width": 256.0,
             "height": 352.0,
             "type": "Match Time",
@@ -527,6 +220,19 @@
               "field_rotation": 0.0,
               "robot_color": 4291163190,
               "trajectory_color": 4294967295
+            }
+          },
+          {
+            "title": "isManualMode",
+            "x": 960.0,
+            "y": 576.0,
+            "width": 576.0,
+            "height": 160.0,
+            "type": "Toggle Button",
+            "properties": {
+              "topic": "Superstructure/isManualMode",
+              "period": 0.06,
+              "data_type": "boolean"
             }
           }
         ]
