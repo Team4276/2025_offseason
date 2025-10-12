@@ -14,23 +14,21 @@ public class VisionConstants {
   public static final boolean enableInstanceLogging =
       forceEnableInstanceLogging || Constants.getMode() == Mode.REPLAY;
 
+  public static final Transform3d ov9281RobotToCameraNew =
+      new Transform3d(
+          Units.inchesToMeters(10.5),
+          Units.inchesToMeters(11.25),
+          Units.inchesToMeters(9.0),
+          new Rotation3d(
+              Math.toRadians(0.0), -1.0 * Math.toRadians(20.0), -1.0 * Math.toRadians(0.0)));
+
   // AprilTag layout
   public static AprilTagFieldLayout aprilTagLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
   public static final CameraConfig[] configs =
       new CameraConfig[] {
-        new CameraConfig(
-            "Arducam_OV9281_USB_Camera",
-            new Transform3d(
-                Units.inchesToMeters(11.475659),
-                Units.inchesToMeters(7.818997),
-                Units.inchesToMeters(7.919400),
-                new Rotation3d(
-                    Math.toRadians(5.2362),
-                    -1.0 * Math.toRadians(20.0),
-                    -1.0 * Math.toRadians(14.1327))),
-            1.25),
+        new CameraConfig("Arducam_OV9281_USB_Camera", ov9281RobotToCameraNew, 1.25),
         new CameraConfig(
             "Arducam_OV2311_USB_Camera",
             new Transform3d(

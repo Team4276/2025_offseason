@@ -43,13 +43,13 @@ public class Elevator {
 
   private Goal goal = Goal.STOW;
 
-  private final LoggedTunableNumber maxVel = new LoggedTunableNumber("Elevator/maxVel", 2.75);
-  private final LoggedTunableNumber maxAccel = new LoggedTunableNumber("Elevator/maxAccel", 3.0);
+  private final LoggedTunableNumber maxVel = new LoggedTunableNumber("Elevator/maxVel", 2.5);
+  private final LoggedTunableNumber maxAccel = new LoggedTunableNumber("Elevator/maxAccel", 10.0);
 
   private final LoggedTunableNumber kS = new LoggedTunableNumber("Elevator/kS", 0.20);
-  private final LoggedTunableNumber kV = new LoggedTunableNumber("Elevator/kV", 9.0);
-  private final LoggedTunableNumber kG = new LoggedTunableNumber("Elevator/kG", 0.15);
-  private final LoggedTunableNumber kA = new LoggedTunableNumber("Elevator/kA", 0.01);
+  private final LoggedTunableNumber kV = new LoggedTunableNumber("Elevator/kV", 4.38);
+  private final LoggedTunableNumber kG = new LoggedTunableNumber("Elevator/kG", 0.52);
+  private final LoggedTunableNumber kA = new LoggedTunableNumber("Elevator/kA", 0.08);
 
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();

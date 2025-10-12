@@ -52,9 +52,9 @@ public class DriveConstants {
   public static final int backRightTurnCanId = Ports.BACK_RIGHT_TURN;
 
   // Drive motor configuration
-  public static final int driveMotorCurrentLimit = 50;
+  public static final int driveMotorCurrentLimit = 40;
   public static final double wheelRadiusMeters = Units.inchesToMeters(1.5);
-  public static final double drivingMotorPinionTeeth = 13.0;
+  public static final double drivingMotorPinionTeeth = 12.0;
   public static final double driveMotorReduction =
       (45.0 * 22.0) / (drivingMotorPinionTeeth * 15.0); // MAXSwerve
   // with
@@ -104,9 +104,9 @@ public class DriveConstants {
   public static final double turnPIDMaxInput = 2 * Math.PI; // Radians
 
   // PathPlanner configuration
-  public static final double robotMassKg = 56.699;
+  public static final double robotMassKg = 63;
   public static final double robotMOI = 5.267513460399;
-  public static final double wheelCOF = 1.2;
+  public static final double wheelCOF = 1.1;
   public static final RobotConfig driveConfig =
       new RobotConfig(
           robotMassKg,

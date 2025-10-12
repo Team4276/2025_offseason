@@ -28,7 +28,7 @@ public class ElevatorConstants {
   public static final double minInput = 0.0; // m
   public static final double maxInput = Units.inchesToMeters(25.5); // m
 
-  public static final double gearRatio = 9.0;
+  public static final double gearRatio = 5.0;
   public static final Translation2d origin =
       new Translation2d(0.0, -Units.inchesToMeters(0.860191));
   public static final double length = Units.inchesToMeters(35);
