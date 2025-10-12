@@ -410,7 +410,7 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     if (autoFactory != null) {
-      return AutoFactory.taxiCommand(false);
+      return AutoFactory.taxiCommand(true);
     }
     return Commands.none();
   }

@@ -1,15 +1,15 @@
 package frc.team4276.frc2025.subsystems.clopper;
 
 public class ClopperConstants {
-  public static final double climberMaxVel = 50;
+  public static final double climberMaxVel = 100;
   public static final double climberMaxAccel = 200;
 
   public static final double climberkV = 0.24;
-  public static final double climberkP = 1.0;
+  public static final double climberkP = 0.5;
 
   public static final double climberStowPosition = 0.0;
   public static final double climberClimbPrepPosition = 200.0;
-  public static final double climberClimbPosition = 5.0;
+  public static final double climberClimbPosition = 0.0;
 
   public static final double wheelClimbVolts = 12.0;
 

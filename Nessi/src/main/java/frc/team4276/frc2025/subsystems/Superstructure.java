@@ -580,7 +580,7 @@ public class Superstructure extends SubsystemBase {
             reefSelectionMethod == ReefSelectionMethod.POSE
                 ? VisionMode.POSE_BASED
                 : VisionMode.ROTATION_BASED);
-    RobotState.getInstance().setSideToAccept(ScoringSide.BOTH);
+    RobotState.getInstance().setSideToAccept(side);
 
     if (shouldRaiseToScoringPosition()) {
       elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L1);
@@ -696,7 +696,7 @@ public class Superstructure extends SubsystemBase {
             reefSelectionMethod == ReefSelectionMethod.POSE
                 ? VisionMode.POSE_BASED
                 : VisionMode.ROTATION_BASED);
-    RobotState.getInstance().setSideToAccept(ScoringSide.BOTH);
+    RobotState.getInstance().setSideToAccept(side);
 
     drive.setAutoAlignPose(FieldConstants.getCoralScorePose(getReefSide(), side));
 
