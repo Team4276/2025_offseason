@@ -1,5 +1,6 @@
 package frc.team4276.frc2025;
 
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -123,7 +124,7 @@ public class Robot extends LoggedRobot {
     RobotState.getInstance();
     robotContainer = new RobotContainer();
 
-    // CameraServer.startAutomaticCapture();
+    CameraServer.startAutomaticCapture();
 
     // Switch thread to high priority to improve loop timing
     Threads.setCurrentThreadPriority(true, 10);

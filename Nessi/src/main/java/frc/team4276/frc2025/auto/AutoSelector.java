@@ -27,6 +27,8 @@ public class AutoSelector extends VirtualSubsystem {
     routineChooser.addDefaultOption("Do Nothing", () -> this.autoFactory.idle());
     routineChooser.addOption("Taxi Right", () -> this.autoFactory.taxiCommand(false));
     routineChooser.addOption("Taxi Left", () -> this.autoFactory.taxiCommand(true));
+    routineChooser.addOption("Taxi Mid Right", () -> this.autoFactory.taxiMidCommand(false));
+    routineChooser.addOption("Taxi Mid Left", () -> this.autoFactory.taxiMidCommand(false));
     routineChooser.addOption("3x Right: EBA", () -> this.autoFactory.EBA());
     routineChooser.addOption("3x Left: JAB", () -> this.autoFactory.JAB());
     routineChooser.addOption("4x Right: FEDC", () -> this.autoFactory.FEDC());

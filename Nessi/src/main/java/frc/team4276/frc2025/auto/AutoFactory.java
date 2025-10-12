@@ -40,6 +40,12 @@ public class AutoFactory {
     return resetPose(traj.getInitialPose(false).get()).andThen(driveTrajectory(traj));
   }
 
+  Command taxiMidCommand(boolean isBargeSide) {
+    Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("c_st_sc_G", isBargeSide);
+
+    return resetPose(traj.getInitialPose(false).get()).andThen(driveTrajectory(traj));
+  }
+
   Command EBA() {
     var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, false);
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, false);
