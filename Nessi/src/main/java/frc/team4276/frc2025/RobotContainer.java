@@ -76,9 +76,9 @@ public class RobotContainer {
   @AutoLogOutput private boolean disableVisionSim = true;
 
   // Auto
-  private final AutoSelector autoSelector = new AutoSelector();
-  private final AutoFactory autoFactory =
-      new AutoFactory(); // TODO: add auto selection; figure out if this is ok;
+  private final AutoSelector autoSelector =
+      new AutoSelector(
+          new AutoFactory(this)); // TODO: add auto selection; figure out if this is ok;
   // check logic; run thru sim
   // in
   // both manual and normal mode
@@ -409,10 +409,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    if (autoFactory != null) {
-      return AutoFactory.taxiCommand(true);
-    }
-    return Commands.none();
+    return autoSelector.getCommand();
   }
 
   public Superstructure getSuperstructure() {

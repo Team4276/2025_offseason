@@ -4,7 +4,6 @@ import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.frc2025.RobotContainer;
@@ -19,250 +18,177 @@ import frc.team4276.util.dashboard.Elastic;
 import frc.team4276.util.dashboard.Elastic.Notification;
 import frc.team4276.util.dashboard.Elastic.Notification.NotificationLevel;
 import frc.team4276.util.path.ChoreoUtil;
-import frc.team4276.util.path.PathUtil;
 
 @SuppressWarnings("unused")
 public class AutoFactory {
-  private static RobotContainer robotContainer;
+  private RobotContainer robotContainer;
 
-  public AutoFactory() {}
-
-  public static void addContainer(RobotContainer robotContrContainer) {
-    robotContainer = robotContrContainer;
+  public AutoFactory(RobotContainer robotContainer) {
+    this.robotContainer = robotContainer;
   }
 
-  public static Command idle() {
+  Command idle() {
     return resetPose(
         new Pose2d(
             RobotState.getInstance().getEstimatedPose().getTranslation(),
             AllianceFlipUtil.apply(Rotation2d.kZero)));
   }
 
-  public static Command taxiCommand(boolean isProcessorSide) {
-    Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("t_WALL", !isProcessorSide);
+  Command taxiCommand(boolean isBargeSide) {
+    Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("t_WALL", isBargeSide);
 
-    return resetPose(traj.getInitialPose(false).get())
-        .andThen(
-            driveToPoint(
-                traj.getInitialPose(false)
-                    .get()
-                    .transformBy(new Transform2d(1.0, 0.0, Rotation2d.kZero))));
+    return resetPose(traj.getInitialPose(false).get()).andThen(driveTrajectory(traj));
   }
 
-  public static Command jitbProcessorSide() {
-    Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("jitb_start", false);
-    return resetPose(AllianceFlipUtil.apply(traj.getInitialPose(false).get()))
-        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueInsideStationIntake)))
-        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueInsideStationIntake)))
-        .andThen(driveAndAlgaePickup(ReefSide.AB, ScoringSide.RIGHT))
-        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L3))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueInsideStationIntake)))
-        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L3))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueInsideStationIntake)));
-  }
+  Command EBA() {
+    var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, false);
+    var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, false);
 
-  public static Command jitbBargeSide() {
-    Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("jitb_start", true);
-    return resetPose(
-            PathUtil.mirrorLengthwise(AllianceFlipUtil.apply(traj.getInitialPose(false).get())))
-        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueInsideStationIntake))))
-        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueInsideStationIntake))))
-        .andThen(driveAndAlgaePickup(ReefSide.AB, ScoringSide.RIGHT))
-        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L3))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueInsideStationIntake))))
-        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L3))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueInsideStationIntake))));
-  }
-
-  public static Command poofsProcessorSide() {
-    return resetPose(AllianceFlipUtil.apply(FieldConstants.blueProcessorSideStart))
+    return resetPose(startPose)
         .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L2))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L2))
+        .andThen(driveAndIntakeFromStation(intakePose));
+  }
+
+  Command JAB() {
+    var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, true);
+    var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, true);
+
+    return resetPose(startPose)
+        .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_LEFT_L2))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L2))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L2))
+        .andThen(driveAndIntakeFromStation(intakePose));
+  }
+
+  Command FEDC() {
+    var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, false);
+    var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, false);
+
+    return resetPose(startPose)
+        .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_LEFT_L2))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_LEFT_L1))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_RIGHT_L1))
+        .andThen(driveAndIntakeFromStation(intakePose));
+  }
+
+  Command IJKL() {
+    var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, true);
+    var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, true);
+
+    return resetPose(startPose)
+        .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_RIGHT_L2))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_LEFT_L2))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_RIGHT_L1))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_LEFT_L1))
+        .andThen(driveAndIntakeFromStation(intakePose));
+  }
+
+  Command poofsProcessorSide() {
+    var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, false);
+    var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, false);
+
+    return resetPose(startPose)
+        .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2))
+        .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndAlgaePickup(ReefSide.CD, ScoringSide.LEFT))
         .andThen(algaeSwing(ReefSide.CD, ScoringSide.LEFT))
         .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_LEFT_L3))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)))
+        .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_RIGHT_L3))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)))
+        .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_LEFT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)))
+        .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_RIGHT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)));
+        .andThen(driveAndIntakeFromStation(intakePose));
   }
 
-  public static Command poofsBargeSide() {
-    return resetPose(
-            PathUtil.mirrorLengthwise(
-                AllianceFlipUtil.apply(FieldConstants.blueProcessorSideStart)))
+  Command poofsBargeSide() {
+    var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, true);
+    var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, true);
+
+    return resetPose(startPose)
         .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_LEFT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))))
+        .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndAlgaePickup(ReefSide.KL, ScoringSide.RIGHT))
         .andThen(algaeSwing(ReefSide.KL, ScoringSide.RIGHT))
         .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_RIGHT_L3))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))))
+        .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_LEFT_L3))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))))
+        .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_RIGHT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))))
+        .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_LEFT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))));
+        .andThen(driveAndIntakeFromStation(intakePose));
   }
 
-  public static Command FEDC() {
-    return resetPose(AllianceFlipUtil.apply(FieldConstants.blueProcessorSideStart))
-        .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_LEFT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)))
-        .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)))
-        .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_LEFT_L1))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)))
-        .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_RIGHT_L1))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)));
-  }
+  Command jitbProcessorSide() {
+    Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("jitb_start");
+    var intakePose = FieldConstants.flippablePose(FieldConstants.blueInsideStationIntake, false);
 
-  public static Command IJKL() {
-    return resetPose(
-            PathUtil.mirrorLengthwise(
-                AllianceFlipUtil.apply(FieldConstants.blueProcessorSideStart)))
-        .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_RIGHT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))))
-        .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_LEFT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))))
-        .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_RIGHT_L1))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))))
-        .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_LEFT_L1))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))));
-  }
-
-  public static Command EBA() {
-    return resetPose(AllianceFlipUtil.apply(FieldConstants.blueProcessorSideStart))
-        .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)))
+    return resetPose(traj.getInitialPose(false).get())
         .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)))
+        .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake)));
+        .andThen(driveAndAlgaePickup(ReefSide.AB, ScoringSide.RIGHT))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L3))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L3))
+        .andThen(driveAndIntakeFromStation(intakePose));
   }
 
-  public static Command JAB() {
-    return resetPose(
-            PathUtil.mirrorLengthwise(
-                AllianceFlipUtil.apply(FieldConstants.blueProcessorSideStart)))
-        .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_LEFT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))))
+  Command jitbBargeSide() {
+    Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("jitb_start", true);
+    var intakePose = FieldConstants.flippablePose(FieldConstants.blueInsideStationIntake, true);
+
+    return resetPose(traj.getInitialPose(false).get())
         .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))))
+        .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L2))
-        .andThen(
-            driveAndIntakeFromStation(
-                PathUtil.mirrorLengthwise(
-                    AllianceFlipUtil.apply(FieldConstants.blueOutsideStationIntake))));
+        .andThen(driveAndAlgaePickup(ReefSide.AB, ScoringSide.RIGHT))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L3))
+        .andThen(driveAndIntakeFromStation(intakePose))
+        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L3))
+        .andThen(driveAndIntakeFromStation(intakePose));
   }
 
-  private static Command resetPose(Pose2d pose) {
+  private Command resetPose(Pose2d pose) {
     return Commands.runOnce(() -> RobotState.getInstance().resetPose(pose));
   }
 
-  private static Command driveTrajectory(Trajectory<SwerveSample> traj) {
+  private Command driveTrajectory(Trajectory<SwerveSample> traj) {
     return Commands.runOnce(() -> robotContainer.getDrive().setChoreoTrajectory(traj))
         .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isTrajectoryFinished()));
   }
 
-  private static Command driveToPoint(Pose2d pose) {
+  private Command driveToPoint(Pose2d pose) {
     return Commands.runOnce(() -> robotContainer.getDrive().setAutoAlignPose(pose))
         .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isAtAutoAlignPose()));
   }
 
-  private static Command setState(WantedSuperState state) {
+  private Command setState(WantedSuperState state) {
     return robotContainer.getSuperstructure().setStateCommand(state);
   }
 
-  private static Command waitForCoralIntake() {
+  private Command waitForCoralIntake() {
     return Commands.waitUntil(() -> !robotContainer.getSuperstructure().hasCoral());
   }
 
-  private static Command driveAndScore(ReefSide reefSide, WantedSuperState state) {
+  private Command driveAndScore(ReefSide reefSide, WantedSuperState state) {
     var side =
         (state == WantedSuperState.SCORE_LEFT_L1
                 || state == WantedSuperState.SCORE_LEFT_L2
@@ -276,14 +202,14 @@ public class AutoFactory {
         .andThen(Commands.waitSeconds(0.25));
   }
 
-  private static Command driveAndIntakeFromStation(Pose2d intakePose) {
+  private Command driveAndIntakeFromStation(Pose2d intakePose) {
     return (driveToPoint(intakePose)
             .alongWith(setState(WantedSuperState.INTAKE_CORAL))
             .andThen(Commands.waitSeconds(3.0)))
         .raceWith(waitForCoralIntake());
   }
 
-  private static Command driveAndAlgaePickup(ReefSide reefSide, ScoringSide side) {
+  private Command driveAndAlgaePickup(ReefSide reefSide, ScoringSide side) {
     return driveToPoint(FieldConstants.getClearReefPose(reefSide, side))
         .andThen(setState(WantedSuperState.REEF_ALGAE))
         .andThen(
@@ -294,7 +220,7 @@ public class AutoFactory {
         .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isAtAutoAlignPose()));
   }
 
-  private static Command algaeSwing(ReefSide reefSide, ScoringSide side) {
+  private Command algaeSwing(ReefSide reefSide, ScoringSide side) {
     return Commands.runOnce(
         () ->
             robotContainer

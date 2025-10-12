@@ -3,12 +3,15 @@ package frc.team4276.frc2025.field;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import frc.team4276.frc2025.subsystems.SuperstructureConstants.ScoringSide;
 import frc.team4276.util.AllianceFlipUtil;
+import frc.team4276.util.path.PathUtil;
+import java.util.Map;
 import java.util.Optional;
 
 public class FieldConstants {
@@ -225,6 +228,38 @@ public class FieldConstants {
     return (tagId >= 6 && tagId <= 11) || (tagId >= 17 && tagId <= 22);
   }
 
+  public static Pose3d getTagPose(int id) {
+    if (id < 1 || id > 22) {
+      throw new IllegalArgumentException("id must be between 1 and 22");
+    }
+
+    return apriltagLayout
+        .getTagPose(id)
+        .orElseThrow(
+            () -> {
+              final String message = String.format("getTagPose called for unexpected tag %d", id);
+              return new RuntimeException(message);
+            });
+  }
+
+  public static final Map<Pose2d, Integer> blueAlliancePoseToTagIDsMap =
+      Map.of(
+          getTagPose(21).toPose2d(), 21,
+          getTagPose(20).toPose2d(), 20,
+          getTagPose(19).toPose2d(), 19,
+          getTagPose(18).toPose2d(), 18,
+          getTagPose(17).toPose2d(), 17,
+          getTagPose(22).toPose2d(), 22);
+
+  public static final Map<Pose2d, Integer> redAlliancePoseToTagIDsMap =
+      Map.of(
+          getTagPose(6).toPose2d(), 6,
+          getTagPose(7).toPose2d(), 7,
+          getTagPose(8).toPose2d(), 8,
+          getTagPose(9).toPose2d(), 9,
+          getTagPose(10).toPose2d(), 10,
+          getTagPose(11).toPose2d(), 11);
+
   public static final Pose2d blueProcessorSideStart =
       new Pose2d(7.1415, 1.905, Rotation2d.kCCW_90deg);
   public static final Pose2d blueJITBProcessorSideStart =
@@ -234,4 +269,12 @@ public class FieldConstants {
       new Pose2d(1.55, 0.72, Rotation2d.fromDegrees(55));
   public static final Pose2d blueInsideStationIntake =
       new Pose2d(0.69, 1.33, Rotation2d.fromDegrees(55));
+
+  public static Pose2d flippablePose(Pose2d pose, boolean isBargeSide) {
+    if (isBargeSide) {
+      return PathUtil.mirrorLengthwise(AllianceFlipUtil.apply(pose));
+    }
+
+    return AllianceFlipUtil.apply(pose);
+  }
 }

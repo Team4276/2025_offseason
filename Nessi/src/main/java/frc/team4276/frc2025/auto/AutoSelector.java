@@ -1,103 +1,45 @@
 package frc.team4276.frc2025.auto;
 
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.util.AllianceFlipUtil;
-import frc.team4276.util.dashboard.Elastic;
-import frc.team4276.util.dashboard.Elastic.Notification;
-import frc.team4276.util.dashboard.Elastic.Notification.NotificationLevel;
 import frc.team4276.util.drivers.VirtualSubsystem;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class AutoSelector extends VirtualSubsystem {
-  public static enum AutoQuestionResponse {
-    EMPTY,
-    YES,
-    NO
+  private final AutoFactory autoFactory;
+
+  private final LoggedDashboardChooser<Supplier<Command>> routineChooser =
+      new LoggedDashboardChooser<>("Comp/Auto/RoutineChooser");
+  private Supplier<Command> lastRoutine = () -> Commands.none();
+
+  private static boolean autoChanged = true;
+
+  private final LoggedNetworkNumber delayInput = new LoggedNetworkNumber("Comp/Auto/Delay", 0.0);
+
+  public AutoSelector(AutoFactory autoFactory) {
+    this.autoFactory = autoFactory;
+
+    routineChooser.addDefaultOption("Do Nothing", () -> this.autoFactory.idle());
+    routineChooser.addOption("Taxi Right", () -> this.autoFactory.taxiCommand(false));
+    routineChooser.addOption("Taxi Left", () -> this.autoFactory.taxiCommand(true));
+    routineChooser.addOption("3x Right: EBA", () -> this.autoFactory.EBA());
+    routineChooser.addOption("3x Left: JAB", () -> this.autoFactory.JAB());
+    routineChooser.addOption("4x Right: FEDC", () -> this.autoFactory.FEDC());
+    routineChooser.addOption("4x Left: IJKL", () -> this.autoFactory.IJKL());
+    routineChooser.addOption("Jitb 4x Right: FEDC", () -> this.autoFactory.jitbProcessorSide());
+    routineChooser.addOption("Jitb 4x Left: IJKL", () -> this.autoFactory.jitbBargeSide());
+    routineChooser.addOption("5x Right: JAB", () -> this.autoFactory.poofsProcessorSide());
+    routineChooser.addOption("5x Left: ECDCD", () -> this.autoFactory.poofsBargeSide());
   }
 
-  private static final int maxQuestions = 1;
-
-  private static final AutoRoutine defaultRoutine =
-      new AutoRoutine("Do Nothing", List.of(), () -> Commands.none());
-
-  private final LoggedDashboardChooser<AutoRoutine> routineChooser;
-  private final StringPublisher errorPublisher;
-  private final List<StringPublisher> questionPublishers;
-  private final List<LoggedDashboardChooser<AutoQuestionResponse>> questionChoosers;
-
-  private static boolean autoChanged = false;
-
-  private final Timer errorNotificationTimer = new Timer();
-  private final String validAutoText = "We Happy";
-  private String prevErrorMsg = validAutoText;
-
-  private final LoggedNetworkNumber delayInput;
-  private double prevDelayInput = 0.0;
-
-  private AutoRoutine lastRoutine;
-  private List<AutoQuestionResponse> lastResponses = List.of(AutoQuestionResponse.EMPTY);
-
-  public AutoSelector() {
-    routineChooser = new LoggedDashboardChooser<>("Comp/Auto/RoutineChooser");
-    routineChooser.addDefaultOption(defaultRoutine.name(), defaultRoutine);
-    lastRoutine = defaultRoutine;
-
-    errorPublisher =
-        NetworkTableInstance.getDefault().getStringTopic("Comp/Auto/ErrorMsg").publish();
-    questionPublishers = new ArrayList<>();
-    questionChoosers = new ArrayList<>();
-    for (int i = 0; i < maxQuestions; i++) {
-      var publisher =
-          NetworkTableInstance.getDefault()
-              .getStringTopic("Comp/Auto/Question #" + Integer.toString(i + 1))
-              .publish();
-      publisher.set("NA");
-      questionPublishers.add(publisher);
-      questionChoosers.add(
-          new LoggedDashboardChooser<>(
-              "Comp/Auto/Question #" + Integer.toString(i + 1) + " Chooser"));
-    }
-
-    delayInput = new LoggedNetworkNumber("Comp/Auto/Delay", 0.0);
-
-    errorNotificationTimer.restart();
-  }
-
-  /** Registers a new auto routine that can be selected. */
-  public void addRoutine(String name, Supplier<Command> command) {
-    addRoutine(name, List.of(), command);
-  }
-
-  /** Registers a new auto routine that can be selected. */
-  public void addRoutine(String name, List<AutoQuestion> questions, Supplier<Command> command) {
-    routineChooser.addOption(name, new AutoRoutine(name, questions, command));
-  }
-
-  /** Returns the selected auto command. */
+  /** Returns the selected auto command with the inputted delay. */
   public Command getCommand() {
-    return prevErrorMsg == validAutoText
-        ? lastRoutine.command().get().beforeStarting(Commands.waitSeconds(getDelayInput()))
-        : Commands.none();
-  }
-
-  /** Returns the name of the selected routine. */
-  public String getSelectedName() {
-    return lastRoutine.name();
-  }
-
-  /** Returns the selected question responses. */
-  public List<AutoQuestionResponse> getResponses() {
-    return lastResponses;
+    return lastRoutine.get().beforeStarting(Commands.waitSeconds(getDelayInput()));
   }
 
   public double getDelayInput() {
@@ -108,7 +50,7 @@ public class AutoSelector extends VirtualSubsystem {
 
   public void periodic() {
     // Skip updates when actively running in auto
-    if (DriverStation.isAutonomousEnabled() && lastRoutine != null && lastResponses != null) {
+    if (DriverStation.isAutonomousEnabled() && lastRoutine != null) {
       return;
     }
 
@@ -120,82 +62,17 @@ public class AutoSelector extends VirtualSubsystem {
       return;
     }
 
-    if (!selectedRoutine.equals(lastRoutine)) {
-      autoChanged = true;
-      var questions = selectedRoutine.questions();
-      questionChoosers.clear();
-      for (int i = 0; i < maxQuestions; i++) {
-        questionChoosers.add(
-            new LoggedDashboardChooser<>(
-                "Comp/Auto/Question #" + Integer.toString(i + 1) + " Chooser"));
-        if (i < questions.size()) {
-          questionPublishers.get(i).set(questions.get(i).question());
-          for (int j = 0; j < questions.get(i).responses().size(); j++) {
-            var response = questions.get(i).responses().get(j);
-            questionChoosers.get(i).addOption(response.toString(), response);
-          }
-        } else {
-          questionPublishers.get(i).set("");
-        }
-      }
-    }
-
     // Update the routine and responses
-    lastRoutine = selectedRoutine;
-    var cachedResponses =
-        lastResponses.isEmpty() || autoChanged
-            ? List.of(AutoQuestionResponse.EMPTY)
-            : lastResponses;
-    lastResponses = new ArrayList<>();
-    for (int i = 0; i < lastRoutine.questions().size(); i++) {
-      questionChoosers.get(i).periodic();
-      var responseString = questionChoosers.get(i).get();
-      if (cachedResponses.get(i) != responseString && responseString != null) {
-        autoChanged = true;
-      }
-      lastResponses.add(
-          responseString == null
-              ? lastRoutine.questions().get(i).responses().get(0)
-              : responseString);
-    }
-
-    if (getDelayInput() != prevDelayInput) {
+    if (lastRoutine != selectedRoutine.get()) {
+      lastRoutine = selectedRoutine;
       autoChanged = true;
     }
-
-    prevDelayInput = getDelayInput();
 
     if (AllianceFlipUtil.shouldFlip() != wasRed) {
       autoChanged = true;
     }
 
     wasRed = AllianceFlipUtil.shouldFlip();
-
-    String errorText = checkLogic();
-
-    // Scream, whine, complain, b*tch, basically be a baby until valid
-    if (errorText != validAutoText) {
-      if (prevErrorMsg == validAutoText || errorNotificationTimer.advanceIfElapsed(11.0)) {
-        Elastic.sendNotification(
-            new Notification(NotificationLevel.WARNING, "Invalid Auto", errorText, 10000));
-      }
-
-    } else {
-      if (autoChanged) {
-        // Elastic.sendNotification(level.INFO, "Auto Confirm", "Auto Is Valid",
-        // 3000));
-      }
-
-      errorNotificationTimer.restart();
-    }
-
-    prevErrorMsg = errorText;
-    errorPublisher.set(prevErrorMsg);
-    SmartDashboard.putBoolean("Comp/Auto/ErrorStatus", prevErrorMsg == validAutoText);
-  }
-
-  private String checkLogic() {
-    return validAutoText;
   }
 
   public static boolean hasAutoChanged() {
@@ -206,11 +83,4 @@ public class AutoSelector extends VirtualSubsystem {
 
     return false;
   }
-
-  /** A customizable auto routine associated with a single command. */
-  private static final record AutoRoutine(
-      String name, List<AutoQuestion> questions, Supplier<Command> command) {}
-
-  /** A question to ask for customizing an auto routine. */
-  public static record AutoQuestion(String question, List<AutoQuestionResponse> responses) {}
 }

@@ -107,9 +107,9 @@ public class Drive extends SubsystemBase {
   private SwerveSetpoint prevSetpoint;
 
   private final LoggedTunablePID teleopAutoAlignController =
-      new LoggedTunablePID(3.0, 0, 0.1, 0.1, "Drive/AutoAlign/TeleopTranslation");
+      new LoggedTunablePID(3.0, 0, 0.1, 0.0, "Drive/AutoAlign/TeleopTranslation");
   private final LoggedTunablePID autoAutoAlignController =
-      new LoggedTunablePID(2.0, 0, 0.0, 0.1, "Drive/AutoAlign/AutoTranslation");
+      new LoggedTunablePID(2.0, 0, 0.0, 0.0, "Drive/AutoAlign/AutoTranslation");
   private final LoggedTunablePID headingAlignController =
       new LoggedTunablePID(5.0, 0, 0, Units.degreesToRadians(1.0), "Drive/HeadingAlign");
   private final LoggedTunableNumber autoAlignTranslationTolerance =
@@ -381,7 +381,7 @@ public class Drive extends SubsystemBase {
                 currentPose.getRotation().minus(desiredHeadingAlignRotation).getRadians());
         requestedSpeeds.omegaRadiansPerSecond = headingAlignController.calculate(thetaError, 0.0);
 
-        if (Math.abs(thetaError) < headingAlignController.getErrorTolerance()) {
+        if (Math.abs(thetaError) < headingAlignTolerance.getAsDouble()) {
           requestedSpeeds.omegaRadiansPerSecond = 0.0;
         }
 
@@ -425,7 +425,7 @@ public class Drive extends SubsystemBase {
                 headingAlignController.calculate(autoAlignThetaError, 0.0),
                 maxAutoAlignDriveRotationOutput);
 
-        if (Math.abs(autoAlignThetaError) < headingAlignController.getErrorTolerance()) {
+        if (Math.abs(autoAlignThetaError) < headingAlignTolerance.getAsDouble()) {
           omega = 0.0;
         }
 

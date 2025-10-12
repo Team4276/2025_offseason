@@ -440,7 +440,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void stow() {
-    RobotState.getInstance().setVisionMode(VisionMode.POSE_BASED);
+    RobotState.getInstance().setVisionMode(VisionMode.ACCEPT_ALL);
     RobotState.getInstance().setSideToAccept(ScoringSide.BOTH);
     if (!DriverStation.isAutonomous()) {
       drive.setWantedState(Drive.WantedState.TELEOP);
