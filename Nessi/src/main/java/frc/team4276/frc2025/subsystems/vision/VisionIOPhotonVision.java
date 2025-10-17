@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.photonvision.PhotonCamera;
+import org.photonvision.PhotonUtils;
 
 /** IO implementation for real PhotonVision hardware. */
 public class VisionIOPhotonVision implements VisionIO {
@@ -67,18 +68,22 @@ public class VisionIOPhotonVision implements VisionIO {
                   new Pair<>(target.detectedCorners.get(i).x, target.detectedCorners.get(i).y));
             }
 
-            double distanceToTag =
-                calculateDistanceToAprilTagInMetersUsingTrigMethod(
-                    calculateAngleEncompassingTagHeight(
-                        calculateTargetHeightInPixels(cornerListPairs)),
-                    FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ());
+            // TODO: chck if target pitch is accurate
+            double distanceToTagPU = PhotonUtils.calculateDistanceToTargetMeters(robotToCamera.getZ(),
+                FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ(),
+                robotToCamera.getRotation().getY(),
+                target.getPitch());
 
-            var poseEstimate =
-                calculateRobotPose(
-                    target.fiducialId,
-                    distanceToTag,
-                    Rotation2d.fromDegrees(target.yaw),
-                    result.getTimestampSeconds());
+            double distanceToTag = calculateDistanceToAprilTagInMetersUsingTrigMethod(
+                calculateAngleEncompassingTagHeight(
+                    calculateTargetHeightInPixels(cornerListPairs)),
+                FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ());
+
+            var poseEstimate = calculateRobotPose(
+                target.fiducialId,
+                distanceToTag,
+                Rotation2d.fromDegrees(target.yaw),
+                result.getTimestampSeconds());
 
             if (poseEstimate.isPresent()) {
               txtyObservations.add(
@@ -121,20 +126,19 @@ public class VisionIOPhotonVision implements VisionIO {
   private double calculateDistanceToAprilTagInMetersUsingTrigMethod(
       Rotation2d angle, double tagHeightOffGround) {
     var tanOfTheta1 = angle.getTan();
-    var sqrtTerm =
-        Math.sqrt(
-            Math.abs(
-                Math.pow(tagHeight, 2)
-                    - (4
-                        * tanOfTheta1
-                        * (tagHeightOffGround
-                            - robotToCamera.getZ()
-                            - Units.inchesToMeters(3.25)
-                            + tagHeight)
-                        * tanOfTheta1
-                        * (tagHeightOffGround
-                            - robotToCamera.getZ()
-                            - Units.inchesToMeters(3.25)))));
+    var sqrtTerm = Math.sqrt(
+        Math.abs(
+            Math.pow(tagHeight, 2)
+                - (4
+                    * tanOfTheta1
+                    * (tagHeightOffGround
+                        - robotToCamera.getZ()
+                        - Units.inchesToMeters(3.25)
+                        + tagHeight)
+                    * tanOfTheta1
+                    * (tagHeightOffGround
+                        - robotToCamera.getZ()
+                        - Units.inchesToMeters(3.25)))));
     return Math.abs((tagHeight + sqrtTerm) / (2 * tanOfTheta1));
   }
 
@@ -157,8 +161,7 @@ public class VisionIOPhotonVision implements VisionIO {
 
     var scaledTx = Rotation2d.fromDegrees(-horizontalAngleToTarget.div(1.0).getDegrees());
 
-    var cameraToRobotCenter =
-        this.robotToCamera.inverse().getTranslation().toTranslation2d().rotateBy(robotRotation);
+    var cameraToRobotCenter = this.robotToCamera.inverse().getTranslation().toTranslation2d().rotateBy(robotRotation);
 
     var angleToTag = scaledTx.plus(correctedCameraRotation);
 
