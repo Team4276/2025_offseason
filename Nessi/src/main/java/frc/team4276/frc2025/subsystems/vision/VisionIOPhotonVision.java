@@ -72,8 +72,9 @@ public class VisionIOPhotonVision implements VisionIO {
             double distanceToTagPU = PhotonUtils.calculateDistanceToTargetMeters(robotToCamera.getZ(),
                 FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ(),
                 robotToCamera.getRotation().getY(),
-                target.getPitch());
+                target.pitch);
 
+            // TODO: try with target.pitch instead of pixel calc
             double distanceToTag = calculateDistanceToAprilTagInMetersUsingTrigMethod(
                 calculateAngleEncompassingTagHeight(
                     calculateTargetHeightInPixels(cornerListPairs)),
