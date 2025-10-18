@@ -38,7 +38,7 @@ public class VisionConstants {
 
   public static final CameraConfig[] configs =
       new CameraConfig[] {
-        new CameraConfig("Arducam_OV9281_USB_Camera", ov9281RobotToCameraNew, 48.0, 800),
+        new CameraConfig("Arducam_OV9281_USB_Camera", ov9281RobotToCameraNew, 43.0, 720),
         new CameraConfig("Arducam_OV2311_USB_Camera", ov2311RobotToCameraOld, 60.0, 1200)
       };
 }

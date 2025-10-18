@@ -5,6 +5,7 @@ import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
@@ -141,9 +142,8 @@ public class RobotState {
       }
 
       // Use gyro angle at time for robot rotation
-      // poseEstimate = obs.robotPose().transformBy(new Transform2d(sample.get(),
-      // odomPoseEstimate));
-      poseEstimate = obs.robotPose();
+      poseEstimate = obs.robotPose().transformBy(new Transform2d(sample.get(), odomPoseEstimate));
+      // poseEstimate = obs.robotPose();
     }
   }
 

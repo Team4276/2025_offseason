@@ -45,7 +45,8 @@ public class Superstructure extends SubsystemBase {
 
   private final ViXController controller = new ViXController(0);
 
-  private SuperstructureConstants.AutomationLevel automationLevel = AutomationLevel.AUTO_RELEASE;
+  private SuperstructureConstants.AutomationLevel automationLevel =
+      AutomationLevel.AUTO_DRIVE_MANUAL_RELEASE;
 
   public enum WantedSuperState {
     STOW,
