@@ -762,7 +762,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   private boolean shouldRaiseToScoringPosition() {
-    return drive.isAtAutoAlignPose(elevatorRaiseThreshold);
+    return drive.isAtTranslation(elevatorRaiseThreshold);
   }
 
   private boolean isReadyToEjectTeleopCoral() {

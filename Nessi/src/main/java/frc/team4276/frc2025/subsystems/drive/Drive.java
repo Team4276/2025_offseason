@@ -16,7 +16,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -107,15 +106,11 @@ public class Drive extends SubsystemBase {
   private SwerveSetpoint prevSetpoint;
 
   private final LoggedTunablePID teleopAutoAlignController =
-      new LoggedTunablePID(3.0, 0, 0.1, 0.0, "Drive/AutoAlign/TeleopTranslation");
+      new LoggedTunablePID(3.0, 0, 0.1, 0.01, "Drive/AutoAlign/TeleopTranslation");
   private final LoggedTunablePID autoAutoAlignController =
-      new LoggedTunablePID(2.0, 0, 0.0, 0.0, "Drive/AutoAlign/AutoTranslation");
+      new LoggedTunablePID(2.0, 0, 0.0, 0.01, "Drive/AutoAlign/AutoTranslation");
   private final LoggedTunablePID headingAlignController =
-      new LoggedTunablePID(5.0, 0, 0, Units.degreesToRadians(1.0), "Drive/HeadingAlign");
-  private final LoggedTunableNumber autoAlignTranslationTolerance =
-      new LoggedTunableNumber("Drive/AutoAlign/TranslationTolerance", 0.01);
-  private final LoggedTunableNumber headingAlignTolerance =
-      new LoggedTunableNumber("Drive/HeadingAlign/HeadingTolerance", Units.degreesToRadians(1.0));
+      new LoggedTunablePID(5.0, 0, 0, Math.toRadians(1.0), "Drive/HeadingAlign");
 
   private Pose2d desiredAutoAlignPose = Pose2d.kZero;
   private final double autoAlignStaticFrictionConstant = maxVelocityMPS * 0.02;
@@ -126,9 +121,9 @@ public class Drive extends SubsystemBase {
   private double maxAutoAlignDriveRotationOutput = maxAngularVelocity * 0.67;
 
   private final LoggedTunablePID trajectoryXController =
-      new LoggedTunablePID(4.0, 0, 0, 0.1, "Drive/Trajectory/TranslationX");
+      new LoggedTunablePID(4.0, 0, 0, 0.1, "Drive/Trajectory/Translation");
   private final LoggedTunablePID trajectoryYController =
-      new LoggedTunablePID(4.0, 0, 0, 0.1, "Drive/Trajectory/TranslationY");
+      new LoggedTunablePID(4.0, 0, 0, 0.1, "Drive/Trajectory/Translation");
   private final LoggedTunablePID trajectoryThetaController =
       new LoggedTunablePID(3.0, 0, 0, Math.toRadians(1.0), "Drive/Trajectory/Rotation");
 
@@ -381,7 +376,7 @@ public class Drive extends SubsystemBase {
                 currentPose.getRotation().minus(desiredHeadingAlignRotation).getRadians());
         requestedSpeeds.omegaRadiansPerSecond = headingAlignController.calculate(thetaError, 0.0);
 
-        if (Math.abs(thetaError) < headingAlignTolerance.getAsDouble()) {
+        if (headingAlignController.atSetpoint()) {
           requestedSpeeds.omegaRadiansPerSecond = 0.0;
         }
 
@@ -397,7 +392,7 @@ public class Drive extends SubsystemBase {
         double translationLinearError = translationError.getNorm();
         double translationLinearOutput;
 
-        if (translationLinearError < autoAlignTranslationTolerance.getAsDouble()) {
+        if (translationLinearError < teleopAutoAlignController.getErrorTolerance()) {
           translationLinearOutput = 0.0;
 
         } else if (DriverStation.isAutonomous()) {
@@ -425,7 +420,7 @@ public class Drive extends SubsystemBase {
                 headingAlignController.calculate(autoAlignThetaError, 0.0),
                 maxAutoAlignDriveRotationOutput);
 
-        if (Math.abs(autoAlignThetaError) < headingAlignTolerance.getAsDouble()) {
+        if (headingAlignController.atSetpoint()) {
           omega = 0.0;
         }
 
@@ -521,31 +516,38 @@ public class Drive extends SubsystemBase {
   }
 
   public boolean isAtAutoAlignPose() {
-    return isAtAutoAlignPose(autoAlignTranslationTolerance.getAsDouble());
-  }
-
-  public boolean isAtAutoAlignPose(double tolerance) {
-    return isAtPose(desiredAutoAlignPose, tolerance);
+    return isAtPose(desiredAutoAlignPose);
   }
 
   public boolean isAtPose(Pose2d pose) {
-    return isAtPose(pose, autoAlignTranslationTolerance.getAsDouble());
+    return isAtTranslation(pose.getTranslation()) && isHeadingAligned();
   }
 
-  public boolean isAtPose(Pose2d pose, double tolerance) {
-    return Math.abs(
-            RobotState.getInstance().getEstimatedPose().minus(pose).getTranslation().getNorm())
+  public boolean isAtTranslation(Translation2d trans) {
+    return isAtTranslation(trans, teleopAutoAlignController.getErrorTolerance());
+  }
+
+  public boolean isAtTranslation(double tolerance) {
+    return isAtTranslation(desiredAutoAlignPose.getTranslation(), tolerance);
+  }
+
+  public boolean isAtTranslation(Translation2d trans, double tolerance) {
+    return RobotState.getInstance().getEstimatedPose().getTranslation().getDistance(trans)
         < tolerance;
   }
 
-  public boolean isAtHeadingAlignPose() {
+  public boolean isHeadingAligned() {
+    return isAtHeading(desiredHeadingAlignRotation, headingAlignController.getErrorTolerance());
+  }
+
+  public boolean isAtHeading() {
+    return isAtHeading(desiredHeadingAlignRotation, headingAlignController.getErrorTolerance());
+  }
+
+  public boolean isAtHeading(Rotation2d heading, double tolerance) {
     return Math.abs(
-            RobotState.getInstance()
-                .getEstimatedPose()
-                .getRotation()
-                .minus(desiredHeadingAlignRotation)
-                .getDegrees())
-        < headingAlignTolerance.getAsDouble();
+            RobotState.getInstance().getEstimatedPose().getRotation().minus(heading).getRadians())
+        < tolerance;
   }
 
   /** Returns the module states (turn angles and drive velocities) for all of the modules. */
