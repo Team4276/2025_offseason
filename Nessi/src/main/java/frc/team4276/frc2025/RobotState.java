@@ -20,6 +20,7 @@ import frc.team4276.util.dashboard.ElasticUI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.littletonrobotics.junction.Logger;
 
 public class RobotState {
   private SwerveModulePosition[] lastWheelPositions =
@@ -116,11 +117,11 @@ public class RobotState {
   public void addVisionObservation(int camera, TagObservation... observations) {
     for (var obs : observations) {
       if (scoringSideToAccept == ScoringSide.LEFT) {
-        if (camera == 1) {
+        if (camera == 0) {
           continue;
         }
       } else if (scoringSideToAccept == ScoringSide.RIGHT) {
-        if (camera == 0) {
+        if (camera == 1) {
           continue;
         }
       }
@@ -180,9 +181,11 @@ public class RobotState {
     double currDistance = 0.0;
     for (AprilTag tag : FieldConstants.apriltagLayout.getTags()) {
       if (!FieldConstants.isReefTag(tag.ID)) {
-        if (AllianceFlipUtil.shouldFlip() && tag.ID > 11) {
-          continue;
-        }
+        continue;
+      }
+
+      if (AllianceFlipUtil.shouldFlip() && tag.ID > 11) {
+        continue;
       }
 
       currDistance =
@@ -205,6 +208,7 @@ public class RobotState {
   }
 
   public void setSideToAccept(ScoringSide scoringSideToAccept) {
+    Logger.recordOutput("Robotstate/ScoringSideToAccept", scoringSideToAccept);
     this.scoringSideToAccept = scoringSideToAccept;
   }
 

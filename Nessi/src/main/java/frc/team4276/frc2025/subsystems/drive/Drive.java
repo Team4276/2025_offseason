@@ -115,7 +115,7 @@ public class Drive extends SubsystemBase {
   private final LoggedTunableNumber autoAlignTranslationTolerance =
       new LoggedTunableNumber("Drive/AutoAlign/TranslationTolerance", 0.01);
   private final LoggedTunableNumber headingAlignTolerance =
-      new LoggedTunableNumber("Drive/HeadingAlign/HeadingTolerance", 1.0);
+      new LoggedTunableNumber("Drive/HeadingAlign/HeadingTolerance", Units.degreesToRadians(1.0));
 
   private Pose2d desiredAutoAlignPose = Pose2d.kZero;
   private final double autoAlignStaticFrictionConstant = maxVelocityMPS * 0.02;

@@ -17,7 +17,7 @@ public interface VisionIO {
       int tagId, double timestamp, int camera, double tx, double distance, Pose2d robotPose) {}
 
   public static record PoseObservation(
-      int[] tagIds, double timestamp, int camera, Pose2d robotPose, double distance) {}
+      Integer[] tagIds, double timestamp, int camera, Pose2d robotPose, double distance) {}
 
   public default void updateInputs(VisionIOInputs inputs) {}
 }

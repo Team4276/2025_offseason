@@ -47,7 +47,7 @@ public class VisionIOPhotonVision implements VisionIO {
     cornerListPairs = new ArrayList<Pair<Double, Double>>();
 
     SmartDashboard.putBoolean("Camera_" + index + "_Use_PU_Distance_Calc", false);
-    SmartDashboard.putBoolean("Camera_" + index + "_Use_3D_Transform_Distance_Calc", false);
+    SmartDashboard.putBoolean("Camera_" + index + "_Use_3D_Transform_Distance_Calc", true);
   }
 
   @Override
@@ -81,31 +81,38 @@ public class VisionIOPhotonVision implements VisionIO {
         double distanceToTag;
 
         if (SmartDashboard.getBoolean("Camera_" + index + "_Use_PU_Distance_Calc", false)) {
-          distanceToTag = PhotonUtils.calculateDistanceToTargetMeters(
-              robotToCamera.getZ(),
-              FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ(),
-              -robotToCamera.getRotation().getY(),
-              Units.degreesToRadians(-target.pitch));
+          distanceToTag =
+              PhotonUtils.calculateDistanceToTargetMeters(
+                  robotToCamera.getZ(),
+                  FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ(),
+                  -robotToCamera.getRotation().getY(),
+                  Units.degreesToRadians(-target.pitch));
 
-        } else if (SmartDashboard.getBoolean("Camera_" + index + "_Use_3D_Transform_Distance_Calc", false)
+        } else if (SmartDashboard.getBoolean(
+                "Camera_" + index + "_Use_3D_Transform_Distance_Calc", true)
             && target.bestCameraToTarget != null) {
-          distanceToTag = Math.sqrt(
-              Math.pow(target.bestCameraToTarget.getTranslation().getNorm(), 2)
-                  - Math.pow(FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ()
-                      - robotToCamera.getZ(), 2));
+          distanceToTag =
+              Math.sqrt(
+                  Math.pow(target.bestCameraToTarget.getTranslation().getNorm(), 2)
+                      - Math.pow(
+                          FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ()
+                              - robotToCamera.getZ(),
+                          2));
 
         } else {
-          distanceToTag = calculateDistanceToAprilTagInMetersUsingTrigMethod(
-              calculateAngleEncompassingTagHeight(
-                  calculateTargetHeightInPixels(cornerListPairs)),
-              FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ());
+          distanceToTag =
+              calculateDistanceToAprilTagInMetersUsingTrigMethod(
+                  calculateAngleEncompassingTagHeight(
+                      calculateTargetHeightInPixels(cornerListPairs)),
+                  FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ());
         }
 
-        var poseEstimate = calculateRobotPose(
-            target.fiducialId,
-            distanceToTag,
-            Rotation2d.fromDegrees(target.yaw),
-            result.getTimestampSeconds());
+        var poseEstimate =
+            calculateRobotPose(
+                target.fiducialId,
+                distanceToTag,
+                Rotation2d.fromDegrees(target.yaw),
+                result.getTimestampSeconds());
 
         if (poseEstimate.isPresent()) {
           txtyObservations.add(
@@ -117,7 +124,6 @@ public class VisionIOPhotonVision implements VisionIO {
                   distanceToTag,
                   poseEstimate.get()));
         }
-
       }
     }
 
@@ -147,19 +153,20 @@ public class VisionIOPhotonVision implements VisionIO {
   private double calculateDistanceToAprilTagInMetersUsingTrigMethod(
       Rotation2d angle, double tagHeightOffGround) {
     var tanOfTheta1 = angle.getTan();
-    var sqrtTerm = Math.sqrt(
-        Math.abs(
-            Math.pow(tagHeight, 2)
-                - (4
-                    * tanOfTheta1
-                    * (tagHeightOffGround
-                        - robotToCamera.getZ()
-                        - Units.inchesToMeters(3.25)
-                        + tagHeight)
-                    * tanOfTheta1
-                    * (tagHeightOffGround
-                        - robotToCamera.getZ()
-                        - Units.inchesToMeters(3.25)))));
+    var sqrtTerm =
+        Math.sqrt(
+            Math.abs(
+                Math.pow(tagHeight, 2)
+                    - (4
+                        * tanOfTheta1
+                        * (tagHeightOffGround
+                            - robotToCamera.getZ()
+                            - Units.inchesToMeters(3.25)
+                            + tagHeight)
+                        * tanOfTheta1
+                        * (tagHeightOffGround
+                            - robotToCamera.getZ()
+                            - Units.inchesToMeters(3.25)))));
     return Math.abs((tagHeight + sqrtTerm) / (2 * tanOfTheta1));
   }
 
@@ -182,7 +189,8 @@ public class VisionIOPhotonVision implements VisionIO {
 
     var scaledTx = Rotation2d.fromDegrees(-horizontalAngleToTarget.div(1.0).getDegrees());
 
-    var cameraToRobotCenter = this.robotToCamera.inverse().getTranslation().toTranslation2d().rotateBy(robotRotation);
+    var cameraToRobotCenter =
+        this.robotToCamera.inverse().getTranslation().toTranslation2d().rotateBy(robotRotation);
 
     var angleToTag = scaledTx.plus(correctedCameraRotation);
 

@@ -67,7 +67,7 @@ public class FieldConstants {
           blueReefCenter.plus(new Transform2d(reefToRightScore.rotateBy(angle), angle));
       blueReefToAlign[i * 2 + 1] =
           blueReefCenter.plus(new Transform2d(reefToRightAlign.rotateBy(angle), angle));
-      blueReefToAlgaePickup[i * 2] =
+      blueReefToAlgaePickup[i * 2 + 1] =
           blueReefCenter.plus(new Transform2d(reefToRightAlgaePickup.rotateBy(angle), angle));
     }
   }

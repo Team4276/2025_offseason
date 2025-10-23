@@ -711,6 +711,16 @@ public class Superstructure extends SubsystemBase {
                 ? VisionMode.POSE_BASED
                 : VisionMode.ROTATION_BASED);
 
+    var trans = RobotState.getInstance().getEstimatedPose().getTranslation();
+
+    if (trans.getDistance(getReefSide().getLeftReef().getAlgaePickup().getTranslation())
+        < trans.getDistance(getReefSide().getLeftReef().getAlgaePickup().getTranslation())) {
+      RobotState.getInstance().setSideToAccept(ScoringSide.LEFT);
+
+    } else {
+      RobotState.getInstance().setSideToAccept(ScoringSide.RIGHT);
+    }
+
     drive.setAutoAlignPose(getClosestAlgaePickup());
 
     return false;
