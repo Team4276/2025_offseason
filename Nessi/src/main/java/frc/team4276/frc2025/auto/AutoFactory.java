@@ -294,13 +294,14 @@ public class AutoFactory {
 
   private Command algaeSwing(ReefSide reefSide, ScoringSide side) {
     return Commands.runOnce(
-        () ->
-            robotContainer
-                .getDrive()
-                .setHeadingAlignRotation(
-                    FieldConstants.getClearReefPose(reefSide, side)
-                        .getRotation()
-                        .plus(Rotation2d.fromDegrees(side == ScoringSide.LEFT ? -90.0 : 90.0))));
+            () ->
+                robotContainer
+                    .getDrive()
+                    .setHeadingAlignRotation(
+                        FieldConstants.getClearReefPose(reefSide, side)
+                            .getRotation()
+                            .plus(Rotation2d.fromDegrees(side == ScoringSide.LEFT ? -90.0 : 90.0))))
+        .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isHeadingAligned()));
   }
 
   /**

@@ -25,26 +25,18 @@ public class AutoSelector extends VirtualSubsystem {
     this.autoFactory = autoFactory;
 
     routineChooser.addDefaultOption("Do Nothing", () -> this.autoFactory.idle());
-    // routineChooser.addOption("Taxi Right", () ->
-    // this.autoFactory.taxiCommand(false));
-    // routineChooser.addOption("Taxi Left", () ->
-    // this.autoFactory.taxiCommand(true));
-    // routineChooser.addOption("Taxi Mid Right", () ->
-    // this.autoFactory.taxiMidCommand(false));
-    // routineChooser.addOption("Taxi Mid Left", () ->
-    // this.autoFactory.taxiMidCommand(false));
-    // routineChooser.addOption("3x Right: EBA", () -> this.autoFactory.EBA());
-    // routineChooser.addOption("3x Left: JAB", () -> this.autoFactory.JAB());
-    // routineChooser.addOption("4x Right: FEDC", () -> this.autoFactory.FEDC());
-    // routineChooser.addOption("4x Left: IJKL", () -> this.autoFactory.IJKL());
-    // routineChooser.addOption("Jitb 4x Right BABA", () ->
-    // this.autoFactory.jitbProcessorSide());
-    // routineChooser.addOption("Jitb 4x Left ABAB", () ->
-    // this.autoFactory.jitbBargeSide());
-    // routineChooser.addOption("5x Right: JKLKL", () ->
-    // this.autoFactory.poofsProcessorSide());
-    // routineChooser.addOption("5x Left: ECDCD", () ->
-    // this.autoFactory.poofsBargeSide());
+    routineChooser.addOption("Taxi Right", () -> this.autoFactory.taxiCommand(false));
+    routineChooser.addOption("Taxi Left", () -> this.autoFactory.taxiCommand(true));
+    routineChooser.addOption("Taxi Mid Right", () -> this.autoFactory.taxiMidCommand(false));
+    routineChooser.addOption("Taxi Mid Left", () -> this.autoFactory.taxiMidCommand(false));
+    routineChooser.addOption("3x Right: EBA", () -> this.autoFactory.EBA());
+    routineChooser.addOption("3x Left: JAB", () -> this.autoFactory.JAB());
+    routineChooser.addOption("4x Right: FEDC", () -> this.autoFactory.FEDC());
+    routineChooser.addOption("4x Left: IJKL", () -> this.autoFactory.IJKL());
+    routineChooser.addOption("Jitb 4x Right BABA", () -> this.autoFactory.jitbProcessorSide());
+    routineChooser.addOption("Jitb 4x Left ABAB", () -> this.autoFactory.jitbBargeSide());
+    routineChooser.addOption("5x Right: JKLKL", () -> this.autoFactory.poofsProcessorSide());
+    routineChooser.addOption("5x Left: ECDCD", () -> this.autoFactory.poofsBargeSide());
   }
 
   /** Returns the selected auto command with the inputted delay. */
