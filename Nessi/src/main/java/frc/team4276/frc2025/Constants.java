@@ -27,7 +27,7 @@ public final class Constants {
     SIMBOT
   }
 
-  public static Mode mode = Mode.REAL;
+  public static Mode mode = Mode.SIM;
 
   public static RobotType getType() {
     return switch (mode) {
@@ -44,7 +44,7 @@ public final class Constants {
         : "Robot must be in REAL mode when SysIdMode is enabled.";
   }
 
-  public static final boolean isTuning = false; // TODO: Create separate tuning project
+  public static final boolean isTuning = true; // TODO: Create separate tuning project
 
   public static final boolean isSim = (mode == Mode.SIM);
 

@@ -18,6 +18,7 @@ import frc.team4276.util.dashboard.Elastic;
 import frc.team4276.util.dashboard.Elastic.Notification;
 import frc.team4276.util.dashboard.Elastic.Notification.NotificationLevel;
 import frc.team4276.util.path.ChoreoUtil;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
 public class AutoFactory {
@@ -32,6 +33,10 @@ public class AutoFactory {
         new Pose2d(
             RobotState.getInstance().getEstimatedPose().getTranslation(),
             AllianceFlipUtil.apply(Rotation2d.kZero)));
+  }
+
+  void autoEnd() {
+    robotContainer.getSuperstructure().setWantedSuperState(WantedSuperState.STOW);
   }
 
   Command taxiCommand(boolean isBargeSide) {
@@ -182,16 +187,24 @@ public class AutoFactory {
   }
 
   private Command driveToPoint(Pose2d pose) {
-    return Commands.runOnce(() -> robotContainer.getDrive().setAutoAlignPose(pose))
-        .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isAtAutoAlignPose()));
+    return driveToPoint(() -> pose);
+  }
+
+  private Command driveToPoint(Supplier<Pose2d> pose) {
+    return Commands.run(() -> robotContainer.getDrive().setAutoAlignPose(pose.get()))
+        .until(() -> robotContainer.getDrive().isAtAutoAlignPose());
   }
 
   private Command setState(WantedSuperState state) {
     return robotContainer.getSuperstructure().setStateCommand(state);
   }
 
-  private Command waitForCoralIntake() {
+  private Command waitForCoralScore() {
     return Commands.waitUntil(() -> !robotContainer.getSuperstructure().hasCoral());
+  }
+
+  private Command waitForCoralIntake() {
+    return Commands.waitUntil(() -> robotContainer.getSuperstructure().hasCoral());
   }
 
   private Command driveAndScore(ReefSide reefSide, WantedSuperState state) {
@@ -202,9 +215,10 @@ public class AutoFactory {
             ? ScoringSide.LEFT
             : ScoringSide.RIGHT;
 
-    return driveToPoint(FieldConstants.getCoralScorePose(reefSide, side))
+    return driveToPoint(
+            () -> robotContainer.getSuperstructure().getAutoAlignCoralScorePose(reefSide, side))
         .alongWith(setState(state))
-        .andThen(waitForCoralIntake().raceWith(Commands.waitSeconds(1.0)))
+        .andThen(waitForCoralScore().raceWith(Commands.waitSeconds(1.0)))
         .andThen(Commands.waitSeconds(0.25));
   }
 

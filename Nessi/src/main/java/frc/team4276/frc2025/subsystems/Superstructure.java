@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.team4276.frc2025.Constants;
 import frc.team4276.frc2025.RobotState;
 import frc.team4276.frc2025.RobotState.VisionMode;
 import frc.team4276.frc2025.field.FieldConstants;
@@ -25,6 +26,7 @@ import frc.team4276.frc2025.subsystems.toggles.TogglesIO;
 import frc.team4276.frc2025.subsystems.toggles.TogglesIOInputsAutoLogged;
 import frc.team4276.frc2025.subsystems.vision.Vision;
 import frc.team4276.util.AllianceFlipUtil;
+import frc.team4276.util.dashboard.LoggedTunableNumber;
 import frc.team4276.util.hid.ViXController;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
@@ -45,8 +47,7 @@ public class Superstructure extends SubsystemBase {
 
   private final ViXController controller = new ViXController(0);
 
-  private SuperstructureConstants.AutomationLevel automationLevel =
-      AutomationLevel.AUTO_DRIVE_MANUAL_RELEASE;
+  private SuperstructureConstants.AutomationLevel automationLevel = AutomationLevel.AUTO_RELEASE;
 
   public enum WantedSuperState {
     STOW,
@@ -699,9 +700,27 @@ public class Superstructure extends SubsystemBase {
                 : VisionMode.ROTATION_BASED);
     RobotState.getInstance().setSideToAccept(side);
 
-    drive.setAutoAlignPose(FieldConstants.getCoralScorePose(getReefSide(), side));
+    drive.setAutoAlignPose(getAutoAlignCoralScorePose(getReefSide(), side));
 
     return false;
+  }
+
+  private LoggedTunableNumber maxfinalScoringPoseBlendDistanceBand =
+      new LoggedTunableNumber("Superstructure/DistToCoralScoreFinalPoseBlend", 1.0);
+  private LoggedTunableNumber finalScoringPoseDeadband =
+      new LoggedTunableNumber("Superstructure/FinalCoralScoringPoseDeadband", 0.1);
+
+  public Pose2d getAutoAlignCoralScorePose(ReefSide reefSide, ScoringSide scoringSide) {
+    var finalPose = FieldConstants.getCoralScorePose(reefSide, scoringSide);
+    var currPose = RobotState.getInstance().getEstimatedPose();
+
+    var t =
+        (maxfinalScoringPoseBlendDistanceBand.getAsDouble()
+                + finalScoringPoseDeadband.getAsDouble()
+                - finalPose.getTranslation().getDistance(currPose.getTranslation()))
+            / maxfinalScoringPoseBlendDistanceBand.getAsDouble();
+
+    return FieldConstants.getLineupPose(reefSide, scoringSide).interpolate(finalPose, t);
   }
 
   private boolean driveToAlgaePickupPose() {
@@ -713,8 +732,8 @@ public class Superstructure extends SubsystemBase {
 
     var trans = RobotState.getInstance().getEstimatedPose().getTranslation();
 
-    if (trans.getDistance(getReefSide().getLeftReef().getAlgaePickup().getTranslation())
-        < trans.getDistance(getReefSide().getLeftReef().getAlgaePickup().getTranslation())) {
+    if (trans.getDistance(getReefSide().getLeftAlgaePickupPose().getTranslation())
+        < trans.getDistance(getReefSide().getRightAlgaePickupPose().getTranslation())) {
       RobotState.getInstance().setSideToAccept(ScoringSide.LEFT);
 
     } else {
@@ -731,8 +750,7 @@ public class Superstructure extends SubsystemBase {
         .getEstimatedPose()
         .nearest(
             List.of(
-                getReefSide().getLeftReef().getAlgaePickup(),
-                getReefSide().getRightReef().getAlgaePickup()));
+                getReefSide().getLeftAlgaePickupPose(), getReefSide().getRightAlgaePickupPose()));
   }
 
   private void driveToReturnPose() {
@@ -747,8 +765,7 @@ public class Superstructure extends SubsystemBase {
     var reef =
         RobotState.getInstance()
             .getEstimatedPose()
-            .nearest(
-                List.of(reefSide.getLeftReef().getAlign(), reefSide.getRightReef().getAlign()));
+            .nearest(List.of(reefSide.getLeftReefClearPose(), reefSide.getRightReefClearPose()));
 
     drive.setAutoAlignPose(reef);
   }
@@ -766,11 +783,11 @@ public class Superstructure extends SubsystemBase {
   }
 
   private boolean isReadyToEjectTeleopCoral() {
-    return elevator.atGoal() && drive.isAtAutoAlignPose();
+    return (elevator.atGoal() || Constants.isSim) && drive.isAtAutoAlignPose();
   }
 
   private boolean isReadyToEjectAutoCoral() {
-    return elevator.atGoal() && drive.isAtAutoAlignPose();
+    return (elevator.atGoal() || Constants.isSim) && drive.isAtAutoAlignPose();
   }
 
   private boolean isHighAlgaePickup() {

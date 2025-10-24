@@ -33,15 +33,18 @@ public class AutoSelector extends VirtualSubsystem {
     routineChooser.addOption("3x Left: JAB", () -> this.autoFactory.JAB());
     routineChooser.addOption("4x Right: FEDC", () -> this.autoFactory.FEDC());
     routineChooser.addOption("4x Left: IJKL", () -> this.autoFactory.IJKL());
-    routineChooser.addOption("Jitb 4x Right: FEDC", () -> this.autoFactory.jitbProcessorSide());
-    routineChooser.addOption("Jitb 4x Left: IJKL", () -> this.autoFactory.jitbBargeSide());
+    routineChooser.addOption("Jitb 4x Right", () -> this.autoFactory.jitbProcessorSide());
+    routineChooser.addOption("Jitb 4x Left", () -> this.autoFactory.jitbBargeSide());
     routineChooser.addOption("5x Right: JAB", () -> this.autoFactory.poofsProcessorSide());
     routineChooser.addOption("5x Left: ECDCD", () -> this.autoFactory.poofsBargeSide());
   }
 
   /** Returns the selected auto command with the inputted delay. */
   public Command getCommand() {
-    return lastRoutine.get().beforeStarting(Commands.waitSeconds(getDelayInput()));
+    return lastRoutine
+        .get()
+        .beforeStarting(Commands.waitSeconds(getDelayInput()))
+        .finallyDo(() -> this.autoFactory.autoEnd());
   }
 
   public double getDelayInput() {

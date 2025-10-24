@@ -515,12 +515,13 @@ public class Drive extends SubsystemBase {
     return getTrajectoryTime() > choreoTrajectory.getTotalTime();
   }
 
+  @AutoLogOutput
   public boolean isAtAutoAlignPose() {
     return isAtPose(desiredAutoAlignPose);
   }
 
   public boolean isAtPose(Pose2d pose) {
-    return isAtTranslation(pose.getTranslation()) && isHeadingAligned();
+    return isAtTranslation(pose.getTranslation()) && isAtHeading(pose.getRotation());
   }
 
   public boolean isAtTranslation(Translation2d trans) {
@@ -536,12 +537,13 @@ public class Drive extends SubsystemBase {
         < tolerance;
   }
 
+  @AutoLogOutput
   public boolean isHeadingAligned() {
     return isAtHeading(desiredHeadingAlignRotation, headingAlignController.getErrorTolerance());
   }
 
-  public boolean isAtHeading() {
-    return isAtHeading(desiredHeadingAlignRotation, headingAlignController.getErrorTolerance());
+  public boolean isAtHeading(Rotation2d heading) {
+    return isAtHeading(heading, headingAlignController.getErrorTolerance());
   }
 
   public boolean isAtHeading(Rotation2d heading, double tolerance) {

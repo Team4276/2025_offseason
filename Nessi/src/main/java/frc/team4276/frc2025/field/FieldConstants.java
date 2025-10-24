@@ -29,132 +29,45 @@ public class FieldConstants {
   public static final Pose2d blueReefCenter =
       new Pose2d(fieldCenter.minus(new Translation2d(reefToFieldCenter, 0.0)), Rotation2d.kZero);
 
-  public static final double clearReefOffset = Units.inchesToMeters(13.0);
-  public static final double scoringOffset = Units.inchesToMeters(18.625);
-  public static final double algaePickupOffset = Units.inchesToMeters(1.0);
-  public static final double reefCenterToTag = Units.inchesToMeters(32.746);
   public static final double tagToReef = Units.inchesToMeters(6.468853);
+  public static final double reefCenterToTag = Units.inchesToMeters(32.746);
 
-  public static final Translation2d reefToLeftAlign =
-      new Translation2d(-1.0 * (reefCenterToTag + scoringOffset + clearReefOffset), tagToReef);
-  public static final Translation2d reefToRightAlign =
-      reefToLeftAlign.plus(new Translation2d(0.0, -2.0 * tagToReef));
-
-  public static final Translation2d reefToLeftScore =
-      new Translation2d(-1.0 * (reefCenterToTag + scoringOffset), tagToReef);
-  public static final Translation2d reefToRightScore =
-      reefToLeftScore.plus(new Translation2d(0.0, -2.0 * tagToReef));
-
-  public static final Translation2d reefToLeftAlgaePickup =
-      new Translation2d(-1.0 * (reefCenterToTag + scoringOffset + algaePickupOffset), tagToReef);
-  public static final Translation2d reefToRightAlgaePickup =
-      reefToLeftScore.plus(new Translation2d(0.0, -2.0 * tagToReef));
-
-  public static final Pose2d[] blueReefToScore = new Pose2d[12];
-  public static final Pose2d[] blueReefToAlign = new Pose2d[12];
-  public static final Pose2d[] blueReefToAlgaePickup = new Pose2d[12];
-
-  static {
-    for (int i = 0; i < 6; i++) {
-      var angle = Rotation2d.fromDegrees(i * 60);
-      blueReefToScore[i * 2] =
-          blueReefCenter.plus(new Transform2d(reefToLeftScore.rotateBy(angle), angle));
-      blueReefToAlign[i * 2] =
-          blueReefCenter.plus(new Transform2d(reefToLeftAlign.rotateBy(angle), angle));
-      blueReefToAlgaePickup[i * 2] =
-          blueReefCenter.plus(new Transform2d(reefToLeftAlgaePickup.rotateBy(angle), angle));
-      blueReefToScore[i * 2 + 1] =
-          blueReefCenter.plus(new Transform2d(reefToRightScore.rotateBy(angle), angle));
-      blueReefToAlign[i * 2 + 1] =
-          blueReefCenter.plus(new Transform2d(reefToRightAlign.rotateBy(angle), angle));
-      blueReefToAlgaePickup[i * 2 + 1] =
-          blueReefCenter.plus(new Transform2d(reefToRightAlgaePickup.rotateBy(angle), angle));
-    }
-  }
-
-  public enum Reef {
-    A(blueReefToScore[0], blueReefToAlign[0], blueReefToAlgaePickup[0]),
-    B(blueReefToScore[1], blueReefToAlign[1], blueReefToAlgaePickup[1]),
-    C(blueReefToScore[2], blueReefToAlign[2], blueReefToAlgaePickup[2]),
-    D(blueReefToScore[3], blueReefToAlign[3], blueReefToAlgaePickup[3]),
-    E(blueReefToScore[4], blueReefToAlign[4], blueReefToAlgaePickup[4]),
-    F(blueReefToScore[5], blueReefToAlign[5], blueReefToAlgaePickup[5]),
-    G(blueReefToScore[6], blueReefToAlign[6], blueReefToAlgaePickup[6]),
-    H(blueReefToScore[7], blueReefToAlign[7], blueReefToAlgaePickup[7]),
-    I(blueReefToScore[8], blueReefToAlign[8], blueReefToAlgaePickup[8]),
-    J(blueReefToScore[9], blueReefToAlign[9], blueReefToAlgaePickup[9]),
-    K(blueReefToScore[10], blueReefToAlign[10], blueReefToAlgaePickup[10]),
-    L(blueReefToScore[11], blueReefToAlign[11], blueReefToAlgaePickup[11]);
-
-    private final Pose2d score;
-    private final Pose2d align;
-    private final Pose2d algaePickup;
-
-    private Reef(Pose2d score, Pose2d align, Pose2d algaePickup) {
-      this.score = score;
-      this.align = align;
-      this.algaePickup = algaePickup;
-    }
-
-    public Pose2d getScore() {
-      return AllianceFlipUtil.apply(score);
-    }
-
-    public Pose2d getBlueScore() {
-      return score;
-    }
-
-    public Pose2d getRedScore() {
-      return AllianceFlipUtil.flip(score);
-    }
-
-    public Pose2d getAlign() {
-      return AllianceFlipUtil.apply(align);
-    }
-
-    public Pose2d getBlueAlign() {
-      return align;
-    }
-
-    public Pose2d getRedAlign() {
-      return AllianceFlipUtil.flip(align);
-    }
-
-    public Pose2d getAlgaePickup() {
-      return AllianceFlipUtil.apply(algaePickup);
-    }
-
-    public Pose2d getBlueAlgaePickup() {
-      return algaePickup;
-    }
-
-    public Pose2d getRedAlgaePickup() {
-      return AllianceFlipUtil.flip(algaePickup);
-    }
-  }
+  public static final double bumperToRobotCenter = Units.inchesToMeters(18.625);
+  public static final double lineupOffset = Units.inchesToMeters(20.0);
+  public static final double scoringOffset = Units.inchesToMeters(0.0);
+  public static final double algaePickupOffset = Units.inchesToMeters(0.0);
+  public static final double clearReefOffset = Units.inchesToMeters(13.0);
 
   public enum ReefSide {
-    AB(Reef.A, Reef.B),
-    CD(Reef.C, Reef.D),
-    EF(Reef.F, Reef.E),
-    GH(Reef.H, Reef.G),
-    IJ(Reef.J, Reef.I),
-    KL(Reef.K, Reef.L);
+    AB,
+    CD,
+    EF,
+    GH,
+    IJ,
+    KL;
 
-    private final Reef leftReef; // Left
-    private final Reef rightReef; // Right
-
-    private ReefSide(Reef firstReef, Reef secondReef) {
-      this.leftReef = firstReef;
-      this.rightReef = secondReef;
+    public Pose2d getLeftScorePose() {
+      return getCoralScorePose(this, ScoringSide.LEFT);
     }
 
-    public Reef getLeftReef() {
-      return leftReef;
+    public Pose2d getRightScorePose() {
+      return getCoralScorePose(this, ScoringSide.RIGHT);
     }
 
-    public Reef getRightReef() {
-      return rightReef;
+    public Pose2d getLeftReefClearPose() {
+      return getClearReefPose(this, ScoringSide.LEFT);
+    }
+
+    public Pose2d getRightReefClearPose() {
+      return getClearReefPose(this, ScoringSide.RIGHT);
+    }
+
+    public Pose2d getLeftAlgaePickupPose() {
+      return getAlgaePickupPose(this, ScoringSide.LEFT);
+    }
+
+    public Pose2d getRightAlgaePickupPose() {
+      return getAlgaePickupPose(this, ScoringSide.RIGHT);
     }
   }
 
@@ -197,16 +110,20 @@ public class FieldConstants {
     return Optional.empty();
   }
 
+  public static Pose2d getLineupPose(ReefSide reefSide, ScoringSide side) {
+    return getReefReferencePose(reefSide, side, lineupOffset);
+  }
+
   public static Pose2d getCoralScorePose(ReefSide reefSide, ScoringSide side) {
     return getReefReferencePose(reefSide, side, scoringOffset);
   }
 
   public static Pose2d getClearReefPose(ReefSide reefSide, ScoringSide side) {
-    return getReefReferencePose(reefSide, side, scoringOffset + clearReefOffset);
+    return getReefReferencePose(reefSide, side, clearReefOffset);
   }
 
   public static Pose2d getAlgaePickupPose(ReefSide reefSide, ScoringSide side) {
-    return getReefReferencePose(reefSide, side, scoringOffset + algaePickupOffset);
+    return getReefReferencePose(reefSide, side, algaePickupOffset);
   }
 
   private static Pose2d getReefReferencePose(ReefSide reefSide, ScoringSide side, double offset) {
@@ -214,7 +131,7 @@ public class FieldConstants {
 
     var reefToPose =
         new Translation2d(
-            -1.0 * (reefCenterToTag + offset),
+            -1.0 * (reefCenterToTag + bumperToRobotCenter + offset),
             tagToReef
                 * (side == ScoringSide.LEFT
                     ? ((reefSide.ordinal() < 3 || reefSide.ordinal() == 5) ? 1 : -1)

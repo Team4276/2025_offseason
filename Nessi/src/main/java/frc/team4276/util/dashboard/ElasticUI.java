@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.team4276.util.AllianceFlipUtil;
+import frc.team4276.util.dashboard.Elastic.Notification;
+import frc.team4276.util.dashboard.Elastic.Notification.NotificationLevel;
 import java.util.function.Supplier;
 
 public class ElasticUI {
@@ -117,5 +119,12 @@ public class ElasticUI {
                 null);
           }
         });
+  }
+
+  private static Notification autoEndNotification =
+      new Notification(NotificationLevel.INFO, "AUTO FINISHED", "n/a seconds", 5000);
+
+  public static void sendAutoEndNotification(double time) {
+    Elastic.sendNotification(autoEndNotification.withDescription(time + "seconds!"));
   }
 }

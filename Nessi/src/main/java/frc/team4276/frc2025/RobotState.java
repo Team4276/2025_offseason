@@ -8,7 +8,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.team4276.frc2025.field.FieldConstants;
@@ -34,8 +33,6 @@ public class RobotState {
   private Pose2d poseEstimate = Pose2d.kZero;
   private Pose2d odomPoseEstimate = Pose2d.kZero;
 
-  private SwerveDriveOdometry odometry =
-      new SwerveDriveOdometry(kinematics, Rotation2d.kZero, lastWheelPositions);
   private TimeInterpolatableBuffer<Pose2d> odomPoseBuffer =
       TimeInterpolatableBuffer.createBuffer(2.0);
 
@@ -74,7 +71,6 @@ public class RobotState {
 
   /** Resets the current odometry pose. */
   public void resetPose(Pose2d pose) {
-    odometry.resetPose(pose);
     odomPoseBuffer.clear();
     poseEstimate = pose;
     odomPoseEstimate = pose;
@@ -90,25 +86,20 @@ public class RobotState {
 
   public void addOdometryObservation(
       double timestamp, Rotation2d yaw, SwerveModulePosition[] wheelPositions) {
+    // Derive from kinematics
+    var twist = kinematics.toTwist2d(lastWheelPositions, wheelPositions);
+    Pose2d lastOdometryPose = odomPoseEstimate;
+    lastWheelPositions = wheelPositions;
+    odomPoseEstimate = odomPoseEstimate.exp(twist);
+
     // Update gyro angle
-    if (yaw == null) {
-      // Derive from kinematics
-      yaw =
-          odomPoseEstimate
-              .getRotation()
-              .rotateBy(
-                  new Rotation2d(kinematics.toTwist2d(lastWheelPositions, wheelPositions).dtheta));
+    if (yaw != null) {
+      odomPoseEstimate = new Pose2d(odomPoseEstimate.getTranslation(), yaw);
     }
 
-    lastWheelPositions = wheelPositions;
+    odomPoseBuffer.addSample(timestamp, odomPoseEstimate);
 
-    var latestOdomEstimate = odometry.update(yaw, wheelPositions);
-
-    poseEstimate = poseEstimate.exp(odomPoseEstimate.log(latestOdomEstimate));
-
-    odomPoseBuffer.addSample(timestamp, latestOdomEstimate);
-
-    odomPoseEstimate = latestOdomEstimate;
+    poseEstimate = poseEstimate.exp(lastOdometryPose.log(odomPoseEstimate));
   }
 
   // TODO: check if this is taking a lot of processing time; if so, remove further

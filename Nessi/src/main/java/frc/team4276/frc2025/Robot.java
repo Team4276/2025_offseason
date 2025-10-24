@@ -40,7 +40,7 @@ public class Robot extends LoggedRobot {
       new Alert("CAN errors detected, robot may not be controllable.", AlertType.kError);
 
   private boolean autoMessagePrinted = false;
-  private double autoStart = 0.0;
+  private Timer autoTimer = new Timer();
 
   public Robot() {
     // Record metadata
@@ -141,12 +141,12 @@ public class Robot extends LoggedRobot {
     if (autonomousCommand != null) {
       if (!autonomousCommand.isScheduled() && !autoMessagePrinted) {
         if (DriverStation.isAutonomousEnabled()) {
-          System.out.printf(
-              "*** Auto finished in %.2f secs ***%n", Timer.getFPGATimestamp() - autoStart);
+          System.out.printf("*** Auto finished in %.2f secs ***%n", autoTimer.get());
+          ElasticUI.sendAutoEndNotification(autoTimer.get());
         } else {
-          System.out.printf(
-              "*** Auto cancelled in %.2f secs ***%n", Timer.getFPGATimestamp() - autoStart);
+          System.out.printf("*** Auto cancelled in %.2f secs ***%n", autoTimer.get());
         }
+        autoTimer.stop();
         autoMessagePrinted = true;
       }
     }
@@ -179,7 +179,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void autonomousInit() {
     autoMessagePrinted = false;
-    autoStart = Timer.getFPGATimestamp();
+    autoTimer.restart();
     System.out.println("Auto Started");
 
     if (!Constants.isTuning) {
