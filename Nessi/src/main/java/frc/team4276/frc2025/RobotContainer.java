@@ -76,13 +76,7 @@ public class RobotContainer {
   @AutoLogOutput private boolean disableVisionSim = true;
 
   // Auto
-  private final AutoSelector autoSelector =
-      new AutoSelector(
-          new AutoFactory(this)); // TODO: add auto selection; figure out if this is ok;
-  // check logic; run thru sim
-  // in
-  // both manual and normal mode
-  // TODO: add manual toggle in dashboard
+  private final AutoSelector autoSelector = new AutoSelector(new AutoFactory(this));
 
   public RobotContainer() {
     if (Constants.getMode() != Constants.Mode.REPLAY) {

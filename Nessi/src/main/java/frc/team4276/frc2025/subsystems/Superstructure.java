@@ -368,7 +368,7 @@ public class Superstructure extends SubsystemBase {
         break;
 
       case SCORE_RIGHT_AUTO_L1:
-        scoreAutoL1(ScoringSide.LEFT);
+        scoreAutoL1(ScoringSide.RIGHT);
         break;
 
       case SCORE_LEFT_AUTO_L2:
@@ -584,9 +584,7 @@ public class Superstructure extends SubsystemBase {
                 : VisionMode.ROTATION_BASED);
     RobotState.getInstance().setSideToAccept(side);
 
-    if (shouldRaiseToScoringPosition()) {
-      elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L1);
-    }
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L1);
 
     shouldEjectCoral = isReadyToEjectAutoCoral();
 
@@ -605,9 +603,7 @@ public class Superstructure extends SubsystemBase {
                 ? VisionMode.POSE_BASED
                 : VisionMode.ROTATION_BASED);
 
-    if (shouldRaiseToScoringPosition()) {
-      elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L2);
-    }
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L2);
 
     shouldEjectCoral = isReadyToEjectAutoCoral();
 
@@ -623,9 +619,7 @@ public class Superstructure extends SubsystemBase {
                 ? VisionMode.POSE_BASED
                 : VisionMode.ROTATION_BASED);
 
-    if (shouldRaiseToScoringPosition()) {
-      elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L3);
-    }
+    elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L3);
 
     shouldEjectCoral = isReadyToEjectAutoCoral();
 
@@ -708,7 +702,7 @@ public class Superstructure extends SubsystemBase {
   private LoggedTunableNumber maxfinalScoringPoseBlendDistanceBand =
       new LoggedTunableNumber("Superstructure/DistToCoralScoreFinalPoseBlend", 1.0);
   private LoggedTunableNumber finalScoringPoseDeadband =
-      new LoggedTunableNumber("Superstructure/FinalCoralScoringPoseDeadband", 0.1);
+      new LoggedTunableNumber("Superstructure/FinalCoralScoringPoseDeadband", 0.5);
 
   public Pose2d getAutoAlignCoralScorePose(ReefSide reefSide, ScoringSide scoringSide) {
     var finalPose = FieldConstants.getCoralScorePose(reefSide, scoringSide);
@@ -774,7 +768,7 @@ public class Superstructure extends SubsystemBase {
     return FieldConstants.getSideFromTagId(
             reefSelectionMethod == ReefSelectionMethod.POSE
                 ? RobotState.getInstance().getTagIdFromClosestPoseSide()
-                : RobotState.getInstance().getTagIdFromClosestRotationSide())
+                : RobotState.getInstance().getTagIdFromClosest60DegreeRotation())
         .get();
   }
 
@@ -787,7 +781,8 @@ public class Superstructure extends SubsystemBase {
   }
 
   private boolean isReadyToEjectAutoCoral() {
-    return (elevator.atGoal() || Constants.isSim) && drive.isAtAutoAlignPose();
+    return (elevator.atGoal() || Constants.isSim)
+        && (drive.isAtAutoAlignPose() || drive.isTrajectoryFinished());
   }
 
   private boolean isHighAlgaePickup() {

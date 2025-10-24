@@ -24,6 +24,8 @@ import java.util.function.Supplier;
 public class AutoFactory {
   private RobotContainer robotContainer;
 
+  private final double distanceToScoreElevatorRaise = 2.0;
+
   public AutoFactory(RobotContainer robotContainer) {
     this.robotContainer = robotContainer;
   }
@@ -48,7 +50,12 @@ public class AutoFactory {
   Command taxiMidCommand(boolean isBargeSide) {
     Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("c_st_sc_G", isBargeSide);
 
-    return resetPose(traj.getInitialPose(false).get()).andThen(driveTrajectory(traj));
+    return resetPose(traj.getInitialPose(false).get())
+        .andThen(
+            driveAndScore(
+                traj,
+                ReefSide.GH,
+                isBargeSide ? WantedSuperState.SCORE_LEFT_L1 : WantedSuperState.SCORE_RIGHT_L1));
   }
 
   Command EBA() {
@@ -150,7 +157,7 @@ public class AutoFactory {
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueInsideStationIntake, false);
 
     return resetPose(traj.getInitialPose(false).get())
-        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L2))
+        .andThen(driveAndScore(traj, ReefSide.AB, WantedSuperState.SCORE_RIGHT_L2))
         .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L2))
         .andThen(driveAndAlgaePickup(ReefSide.AB, ScoringSide.RIGHT))
@@ -166,7 +173,7 @@ public class AutoFactory {
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueInsideStationIntake, true);
 
     return resetPose(traj.getInitialPose(false).get())
-        .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_LEFT_L2))
+        .andThen(driveAndScore(traj, ReefSide.AB, WantedSuperState.SCORE_LEFT_L2))
         .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndScore(ReefSide.AB, WantedSuperState.SCORE_RIGHT_L2))
         .andThen(driveAndAlgaePickup(ReefSide.AB, ScoringSide.RIGHT))
@@ -207,7 +214,20 @@ public class AutoFactory {
     return Commands.waitUntil(() -> robotContainer.getSuperstructure().hasCoral());
   }
 
+  private Command waitForRaise(Pose2d endPose, double distanceToElevatorRaise) {
+    return Commands.waitUntil(
+        () ->
+            robotContainer
+                .getDrive()
+                .isAtTranslation(endPose.getTranslation(), distanceToElevatorRaise));
+  }
+
   private Command driveAndScore(ReefSide reefSide, WantedSuperState state) {
+    return driveAndScore(reefSide, state, distanceToScoreElevatorRaise);
+  }
+
+  private Command driveAndScore(
+      ReefSide reefSide, WantedSuperState state, double distanceToElevatorRaise) {
     var side =
         (state == WantedSuperState.SCORE_LEFT_L1
                 || state == WantedSuperState.SCORE_LEFT_L2
@@ -217,7 +237,38 @@ public class AutoFactory {
 
     return driveToPoint(
             () -> robotContainer.getSuperstructure().getAutoAlignCoralScorePose(reefSide, side))
-        .alongWith(setState(state))
+        .alongWith(
+            waitForRaise(FieldConstants.getCoralScorePose(reefSide, side), distanceToElevatorRaise)
+                .andThen(setState(state)))
+        .andThen(waitForCoralScore().raceWith(Commands.waitSeconds(1.0)))
+        .andThen(Commands.waitSeconds(0.25));
+  }
+
+  private Command driveAndScore(
+      Trajectory<SwerveSample> traj, ReefSide reefSide, WantedSuperState state) {
+    return driveAndScore(traj, reefSide, state, distanceToScoreElevatorRaise);
+  }
+
+  private Command driveAndScore(
+      Trajectory<SwerveSample> traj,
+      ReefSide reefSide,
+      WantedSuperState state,
+      double distanceToElevatorRaise) {
+    var side =
+        (state == WantedSuperState.SCORE_LEFT_L1
+                || state == WantedSuperState.SCORE_LEFT_L2
+                || state == WantedSuperState.SCORE_LEFT_L3)
+            ? ScoringSide.LEFT
+            : ScoringSide.RIGHT;
+
+    return driveTrajectory(traj)
+        .andThen(
+            driveToPoint(
+                () ->
+                    robotContainer.getSuperstructure().getAutoAlignCoralScorePose(reefSide, side)))
+        .alongWith(
+            waitForRaise(FieldConstants.getCoralScorePose(reefSide, side), distanceToElevatorRaise)
+                .andThen(setState(state)))
         .andThen(waitForCoralScore().raceWith(Commands.waitSeconds(1.0)))
         .andThen(Commands.waitSeconds(0.25));
   }
@@ -236,7 +287,8 @@ public class AutoFactory {
             Commands.waitUntil(
                 () ->
                     robotContainer.getElevator().getWantedElevatorPose()
-                        == ElevatorPosition.ALGAE_CHOP))
+                            == ElevatorPosition.ALGAE_CHOP
+                        && robotContainer.getElevator().atGoal()))
         .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isAtAutoAlignPose()));
   }
 

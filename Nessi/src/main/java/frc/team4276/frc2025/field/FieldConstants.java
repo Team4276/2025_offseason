@@ -19,6 +19,103 @@ public class FieldConstants {
   public static final AprilTagFieldLayout apriltagLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
+  public static int getTagIdFromSide(ReefSide side) {
+    return switch (side) {
+      case AB -> AllianceFlipUtil.shouldFlip() ? 7 : 18;
+      case CD -> AllianceFlipUtil.shouldFlip() ? 8 : 17;
+      case EF -> AllianceFlipUtil.shouldFlip() ? 9 : 22;
+      case GH -> AllianceFlipUtil.shouldFlip() ? 10 : 21;
+      case IJ -> AllianceFlipUtil.shouldFlip() ? 11 : 20;
+      case KL -> AllianceFlipUtil.shouldFlip() ? 6 : 19;
+    };
+  }
+
+  public static Optional<ReefSide> getSideFromTagId(int id) {
+    return switch (id) {
+      case 6 -> Optional.of(ReefSide.KL);
+      case 7 -> Optional.of(ReefSide.AB);
+      case 8 -> Optional.of(ReefSide.CD);
+      case 9 -> Optional.of(ReefSide.EF);
+      case 10 -> Optional.of(ReefSide.GH);
+      case 11 -> Optional.of(ReefSide.IJ);
+
+      case 17 -> Optional.of(ReefSide.CD);
+      case 18 -> Optional.of(ReefSide.AB);
+      case 19 -> Optional.of(ReefSide.KL);
+      case 20 -> Optional.of(ReefSide.IJ);
+      case 21 -> Optional.of(ReefSide.GH);
+      case 22 -> Optional.of(ReefSide.EF);
+
+      default -> Optional.empty();
+    };
+  }
+
+  public static boolean isReefTag(int tagId) {
+    return (tagId >= 6 && tagId <= 11) || (tagId >= 17 && tagId <= 22);
+  }
+
+  public static Pose3d getTagPose(int id) {
+    if (id < 1 || id > 22) {
+      throw new IllegalArgumentException("id must be between 1 and 22");
+    }
+
+    return apriltagLayout
+        .getTagPose(id)
+        .orElseThrow(
+            () -> {
+              final String message = String.format("getTagPose called for unexpected tag %d", id);
+              return new RuntimeException(message);
+            });
+  }
+
+  public static final Map<Pose2d, Integer> blueAlliancePoseToTagIDsMap =
+      Map.of(
+          getTagPose(21).toPose2d(), 21,
+          getTagPose(20).toPose2d(), 20,
+          getTagPose(19).toPose2d(), 19,
+          getTagPose(18).toPose2d(), 18,
+          getTagPose(17).toPose2d(), 17,
+          getTagPose(22).toPose2d(), 22);
+
+  public static final Map<Pose2d, Integer> redAlliancePoseToTagIDsMap =
+      Map.of(
+          getTagPose(6).toPose2d(), 6,
+          getTagPose(7).toPose2d(), 7,
+          getTagPose(8).toPose2d(), 8,
+          getTagPose(9).toPose2d(), 9,
+          getTagPose(10).toPose2d(), 10,
+          getTagPose(11).toPose2d(), 11);
+
+  public static final Map<Rotation2d, Integer> redAllianceAngleToTagIDsMap =
+      Map.of(
+          Rotation2d.fromDegrees(-60),
+          9,
+          Rotation2d.fromDegrees(-120),
+          8,
+          Rotation2d.k180deg,
+          7,
+          Rotation2d.fromDegrees(120),
+          6,
+          Rotation2d.fromDegrees(60),
+          1,
+          Rotation2d.kZero,
+          1);
+
+  public static final Map<Rotation2d, Integer> blueAllianceAngleToTagIDsMap =
+      Map.of(
+          Rotation2d.fromDegrees(-60),
+          12,
+          Rotation2d.fromDegrees(-120),
+          27,
+          Rotation2d.k180deg,
+          28,
+          Rotation2d.fromDegrees(120),
+          29,
+          Rotation2d.fromDegrees(60),
+          10,
+          Rotation2d.kZero,
+          11);
+
   public static final double fieldLength = Units.inchesToMeters(690.875958);
   public static final double fieldWidth = Units.inchesToMeters(317);
   public static final Translation2d fieldCenter =
@@ -71,37 +168,6 @@ public class FieldConstants {
     }
   }
 
-  public static int getTagIdFromSide(ReefSide side) {
-    return switch (side) {
-      case AB -> AllianceFlipUtil.shouldFlip() ? 7 : 18;
-      case CD -> AllianceFlipUtil.shouldFlip() ? 8 : 17;
-      case EF -> AllianceFlipUtil.shouldFlip() ? 9 : 22;
-      case GH -> AllianceFlipUtil.shouldFlip() ? 10 : 21;
-      case IJ -> AllianceFlipUtil.shouldFlip() ? 11 : 20;
-      case KL -> AllianceFlipUtil.shouldFlip() ? 6 : 19;
-    };
-  }
-
-  public static Optional<ReefSide> getSideFromTagId(int id) {
-    return switch (id) {
-      case 6 -> Optional.of(ReefSide.KL);
-      case 7 -> Optional.of(ReefSide.AB);
-      case 8 -> Optional.of(ReefSide.CD);
-      case 9 -> Optional.of(ReefSide.EF);
-      case 10 -> Optional.of(ReefSide.GH);
-      case 11 -> Optional.of(ReefSide.IJ);
-
-      case 17 -> Optional.of(ReefSide.CD);
-      case 18 -> Optional.of(ReefSide.AB);
-      case 19 -> Optional.of(ReefSide.KL);
-      case 20 -> Optional.of(ReefSide.IJ);
-      case 21 -> Optional.of(ReefSide.GH);
-      case 22 -> Optional.of(ReefSide.EF);
-
-      default -> Optional.empty();
-    };
-  }
-
   public static Optional<Pose2d> getCoralScorePose(int id, ScoringSide side) {
     var reefSide = getSideFromTagId(id);
     if (reefSide.isPresent()) {
@@ -140,42 +206,6 @@ public class FieldConstants {
     return AllianceFlipUtil.apply(
         blueReefCenter.plus(new Transform2d(reefToPose.rotateBy(angle), angle)));
   }
-
-  public static boolean isReefTag(int tagId) {
-    return (tagId >= 6 && tagId <= 11) || (tagId >= 17 && tagId <= 22);
-  }
-
-  public static Pose3d getTagPose(int id) {
-    if (id < 1 || id > 22) {
-      throw new IllegalArgumentException("id must be between 1 and 22");
-    }
-
-    return apriltagLayout
-        .getTagPose(id)
-        .orElseThrow(
-            () -> {
-              final String message = String.format("getTagPose called for unexpected tag %d", id);
-              return new RuntimeException(message);
-            });
-  }
-
-  public static final Map<Pose2d, Integer> blueAlliancePoseToTagIDsMap =
-      Map.of(
-          getTagPose(21).toPose2d(), 21,
-          getTagPose(20).toPose2d(), 20,
-          getTagPose(19).toPose2d(), 19,
-          getTagPose(18).toPose2d(), 18,
-          getTagPose(17).toPose2d(), 17,
-          getTagPose(22).toPose2d(), 22);
-
-  public static final Map<Pose2d, Integer> redAlliancePoseToTagIDsMap =
-      Map.of(
-          getTagPose(6).toPose2d(), 6,
-          getTagPose(7).toPose2d(), 7,
-          getTagPose(8).toPose2d(), 8,
-          getTagPose(9).toPose2d(), 9,
-          getTagPose(10).toPose2d(), 10,
-          getTagPose(11).toPose2d(), 11);
 
   public static final Pose2d blueProcessorSideStart =
       new Pose2d(7.1415, 1.905, Rotation2d.kCCW_90deg);

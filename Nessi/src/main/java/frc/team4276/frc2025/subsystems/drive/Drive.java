@@ -512,7 +512,12 @@ public class Drive extends SubsystemBase {
   }
 
   public boolean isTrajectoryFinished() {
-    return getTrajectoryTime() > choreoTrajectory.getTotalTime();
+    if (wantedState != WantedState.TRAJECTORY || choreoTrajectory == null) {
+      return false;
+    }
+
+    return getTrajectoryTime() > choreoTrajectory.getTotalTime()
+        && isAtPose(choreoTrajectory.getFinalPose(false).get());
   }
 
   @AutoLogOutput

@@ -102,8 +102,6 @@ public class RobotState {
     poseEstimate = poseEstimate.exp(lastOdometryPose.log(odomPoseEstimate));
   }
 
-  // TODO: check if this is taking a lot of processing time; if so, remove further
-  // tags in vision
   /** Adds a new timestamped vision measurement. */
   public void addVisionObservation(int camera, TagObservation... observations) {
     for (var obs : observations) {
@@ -152,7 +150,7 @@ public class RobotState {
         yield false;
 
       case ROTATION_BASED:
-        yield observationTagId == getTagIdFromClosestRotationSide();
+        yield observationTagId == getTagIdFromClosestRotationSide(getClosest60DegreeRotation());
 
       case POSE_BASED:
         yield observationTagId == getTagIdFromClosestPoseSide();
@@ -162,8 +160,31 @@ public class RobotState {
     };
   }
 
-  public int getTagIdFromClosestRotationSide() {
-    return 7;
+  public int getTagIdFromClosest60DegreeRotation() {
+    return getTagIdFromClosestRotationSide(getClosest60DegreeRotation());
+  }
+
+  public int getTagIdFromClosestRotationSide(Rotation2d closest60DegreeRotation) {
+    var id =
+        AllianceFlipUtil.shouldFlip()
+            ? FieldConstants.redAllianceAngleToTagIDsMap.get(closest60DegreeRotation)
+            : FieldConstants.blueAllianceAngleToTagIDsMap.get(closest60DegreeRotation);
+    Logger.recordOutput("RobotState/ValidTagIdFromRotation/FrontID", id);
+    return id;
+  }
+
+  public Rotation2d getClosest60DegreeRotation() {
+    double[] list = {60, 120, 180, -60, -120, 0};
+    double desiredRotation = 0;
+    for (double e : list) {
+      var rotation = Rotation2d.fromDegrees(e);
+      if (poseEstimate.getRotation().minus(rotation).getDegrees() < 30.0
+          && poseEstimate.getRotation().minus(rotation).getDegrees() >= -30) {
+        desiredRotation = e;
+      }
+    }
+    Logger.recordOutput("RobotState/Closest60DegreeAngle", desiredRotation);
+    return Rotation2d.fromDegrees(desiredRotation);
   }
 
   public int getTagIdFromClosestPoseSide() {
