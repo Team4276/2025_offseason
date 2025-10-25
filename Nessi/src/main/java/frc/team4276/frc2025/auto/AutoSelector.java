@@ -16,6 +16,7 @@ public class AutoSelector extends VirtualSubsystem {
   private final LoggedDashboardChooser<Supplier<Command>> routineChooser =
       new LoggedDashboardChooser<>("Comp/Auto/RoutineChooser");
   private Supplier<Command> lastRoutine = () -> Commands.none();
+  private String lastRoutineName = "";
 
   private static boolean autoChanged = true;
 
@@ -62,16 +63,21 @@ public class AutoSelector extends VirtualSubsystem {
     SmartDashboard.putNumber("Comp/Auto/Delay Input Submitted ", getDelayInput());
 
     // Update the list of questions
-    var selectedRoutine = routineChooser.get();
-    if (selectedRoutine == null) {
-      return;
-    }
+    var routineName = routineChooser.getSendableChooser().getSelected();
 
     // Update the routine and responses
-    if (lastRoutine != selectedRoutine.get()) {
+    if (lastRoutineName != routineName) {
+      var selectedRoutine = routineChooser.get();
+      if (selectedRoutine == null) {
+        return;
+      }
+
       lastRoutine = selectedRoutine;
+      lastRoutineName = routineName;
       autoChanged = true;
     }
+
+    SmartDashboard.putString("Comp/Auto/Routine Submitted ", lastRoutineName);
 
     if (AllianceFlipUtil.shouldFlip() != wasRed) {
       autoChanged = true;

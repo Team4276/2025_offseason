@@ -16,8 +16,6 @@ import frc.team4276.frc2025.subsystems.SuperstructureConstants.ScoringSide;
 import frc.team4276.frc2025.subsystems.vision.VisionIO.TagObservation;
 import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.ElasticUI;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
@@ -35,8 +33,6 @@ public class RobotState {
 
   private TimeInterpolatableBuffer<Pose2d> odomPoseBuffer =
       TimeInterpolatableBuffer.createBuffer(2.0);
-
-  private final Map<Integer, TagObservation> priorityTagObservations = new HashMap<>();
 
   public enum VisionMode {
     ACCEPT_ALL,
@@ -116,13 +112,6 @@ public class RobotState {
       }
 
       if (!shouldAcceptTagEstimate(obs.tagId())) continue;
-
-      if (priorityTagObservations.containsKey(obs.tagId())
-          && obs.timestamp() <= priorityTagObservations.get(obs.tagId()).timestamp()) {
-        continue;
-      }
-
-      priorityTagObservations.put(obs.tagId(), obs);
 
       // Get rotation at timestamp
       var sample = odomPoseBuffer.getSample(obs.timestamp());

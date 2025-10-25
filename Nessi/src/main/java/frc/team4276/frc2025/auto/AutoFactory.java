@@ -17,7 +17,9 @@ import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.Elastic;
 import frc.team4276.util.dashboard.Elastic.Notification;
 import frc.team4276.util.dashboard.Elastic.Notification.NotificationLevel;
+import frc.team4276.util.dashboard.ElasticUI;
 import frc.team4276.util.path.ChoreoUtil;
+import java.util.List;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
@@ -31,6 +33,8 @@ public class AutoFactory {
   }
 
   Command idle() {
+    ElasticUI.putAutoPath(() -> List.of());
+
     return resetPose(
         new Pose2d(
             RobotState.getInstance().getEstimatedPose().getTranslation(),
@@ -44,11 +48,15 @@ public class AutoFactory {
   Command taxiCommand(boolean isBargeSide) {
     Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("t_WALL", isBargeSide);
 
+    ElasticUI.putAutoTrajectory(traj);
+
     return resetPose(traj.getInitialPose(false).get()).andThen(driveTrajectory(traj));
   }
 
   Command taxiMidCommand(boolean isBargeSide) {
     Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("c_st_sc_G", isBargeSide);
+
+    ElasticUI.putAutoTrajectory(traj);
 
     return resetPose(traj.getInitialPose(false).get())
         .andThen(

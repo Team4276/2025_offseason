@@ -1,5 +1,7 @@
 package frc.team4276.util.dashboard;
 
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -14,6 +16,7 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.Elastic.Notification;
 import frc.team4276.util.dashboard.Elastic.Notification.NotificationLevel;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class ElasticUI {
@@ -96,35 +99,32 @@ public class ElasticUI {
         });
   }
 
-  public static void putPoseEstimate(Supplier<Pose2d> estimatedPose) {
-    SmartDashboard.putData(
-        "Field",
-        new Sendable() {
-          @Override
-          public void initSendable(SendableBuilder builder) {
-            builder.setSmartDashboardType("Field");
+  private static final SendableField autoField = new SendableField();
+  private static final SendableField teleopField = new SendableField();
+  private static final SendableField pathDisplayField = new SendableField();
 
-            builder.addDoubleArrayProperty(
-                "Robot",
-                () ->
-                    new double[] {
-                      estimatedPose.get().getX()
-                      // - (fieldLength / 2)
-                      ,
-                      estimatedPose.get().getY()
-                      // - (fieldWidth / 2)
-                      ,
-                      estimatedPose.get().getRotation().getDegrees()
-                    },
-                null);
-          }
-        });
+  public static void putPoseEstimate(Supplier<Pose2d> poseEstimate) {
+    autoField.withRobot(poseEstimate);
+    teleopField.withRobot(poseEstimate);
+
+    SmartDashboard.putData("Auto Field", autoField);
+    SmartDashboard.putData("Teleop Field", teleopField);
+  }
+
+  public static void putAutoPath(Supplier<List<Pose2d>> poses) { // TODO: add adder function and don't instantiate new sendable field
+    SmartDashboard.putData("Auto Path Display Field", new SendableField().withPath(poses));
+  }
+
+  public static void putAutoTrajectory(Trajectory<SwerveSample> traj) {
+    // pathDisplayField = .withTrajectory(traj);
+
+    SmartDashboard.putData("Auto Path Display Field", new SendableField().withTrajectory(traj));
   }
 
   private static Notification autoEndNotification =
       new Notification(NotificationLevel.INFO, "AUTO FINISHED", "n/a seconds", 5000);
 
   public static void sendAutoEndNotification(double time) {
-    Elastic.sendNotification(autoEndNotification.withDescription(time + "seconds!"));
+    Elastic.sendNotification(autoEndNotification.withDescription(time + "%.2f seconds!"));
   }
 }

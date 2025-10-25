@@ -704,17 +704,22 @@ public class Superstructure extends SubsystemBase {
   private LoggedTunableNumber finalScoringPoseDeadband =
       new LoggedTunableNumber("Superstructure/FinalCoralScoringPoseDeadband", 0.5);
 
-  public Pose2d getAutoAlignCoralScorePose(ReefSide reefSide, ScoringSide scoringSide) {
-    var finalPose = FieldConstants.getCoralScorePose(reefSide, scoringSide);
+  public Pose2d getAutoAlignCoralScorePose(Pose2d lineupPose, Pose2d scorePose) {
     var currPose = RobotState.getInstance().getEstimatedPose();
 
     var t =
         (maxfinalScoringPoseBlendDistanceBand.getAsDouble()
                 + finalScoringPoseDeadband.getAsDouble()
-                - finalPose.getTranslation().getDistance(currPose.getTranslation()))
+                - scorePose.getTranslation().getDistance(currPose.getTranslation()))
             / maxfinalScoringPoseBlendDistanceBand.getAsDouble();
 
-    return FieldConstants.getLineupPose(reefSide, scoringSide).interpolate(finalPose, t);
+    return lineupPose.interpolate(scorePose, t);
+  }
+
+  public Pose2d getAutoAlignCoralScorePose(ReefSide reefSide, ScoringSide scoringSide) {
+    return getAutoAlignCoralScorePose(
+        FieldConstants.getLineupPose(reefSide, scoringSide),
+        FieldConstants.getCoralScorePose(reefSide, scoringSide));
   }
 
   private boolean driveToAlgaePickupPose() {
