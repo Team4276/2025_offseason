@@ -111,7 +111,9 @@ public class ElasticUI {
     SmartDashboard.putData("Teleop Field", teleopField);
   }
 
-  public static void putAutoPath(Supplier<List<Pose2d>> poses) { // TODO: add adder function and don't instantiate new sendable field
+  public static void putAutoPath(
+      Supplier<List<Pose2d>>
+          poses) { // TODO: add adder function and don't instantiate new sendable field
     SmartDashboard.putData("Auto Path Display Field", new SendableField().withPath(poses));
   }
 

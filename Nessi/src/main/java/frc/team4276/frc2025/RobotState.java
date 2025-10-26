@@ -3,6 +3,8 @@ package frc.team4276.frc2025;
 import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
 
 import edu.wpi.first.apriltag.AprilTag;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -13,6 +15,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.field.FieldConstants.ReefSide;
 import frc.team4276.frc2025.subsystems.SuperstructureConstants.ScoringSide;
+import frc.team4276.frc2025.subsystems.vision.VisionIO.PoseObservation;
 import frc.team4276.frc2025.subsystems.vision.VisionIO.TagObservation;
 import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.ElasticUI;
@@ -45,6 +48,15 @@ public class RobotState {
   private VisionMode visionMode = VisionMode.ACCEPT_ALL;
   private ReefSide reefSideToAccept = ReefSide.AB;
   private ScoringSide scoringSideToAccept = ScoringSide.BOTH;
+
+  private SwerveDrivePoseEstimator poseEstimator3d =
+      new SwerveDrivePoseEstimator(
+          kinematics,
+          poseEstimate.getRotation(),
+          lastWheelPositions,
+          poseEstimate,
+          VecBuilder.fill(0.1, 0.1, 0.1),
+          VecBuilder.fill(0.9, 0.9, 2.0));
 
   private ChassisSpeeds robotVelocity = new ChassisSpeeds();
 
@@ -96,17 +108,18 @@ public class RobotState {
     odomPoseBuffer.addSample(timestamp, odomPoseEstimate);
 
     poseEstimate = poseEstimate.exp(lastOdometryPose.log(odomPoseEstimate));
+    poseEstimator3d.updateWithTime(timestamp, yaw, wheelPositions);
   }
 
   /** Adds a new timestamped vision measurement. */
-  public void addVisionObservation(int camera, TagObservation... observations) {
+  public void addVisionObservation(TagObservation... observations) {
     for (var obs : observations) {
       if (scoringSideToAccept == ScoringSide.LEFT) {
-        if (camera == 0) {
+        if (obs.camera() == 0) {
           continue;
         }
       } else if (scoringSideToAccept == ScoringSide.RIGHT) {
-        if (camera == 1) {
+        if (obs.camera() == 1) {
           continue;
         }
       }
@@ -218,12 +231,25 @@ public class RobotState {
     setVisionMode(VisionMode.ACCEPT_SIDE);
   }
 
+  /** Adds a new timestamped vision measurement. */
+  public void addVision3dPoseObservation(PoseObservation... observations) {
+    for (var obs : observations) {
+      poseEstimator3d.addVisionMeasurement(obs.robotPose().toPose2d(), obs.timestamp());
+    }
+  }
+
   public Pose2d getEstimatedPose() {
+    Logger.recordOutput("Robotstate/Estimated3dPose", poseEstimator3d.getEstimatedPosition());
+
     return useTrajectorySetpoint() ? trajectorySetpoint : poseEstimate;
   }
 
   public Pose2d getEstimatedOdomPose() {
     return odomPoseEstimate;
+  }
+
+  public Pose2d getEstimated3dPose() {
+    return poseEstimator3d.getEstimatedPosition();
   }
 
   public Optional<Pose2d> getEstimatedOdomPoseAtTime(double timestamp) {

@@ -18,6 +18,7 @@ public class Vision extends SubsystemBase {
   private final Alert[] disconnectedAlerts;
 
   private final List<Pose3d> allTagPoses = new LinkedList<>();
+  private final List<Pose3d> allTxTyPoses = new LinkedList<>();
   private final List<Pose3d> allRobotPoses = new LinkedList<>();
 
   public Vision(VisionIO... io) {
@@ -41,6 +42,7 @@ public class Vision extends SubsystemBase {
   @Override
   public void periodic() {
     allTagPoses.clear();
+    allTxTyPoses.clear();
     allRobotPoses.clear();
 
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
@@ -52,6 +54,7 @@ public class Vision extends SubsystemBase {
 
       // Initialize logging values
       List<Pose3d> tagPoses = new LinkedList<>();
+      List<Pose3d> txtyPoses = new LinkedList<>();
       List<Pose3d> robotPoses = new LinkedList<>();
 
       // Add tag poses
@@ -64,11 +67,16 @@ public class Vision extends SubsystemBase {
 
       // Send Tx Ty Data
       for (var tagObs : inputs[cameraIndex].targetObservations) {
-        robotPoses.add(new Pose3d(tagObs.robotPose()));
+        txtyPoses.add(new Pose3d(tagObs.robotPose()));
       }
 
-      RobotState.getInstance()
-          .addVisionObservation(cameraIndex, inputs[cameraIndex].targetObservations);
+      RobotState.getInstance().addVisionObservation(inputs[cameraIndex].targetObservations);
+
+      for (var poseObs : inputs[cameraIndex].poseObservations) {
+        robotPoses.add(poseObs.robotPose());
+      }
+
+      RobotState.getInstance().addVision3dPoseObservation(inputs[cameraIndex].poseObservations);
 
       if (enableInstanceLogging) {
         // Log camera datadata
@@ -76,16 +84,22 @@ public class Vision extends SubsystemBase {
             "Vision/Camera_" + Integer.toString(cameraIndex) + "/TagPoses",
             tagPoses.toArray(new Pose3d[tagPoses.size()]));
         Logger.recordOutput(
+            "Vision/Camera_" + Integer.toString(cameraIndex) + "/TxtyPoses",
+            txtyPoses.toArray(new Pose3d[txtyPoses.size()]));
+        Logger.recordOutput(
             "Vision/Camera_" + Integer.toString(cameraIndex) + "/RobotPoses",
             robotPoses.toArray(new Pose3d[robotPoses.size()]));
       }
       allTagPoses.addAll(tagPoses);
+      allTxTyPoses.addAll(txtyPoses);
       allRobotPoses.addAll(robotPoses);
     }
 
     // Log summary data
     Logger.recordOutput(
         "Vision/Summary/TagPoses", allTagPoses.toArray(new Pose3d[allTagPoses.size()]));
+    Logger.recordOutput(
+        "Vision/Summary/TxtyPoses", allTxTyPoses.toArray(new Pose3d[allTxTyPoses.size()]));
     Logger.recordOutput(
         "Vision/Summary/RobotPoses", allRobotPoses.toArray(new Pose3d[allRobotPoses.size()]));
   }

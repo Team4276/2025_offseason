@@ -4,6 +4,7 @@ import static frc.team4276.frc2025.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -34,6 +35,8 @@ public class VisionIOPhotonVision implements VisionIO {
   private final List<TagObservation> txtyObservations;
   private final ArrayList<Pair<Double, Double>> cornerListPairs;
 
+  private final List<PoseObservation> poseObservations;
+
   public VisionIOPhotonVision(int index) {
     this.index = index;
     camera = new PhotonCamera(configs[index].name);
@@ -46,6 +49,8 @@ public class VisionIOPhotonVision implements VisionIO {
     txtyObservations = new ArrayList<>();
     cornerListPairs = new ArrayList<Pair<Double, Double>>();
 
+    poseObservations = new ArrayList<>();
+
     SmartDashboard.putBoolean("Camera_" + index + "_Use_PU_Distance_Calc", false);
     SmartDashboard.putBoolean("Camera_" + index + "_Use_3D_Transform_Distance_Calc", true);
   }
@@ -57,6 +62,7 @@ public class VisionIOPhotonVision implements VisionIO {
     tagIds.clear();
     txtyObservations.clear();
     cornerListPairs.clear();
+    poseObservations.clear();
 
     // Read new camera observations
     for (var result : camera.getAllUnreadResults()) {
@@ -125,6 +131,63 @@ public class VisionIOPhotonVision implements VisionIO {
                   poseEstimate.get()));
         }
       }
+
+      if (result.multitagResult.isPresent()) {
+        Integer[] tagsUsed = new Integer[result.multitagResult.get().fiducialIDsUsed.size()];
+        result.multitagResult.get().fiducialIDsUsed.toArray(tagsUsed);
+        var cameraPose = result.multitagResult.get().estimatedPose.best;
+        var robotPose = cameraPose.plus(robotToCamera.inverse());
+
+        poseObservations.add(
+            new PoseObservation(
+                tagsUsed,
+                result.getTimestampSeconds(),
+                index,
+                Pose3d.kZero.transformBy(robotPose),
+                cameraPose.getTranslation().getNorm()));
+
+      } else if (result.hasTargets()) {
+        double ambiguity = result.getBestTarget().getPoseAmbiguity();
+
+        var bestCameraToTarget = result.getBestTarget().getBestCameraToTarget();
+        var altCameraToTarget = result.getBestTarget().getAlternateCameraToTarget();
+
+        var bestRobotPose = Pose3d.kZero.transformBy(bestCameraToTarget);
+        var altRobotPose = Pose3d.kZero.transformBy(altCameraToTarget);
+
+        Pose3d robotPose;
+
+        // Borrow from Mech A
+        if (ambiguity < (1 - ambiguity) * 0.4) {
+          Rotation2d odomRotation = RobotState.getInstance().getEstimatedPose().getRotation();
+          Rotation2d bestVisionRotation = bestRobotPose.getRotation().toRotation2d();
+          Rotation2d altVisionRotation = altRobotPose.getRotation().toRotation2d();
+
+          if (Math.abs(odomRotation.minus(bestVisionRotation).getRadians())
+              < Math.abs(odomRotation.minus(altVisionRotation).getRadians())) {
+            robotPose = bestRobotPose;
+
+          } else {
+            robotPose = altRobotPose;
+          }
+
+          // Exit if robot pose is off the field
+          if (robotPose.getX() < -fieldBorderMargin
+              || robotPose.getX() > FieldConstants.fieldLength + fieldBorderMargin
+              || robotPose.getY() < -fieldBorderMargin
+              || robotPose.getY() > FieldConstants.fieldWidth + fieldBorderMargin) {
+            continue;
+          }
+
+          poseObservations.add(
+              new PoseObservation(
+                  new Integer[] {result.getBestTarget().fiducialId},
+                  result.getTimestampSeconds(),
+                  index,
+                  robotPose,
+                  bestCameraToTarget.getTranslation().getNorm()));
+        }
+      }
     }
 
     // Save tag IDs to inputs objects
@@ -138,6 +201,11 @@ public class VisionIOPhotonVision implements VisionIO {
     inputs.targetObservations = new TagObservation[txtyObservations.size()];
     for (int j = 0; j < txtyObservations.size(); j++) {
       inputs.targetObservations[j] = txtyObservations.get(j);
+    }
+
+    inputs.poseObservations = new PoseObservation[poseObservations.size()];
+    for (int j = 0; j < poseObservations.size(); j++) {
+      inputs.poseObservations[j] = poseObservations.get(j);
     }
   }
 

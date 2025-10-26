@@ -13,6 +13,7 @@ public class VisionConstants {
       forceEnableInstanceLogging || Constants.getMode() == Mode.REPLAY;
 
   public static final double tagHeight = Units.inchesToMeters(6.5);
+  public static final double fieldBorderMargin = 0.5;
 
   public static final Transform3d ov9281RobotToCameraNew =
       new Transform3d(
