@@ -108,21 +108,21 @@ public class RobotState {
     odomPoseBuffer.addSample(timestamp, odomPoseEstimate);
 
     poseEstimate = poseEstimate.exp(lastOdometryPose.log(odomPoseEstimate));
-    poseEstimator3d.updateWithTime(timestamp, yaw, wheelPositions);
+    poseEstimator3d.updateWithTime(timestamp, odomPoseEstimate.getRotation(), wheelPositions);
   }
 
   /** Adds a new timestamped vision measurement. */
   public void addVisionObservation(TagObservation... observations) {
     for (var obs : observations) {
-      if (scoringSideToAccept == ScoringSide.LEFT) {
-        if (obs.camera() == 0) {
-          continue;
-        }
-      } else if (scoringSideToAccept == ScoringSide.RIGHT) {
-        if (obs.camera() == 1) {
-          continue;
-        }
-      }
+      // if (scoringSideToAccept == ScoringSide.LEFT) {
+      //   if (obs.camera() == 0) {
+      //     continue;
+      //   }
+      // } else if (scoringSideToAccept == ScoringSide.RIGHT) {
+      //   if (obs.camera() == 1) {
+      //     continue;
+      //   }
+      // }
 
       if (!shouldAcceptTagEstimate(obs.tagId())) continue;
 

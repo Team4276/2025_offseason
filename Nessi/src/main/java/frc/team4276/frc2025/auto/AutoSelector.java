@@ -29,15 +29,17 @@ public class AutoSelector extends VirtualSubsystem {
     routineChooser.addOption("Taxi Right", () -> this.autoFactory.taxiCommand(false));
     routineChooser.addOption("Taxi Left", () -> this.autoFactory.taxiCommand(true));
     routineChooser.addOption("Taxi Mid Right", () -> this.autoFactory.taxiMidCommand(false));
-    routineChooser.addOption("Taxi Mid Left", () -> this.autoFactory.taxiMidCommand(false));
+    routineChooser.addOption("Taxi Mid Left", () -> this.autoFactory.taxiMidCommand(true));
     routineChooser.addOption("3x Right: EBA", () -> this.autoFactory.EBA());
     routineChooser.addOption("3x Left: JAB", () -> this.autoFactory.JAB());
-    routineChooser.addOption("4x Right: FEDC", () -> this.autoFactory.FEDC());
-    routineChooser.addOption("4x Left: IJKL", () -> this.autoFactory.IJKL());
+    routineChooser.addOption("4x Right: FCDE", () -> this.autoFactory.FCDE());
+    routineChooser.addOption("4x Left: ILKJ", () -> this.autoFactory.ILKJ());
     routineChooser.addOption("Jitb 4x Right BABA", () -> this.autoFactory.jitbProcessorSide());
     routineChooser.addOption("Jitb 4x Left ABAB", () -> this.autoFactory.jitbBargeSide());
-    routineChooser.addOption("5x Right: JKLKL", () -> this.autoFactory.poofsProcessorSide());
-    routineChooser.addOption("5x Left: ECDCD", () -> this.autoFactory.poofsBargeSide());
+    routineChooser.addOption("4x Right: CDCD", () -> this.autoFactory.poofs4xProcessorSide());
+    routineChooser.addOption("4x Left: LKLK", () -> this.autoFactory.poofs4xBargeSide());
+    routineChooser.addOption("5x Right: ECDCD", () -> this.autoFactory.poofsProcessorSide());
+    routineChooser.addOption("5x Left: JLKLK", () -> this.autoFactory.poofsBargeSide());
   }
 
   /** Returns the selected auto command with the inputted delay. */

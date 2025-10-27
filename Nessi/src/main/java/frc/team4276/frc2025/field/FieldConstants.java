@@ -5,7 +5,6 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import frc.team4276.frc2025.subsystems.SuperstructureConstants.ScoringSide;
@@ -123,14 +122,14 @@ public class FieldConstants {
 
   public static final double reefToFieldCenter = 4.284788;
 
-  public static final Pose2d blueReefCenter =
-      new Pose2d(fieldCenter.minus(new Translation2d(reefToFieldCenter, 0.0)), Rotation2d.kZero);
+  public static final Translation2d blueReefCenter =
+      fieldCenter.minus(new Translation2d(reefToFieldCenter, 0.0));
 
   public static final double tagToReef = Units.inchesToMeters(6.468853);
   public static final double reefCenterToTag = Units.inchesToMeters(32.746);
 
   public static final double bumperToRobotCenter = Units.inchesToMeters(18.625);
-  public static final double lineupOffset = Units.inchesToMeters(20.0);
+  public static final double lineupOffset = Units.inchesToMeters(40.0);
   public static final double scoringOffset = Units.inchesToMeters(0.0);
   public static final double algaePickupOffset = Units.inchesToMeters(0.0);
   public static final double clearReefOffset = Units.inchesToMeters(13.0);
@@ -199,12 +198,12 @@ public class FieldConstants {
         new Translation2d(
             -1.0 * (reefCenterToTag + bumperToRobotCenter + offset),
             tagToReef
-                * (side == ScoringSide.LEFT
-                    ? ((reefSide.ordinal() < 3 || reefSide.ordinal() == 5) ? 1 : -1)
-                    : ((reefSide.ordinal() > 2 && reefSide.ordinal() < 5) ? 1 : -1)));
+                * ((reefSide.ordinal() < 2 || reefSide.ordinal() == 5)
+                    ? (side == ScoringSide.LEFT ? 1 : -1)
+                    : (side == ScoringSide.LEFT ? -1 : 1)));
 
     return AllianceFlipUtil.apply(
-        blueReefCenter.plus(new Transform2d(reefToPose.rotateBy(angle), angle)));
+        new Pose2d(blueReefCenter.plus(reefToPose.rotateBy(angle)), angle));
   }
 
   public static final Pose2d blueProcessorSideStart =

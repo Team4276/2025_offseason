@@ -16,6 +16,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -106,9 +107,11 @@ public class Drive extends SubsystemBase {
   private SwerveSetpoint prevSetpoint;
 
   private final LoggedTunablePID teleopAutoAlignController =
-      new LoggedTunablePID(3.0, 0, 0.1, 0.01, "Drive/AutoAlign/TeleopTranslation");
+      new LoggedTunablePID(
+          3.0, 0, 0.1, Units.inchesToMeters(1.0), "Drive/AutoAlign/TeleopTranslation");
   private final LoggedTunablePID autoAutoAlignController =
-      new LoggedTunablePID(2.0, 0, 0.0, 0.01, "Drive/AutoAlign/AutoTranslation");
+      new LoggedTunablePID(
+          3.0, 0, 0.1, Units.inchesToMeters(1.0), "Drive/AutoAlign/AutoTranslation");
   private final LoggedTunablePID headingAlignController =
       new LoggedTunablePID(5.0, 0, 0, Math.toRadians(1.0), "Drive/HeadingAlign");
 
@@ -121,9 +124,9 @@ public class Drive extends SubsystemBase {
   private double maxAutoAlignDriveRotationOutput = maxAngularVelocity * 0.67;
 
   private final LoggedTunablePID trajectoryXController =
-      new LoggedTunablePID(4.0, 0, 0, 0.1, "Drive/Trajectory/Translation");
+      new LoggedTunablePID(4.0, 0, 0, Units.inchesToMeters(0.5), "Drive/Trajectory/Translation");
   private final LoggedTunablePID trajectoryYController =
-      new LoggedTunablePID(4.0, 0, 0, 0.1, "Drive/Trajectory/Translation");
+      new LoggedTunablePID(4.0, 0, 0, Units.inchesToMeters(0.5), "Drive/Trajectory/Translation");
   private final LoggedTunablePID trajectoryThetaController =
       new LoggedTunablePID(3.0, 0, 0, Math.toRadians(1.0), "Drive/Trajectory/Rotation");
 
@@ -143,7 +146,6 @@ public class Drive extends SubsystemBase {
           VecBuilder.fill(0.0, 0.0),
           VecBuilder.fill(0.0, 0.0),
           VecBuilder.fill(0.0, 0.0));
-  // private final double[] dummyForces = { 0.0, 0.0, 0.0, 0.0 };
 
   public Drive(
       JoystickOutputController controller,
@@ -516,8 +518,11 @@ public class Drive extends SubsystemBase {
       return false;
     }
 
+    var pose = choreoTrajectory.getFinalPose(false).get();
+
     return getTrajectoryTime() > choreoTrajectory.getTotalTime()
-        && isAtPose(choreoTrajectory.getFinalPose(false).get());
+        && isAtTranslation(pose.getTranslation(), trajectoryXController.getErrorTolerance())
+        && isAtHeading(pose.getRotation(), trajectoryThetaController.getErrorTolerance());
   }
 
   @AutoLogOutput

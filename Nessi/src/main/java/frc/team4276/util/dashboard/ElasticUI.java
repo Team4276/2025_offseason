@@ -127,6 +127,7 @@ public class ElasticUI {
       new Notification(NotificationLevel.INFO, "AUTO FINISHED", "n/a seconds", 5000);
 
   public static void sendAutoEndNotification(double time) {
-    Elastic.sendNotification(autoEndNotification.withDescription(time + "%.2f seconds!"));
+    Elastic.sendNotification(
+        autoEndNotification.withDescription(String.format("%.2f", time) + " seconds!"));
   }
 }

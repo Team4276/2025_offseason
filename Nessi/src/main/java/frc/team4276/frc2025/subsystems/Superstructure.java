@@ -112,6 +112,11 @@ public class Superstructure extends SubsystemBase {
       ReefSelectionMethod.POSE;
   private boolean isL1Mode = false;
 
+  private LoggedTunableNumber maxfinalScoringPoseBlendDistanceBand =
+      new LoggedTunableNumber("Superstructure/DistToCoralScoreFinalPoseBlend", 1.0);
+  private LoggedTunableNumber finalScoringPoseDeadband =
+      new LoggedTunableNumber("Superstructure/FinalCoralScoringPoseDeadband", 0.5);
+
   public enum GamePieceState {
     NO_BANANA,
     CORAL
@@ -458,7 +463,7 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void intakeCoral() {
-    RobotState.getInstance().setVisionMode(VisionMode.POSE_BASED);
+    RobotState.getInstance().setVisionMode(VisionMode.REJECT_ALL);
     RobotState.getInstance().setSideToAccept(ScoringSide.BOTH);
 
     shouldEjectCoral = false;
@@ -699,11 +704,6 @@ public class Superstructure extends SubsystemBase {
     return false;
   }
 
-  private LoggedTunableNumber maxfinalScoringPoseBlendDistanceBand =
-      new LoggedTunableNumber("Superstructure/DistToCoralScoreFinalPoseBlend", 1.0);
-  private LoggedTunableNumber finalScoringPoseDeadband =
-      new LoggedTunableNumber("Superstructure/FinalCoralScoringPoseDeadband", 0.5);
-
   public Pose2d getAutoAlignCoralScorePose(Pose2d lineupPose, Pose2d scorePose) {
     var currPose = RobotState.getInstance().getEstimatedPose();
 
@@ -853,11 +853,12 @@ public class Superstructure extends SubsystemBase {
         () -> !isManualMode.get());
   }
 
-  // public void toggleReefSelectionMethod() {
-  // reefSelectionMethod = (reefSelectionMethod == ReefSelectionMethod.POSE)
-  // ? ReefSelectionMethod.ROTATION
-  // : ReefSelectionMethod.POSE;
-  // }
+  public void toggleReefSelectionMethod() {
+    reefSelectionMethod =
+        (reefSelectionMethod == ReefSelectionMethod.POSE)
+            ? ReefSelectionMethod.ROTATION
+            : ReefSelectionMethod.POSE;
+  }
 
   public void setL1ModeEnabled(boolean enabled) {
     isL1Mode = enabled;
