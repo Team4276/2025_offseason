@@ -115,13 +115,13 @@ public class RobotState {
   public void addVisionObservation(TagObservation... observations) {
     for (var obs : observations) {
       // if (scoringSideToAccept == ScoringSide.LEFT) {
-      //   if (obs.camera() == 0) {
-      //     continue;
-      //   }
+      // if (obs.camera() == 0) {
+      // continue;
+      // }
       // } else if (scoringSideToAccept == ScoringSide.RIGHT) {
-      //   if (obs.camera() == 1) {
-      //     continue;
-      //   }
+      // if (obs.camera() == 1) {
+      // continue;
+      // }
       // }
 
       if (!shouldAcceptTagEstimate(obs.tagId())) continue;

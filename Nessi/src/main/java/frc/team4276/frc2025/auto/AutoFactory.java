@@ -33,7 +33,7 @@ public class AutoFactory {
   }
 
   Command idle() {
-    ElasticUI.putAutoPath(() -> List.of());
+    ElasticUI.clearPathDisplayField();
 
     return resetPose(
         new Pose2d(
@@ -48,7 +48,7 @@ public class AutoFactory {
   Command taxiCommand(boolean isBargeSide) {
     Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("t_WALL", isBargeSide);
 
-    ElasticUI.putAutoTrajectory(traj);
+    ElasticUI.clearPathDisplayField();
 
     return resetPose(traj.getInitialPose(false).get()).andThen(driveTrajectory(traj));
   }
@@ -56,7 +56,7 @@ public class AutoFactory {
   Command taxiMidCommand(boolean isBargeSide) {
     Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("c_st_sc_G", isBargeSide);
 
-    ElasticUI.putAutoTrajectory(traj);
+    ElasticUI.clearPathDisplayField();
 
     return resetPose(traj.getInitialPose(false).get())
         .andThen(
@@ -69,6 +69,8 @@ public class AutoFactory {
   Command EBA() {
     var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, false);
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, false);
+
+    ElasticUI.clearPathDisplayField();
 
     return resetPose(startPose)
         .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2))
@@ -83,6 +85,8 @@ public class AutoFactory {
     var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, true);
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, true);
 
+    ElasticUI.clearPathDisplayField();
+
     return resetPose(startPose)
         .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_LEFT_L2))
         .andThen(driveAndIntakeFromStation(intakePose))
@@ -95,6 +99,8 @@ public class AutoFactory {
   Command FCDE() {
     var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, false);
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, false);
+
+    ElasticUI.clearPathDisplayField();
 
     return resetPose(startPose)
         .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_LEFT_L2))
@@ -111,6 +117,8 @@ public class AutoFactory {
     var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, true);
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, true);
 
+    ElasticUI.clearPathDisplayField();
+
     return resetPose(startPose)
         .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_RIGHT_L2))
         .andThen(driveAndIntakeFromStation(intakePose))
@@ -125,6 +133,8 @@ public class AutoFactory {
   Command jitbProcessorSide() {
     Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("jitb_start");
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueInsideStationIntake, false);
+
+    ElasticUI.clearPathDisplayField();
 
     return resetPose(traj.getInitialPose(false).get())
         .andThen(driveAndScore(traj, ReefSide.AB, WantedSuperState.SCORE_RIGHT_L2))
@@ -142,6 +152,8 @@ public class AutoFactory {
     Trajectory<SwerveSample> traj = ChoreoUtil.getChoreoTrajectory("jitb_start", true);
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueInsideStationIntake, true);
 
+    ElasticUI.clearPathDisplayField();
+
     return resetPose(traj.getInitialPose(false).get())
         .andThen(driveAndScore(traj, ReefSide.AB, WantedSuperState.SCORE_LEFT_L2))
         .andThen(driveAndIntakeFromStation(intakePose))
@@ -157,6 +169,8 @@ public class AutoFactory {
   Command poofs4xProcessorSide() {
     var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, false);
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, false);
+
+    ElasticUI.clearPathDisplayField();
 
     return resetPose(startPose)
         .andThen(driveAndAlgaePickup(ReefSide.CD, ScoringSide.LEFT))
@@ -175,6 +189,8 @@ public class AutoFactory {
     var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, true);
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, true);
 
+    ElasticUI.clearPathDisplayField();
+
     return resetPose(startPose)
         .andThen(driveAndAlgaePickup(ReefSide.KL, ScoringSide.RIGHT))
         .andThen(algaeSwing(ReefSide.KL, ScoringSide.RIGHT))
@@ -191,6 +207,8 @@ public class AutoFactory {
   Command poofsProcessorSide() {
     var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, false);
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, false);
+
+    ElasticUI.clearPathDisplayField();
 
     return resetPose(startPose)
         .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2))
@@ -210,6 +228,8 @@ public class AutoFactory {
   Command poofsBargeSide() {
     var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, true);
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, true);
+
+    ElasticUI.clearPathDisplayField();
 
     return resetPose(startPose)
         .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_LEFT_L2))
@@ -231,6 +251,10 @@ public class AutoFactory {
   }
 
   private Command driveTrajectory(Trajectory<SwerveSample> traj) {
+    ElasticUI.putAutoTrajectory(traj);
+    ElasticUI.putAutoPath(
+        List.of(traj.getInitialPose(false).get(), traj.getFinalPose(false).get()));
+
     return Commands.runOnce(() -> robotContainer.getDrive().setChoreoTrajectory(traj))
         .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isTrajectoryFinished()));
   }
@@ -277,6 +301,8 @@ public class AutoFactory {
             ? ScoringSide.LEFT
             : ScoringSide.RIGHT;
 
+    ElasticUI.putAutoPath(List.of(FieldConstants.getCoralScorePose(reefSide, side)));
+
     return driveToPoint(
             () -> robotContainer.getSuperstructure().getAutoAlignCoralScorePose(reefSide, side))
         .alongWith(
@@ -316,6 +342,8 @@ public class AutoFactory {
   }
 
   private Command driveAndIntakeFromStation(Pose2d intakePose) {
+    ElasticUI.putAutoPath(List.of(intakePose));
+
     return (driveToPoint(intakePose)
             .alongWith(setState(WantedSuperState.INTAKE_CORAL))
             .andThen(Commands.waitSeconds(3.0)))

@@ -16,16 +16,29 @@ public class SendableField implements Sendable {
 
   public SendableField() {}
 
+  public static void addPoseToBuilder(final SendableBuilder builder, String key, Pose2d pose) {
+    builder.addDoubleArrayProperty(
+        key, () -> new double[] {pose.getX(), pose.getY(), pose.getRotation().getDegrees()}, null);
+  }
+
   public SendableField withRobot(Supplier<Pose2d> poseSupplier) {
     this.poseSupplier = poseSupplier;
 
     return this;
   }
 
-  public SendableField withPath(Supplier<List<Pose2d>> pathSupplier) {
-    this.trajectorySupplier = pathSupplier;
+  public void clearRobot() {
+    poseSupplier = () -> Pose2d.kZero;
+  }
+
+  public SendableField withPath(List<Pose2d> pathSupplier) {
+    pathSupplier.forEach(this.pathSupplier.get()::add);
 
     return this;
+  }
+
+  public void clearPath() {
+    pathSupplier = () -> List.of();
   }
 
   public SendableField withTrajectory(Trajectory<SwerveSample> trajectory) {
@@ -34,9 +47,13 @@ public class SendableField implements Sendable {
       path.add(pose);
     }
 
-    this.trajectorySupplier = () -> path;
+    path.forEach(this.trajectorySupplier.get()::add);
 
     return this;
+  }
+
+  public void clearTrajectory() {
+    trajectorySupplier = () -> List.of();
   }
 
   @Override
@@ -44,15 +61,15 @@ public class SendableField implements Sendable {
     builder.setSmartDashboardType("Field");
 
     if (poseSupplier != null) {
-      builder.addDoubleArrayProperty(
-          "Robot",
-          () ->
-              new double[] {
-                poseSupplier.get().getX(),
-                poseSupplier.get().getY(),
-                poseSupplier.get().getRotation().getDegrees()
-              },
-          null);
+      addPoseToBuilder(builder, "Robot", poseSupplier.get());
+    }
+
+    if (pathSupplier != null) {
+      int i = 0;
+      for (var pose : pathSupplier.get()) {
+        addPoseToBuilder(builder, "Path" + i, pose);
+        i++;
+      }
     }
 
     if (trajectorySupplier != null) {
@@ -63,7 +80,7 @@ public class SendableField implements Sendable {
         array[3 * i + 2] = trajectorySupplier.get().get(i).getRotation().getDegrees();
       }
 
-      builder.addDoubleArrayProperty("Path", () -> array, null);
+      builder.addDoubleArrayProperty("Trajectory", () -> array, null);
     }
   }
 }

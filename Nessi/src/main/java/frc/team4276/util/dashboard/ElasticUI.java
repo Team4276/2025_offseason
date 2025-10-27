@@ -111,16 +111,17 @@ public class ElasticUI {
     SmartDashboard.putData("Teleop Field", teleopField);
   }
 
-  public static void putAutoPath(
-      Supplier<List<Pose2d>>
-          poses) { // TODO: add adder function and don't instantiate new sendable field
-    SmartDashboard.putData("Auto Path Display Field", new SendableField().withPath(poses));
+  public static void putAutoPath(List<Pose2d> poses) {
+    SmartDashboard.putData("Auto Path Display Field", pathDisplayField.withPath(poses));
   }
 
   public static void putAutoTrajectory(Trajectory<SwerveSample> traj) {
-    // pathDisplayField = .withTrajectory(traj);
+    SmartDashboard.putData("Auto Path Display Field", pathDisplayField.withTrajectory(traj));
+  }
 
-    SmartDashboard.putData("Auto Path Display Field", new SendableField().withTrajectory(traj));
+  public static void clearPathDisplayField() {
+    pathDisplayField.clearPath();
+    pathDisplayField.clearTrajectory();
   }
 
   private static Notification autoEndNotification =
