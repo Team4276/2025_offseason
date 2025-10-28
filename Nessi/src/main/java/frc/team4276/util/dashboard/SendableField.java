@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 
 public class SendableField implements Sendable {
   private Supplier<Pose2d> poseSupplier = () -> Pose2d.kZero;
-  private Supplier<List<Supplier<Pose2d>>> pathSupplier = () -> List.of();
+  private Supplier<List<Pose2d>> pathSupplier = () -> List.of();
   private Supplier<List<Pose2d>> trajectorySupplier = () -> List.of();
 
   public SendableField() {}
@@ -37,15 +37,17 @@ public class SendableField implements Sendable {
     poseSupplier = () -> Pose2d.kZero;
   }
 
-  public SendableField withPath(List<Pose2d> pathSupplier) {
-    List<Supplier<Pose2d>> path = new LinkedList<>();
+  public SendableField withPath(List<Pose2d> pathSupplier) { // TODO: this doesn't fucking work
+    // it keeps indexing the last one and purging the previous list for some reason
+    // i hate life
+    List<Pose2d> path = new LinkedList<>();
 
     for (int i = 0; i < this.pathSupplier.get().size(); i++) {
       path.add(this.pathSupplier.get().get(i));
     }
 
     for (var pose : pathSupplier) {
-      path.add(() -> pose);
+      path.add(pose);
     }
 
     this.pathSupplier = () -> path;
@@ -99,7 +101,7 @@ public class SendableField implements Sendable {
     if (pathSupplier != null) {
       int i = 0;
       for (var pose : pathSupplier.get()) {
-        addPoseToBuilder(builder, "Path" + i, pose);
+        addPoseToBuilder(builder, "Path" + i, () -> pose);
         i++;
       }
     }

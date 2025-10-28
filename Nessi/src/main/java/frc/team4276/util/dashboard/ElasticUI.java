@@ -101,7 +101,7 @@ public class ElasticUI {
 
   private static final SendableField autoField = new SendableField();
   private static final SendableField teleopField = new SendableField();
-  private static final SendableField pathDisplayField = new SendableField();
+  private static SendableField pathDisplayField = new SendableField();
 
   public static void putPoseEstimate(Supplier<Pose2d> poseEstimate) {
     autoField.withRobot(poseEstimate);
@@ -120,8 +120,7 @@ public class ElasticUI {
   }
 
   public static void clearPathDisplayField() {
-    pathDisplayField.clearPath();
-    pathDisplayField.clearTrajectory();
+    pathDisplayField = new SendableField();
   }
 
   private static Notification autoEndNotification =
