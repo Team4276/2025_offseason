@@ -14,19 +14,19 @@ public class LoggedTunablePID extends PIDController {
   public LoggedTunablePID(double kp, double ki, double kd, String key) {
     super(kp, ki, kd);
     this.key = key;
-    Kp = new LoggedTunableNumber(this.key + "/kP", kp);
-    Ki = new LoggedTunableNumber(this.key + "/kI", ki);
-    Kd = new LoggedTunableNumber(this.key + "/kD", kd);
     KTol = new LoggedTunableNumber(this.key + "/Tolerance", getErrorTolerance());
+    Kd = new LoggedTunableNumber(this.key + "/kD", kd);
+    Ki = new LoggedTunableNumber(this.key + "/kI", ki);
+    Kp = new LoggedTunableNumber(this.key + "/kP", kp);
   }
 
   public LoggedTunablePID(double kp, double ki, double kd, double tol, String key) {
     super(kp, ki, kd);
     this.key = key;
-    Kp = new LoggedTunableNumber(this.key + "/kP", kp);
-    Ki = new LoggedTunableNumber(this.key + "/kI", ki);
-    Kd = new LoggedTunableNumber(this.key + "/kD", kd);
     KTol = new LoggedTunableNumber(this.key + "/Tolerance", tol);
+    Kd = new LoggedTunableNumber(this.key + "/kD", kd);
+    Ki = new LoggedTunableNumber(this.key + "/kI", ki);
+    Kp = new LoggedTunableNumber(this.key + "/kP", kp);
   }
 
   @Override
