@@ -11,14 +11,20 @@ import java.util.function.Supplier;
 
 public class SendableField implements Sendable {
   private Supplier<Pose2d> poseSupplier = () -> Pose2d.kZero;
-  private Supplier<List<Pose2d>> pathSupplier = () -> List.of();
+  private Supplier<List<Supplier<Pose2d>>> pathSupplier = () -> List.of();
   private Supplier<List<Pose2d>> trajectorySupplier = () -> List.of();
 
   public SendableField() {}
 
-  public static void addPoseToBuilder(final SendableBuilder builder, String key, Pose2d pose) {
+  public static void addPoseToBuilder(
+      final SendableBuilder builder, String key, Supplier<Pose2d> pose) {
     builder.addDoubleArrayProperty(
-        key, () -> new double[] {pose.getX(), pose.getY(), pose.getRotation().getDegrees()}, null);
+        key,
+        () ->
+            new double[] {
+              pose.get().getX(), pose.get().getY(), pose.get().getRotation().getDegrees()
+            },
+        null);
   }
 
   public SendableField withRobot(Supplier<Pose2d> poseSupplier) {
@@ -32,7 +38,17 @@ public class SendableField implements Sendable {
   }
 
   public SendableField withPath(List<Pose2d> pathSupplier) {
-    pathSupplier.forEach(this.pathSupplier.get()::add);
+    List<Supplier<Pose2d>> path = new LinkedList<>();
+
+    for (int i = 0; i < this.pathSupplier.get().size(); i++) {
+      path.add(this.pathSupplier.get().get(i));
+    }
+
+    for (var pose : pathSupplier) {
+      path.add(() -> pose);
+    }
+
+    this.pathSupplier = () -> path;
 
     return this;
   }
@@ -43,11 +59,16 @@ public class SendableField implements Sendable {
 
   public SendableField withTrajectory(Trajectory<SwerveSample> trajectory) {
     List<Pose2d> path = new LinkedList<>();
+
+    for (var pose : trajectorySupplier.get()) {
+      path.add(pose);
+    }
+
     for (var pose : trajectory.getPoses()) {
       path.add(pose);
     }
 
-    path.forEach(this.trajectorySupplier.get()::add);
+    trajectorySupplier = () -> path;
 
     return this;
   }
@@ -56,12 +77,23 @@ public class SendableField implements Sendable {
     trajectorySupplier = () -> List.of();
   }
 
+  private double[] getTrajectoryArray() {
+    double[] array = new double[trajectorySupplier.get().size() * 3];
+    for (int i = 0; i < trajectorySupplier.get().size(); i++) {
+      array[3 * i] = trajectorySupplier.get().get(i).getX();
+      array[3 * i + 1] = trajectorySupplier.get().get(i).getY();
+      array[3 * i + 2] = trajectorySupplier.get().get(i).getRotation().getDegrees();
+    }
+
+    return array;
+  }
+
   @Override
   public void initSendable(SendableBuilder builder) {
     builder.setSmartDashboardType("Field");
 
     if (poseSupplier != null) {
-      addPoseToBuilder(builder, "Robot", poseSupplier.get());
+      addPoseToBuilder(builder, "Robot", poseSupplier);
     }
 
     if (pathSupplier != null) {
@@ -73,14 +105,7 @@ public class SendableField implements Sendable {
     }
 
     if (trajectorySupplier != null) {
-      double[] array = new double[trajectorySupplier.get().size() * 3];
-      for (int i = 0; i < trajectorySupplier.get().size(); i++) {
-        array[3 * i] = trajectorySupplier.get().get(i).getX();
-        array[3 * i + 1] = trajectorySupplier.get().get(i).getY();
-        array[3 * i + 2] = trajectorySupplier.get().get(i).getRotation().getDegrees();
-      }
-
-      builder.addDoubleArrayProperty("Trajectory", () -> array, null);
+      builder.addDoubleArrayProperty("Trajectory", this::getTrajectoryArray, null);
     }
   }
 }
