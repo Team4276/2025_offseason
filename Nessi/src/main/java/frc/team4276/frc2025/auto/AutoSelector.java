@@ -36,8 +36,8 @@ public class AutoSelector extends VirtualSubsystem {
     routineChooser.addOption("4x Left: ILKJ", () -> this.autoFactory.ILKJ());
     routineChooser.addOption("Jitb 4x Right BABA", () -> this.autoFactory.jitbProcessorSide());
     routineChooser.addOption("Jitb 4x Left ABAB", () -> this.autoFactory.jitbBargeSide());
-    routineChooser.addOption("4x Right: CDCD", () -> this.autoFactory.poofs4xProcessorSide());
-    routineChooser.addOption("4x Left: LKLK", () -> this.autoFactory.poofs4xBargeSide());
+    // routineChooser.addOption("4x Right: CDCD", () -> this.autoFactory.poofs4xProcessorSide());
+    // routineChooser.addOption("4x Left: LKLK", () -> this.autoFactory.poofs4xBargeSide());
     routineChooser.addOption("5x Right: ECDCD", () -> this.autoFactory.poofsProcessorSide());
     routineChooser.addOption("5x Left: JLKLK", () -> this.autoFactory.poofsBargeSide());
   }
