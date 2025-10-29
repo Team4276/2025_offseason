@@ -116,6 +116,7 @@ public class Drive extends SubsystemBase {
       new LoggedTunablePID(5.0, 0, 0, Math.toRadians(1.0), "Drive/HeadingAlign");
 
   private Pose2d desiredAutoAlignPose = Pose2d.kZero;
+  private Pose2d isAutoAlignedCheckPose = Pose2d.kZero;
   private final double autoAlignStaticFrictionConstant = maxVelocityMPS * 0.02;
 
   private Rotation2d desiredHeadingAlignRotation = Rotation2d.kZero;
@@ -433,6 +434,7 @@ public class Drive extends SubsystemBase {
         Logger.recordOutput("Drive/AutoAlign/ThetaError", autoAlignThetaError);
         Logger.recordOutput("Drive/AutoAlign/Output", requestedSpeeds);
         Logger.recordOutput("Drive/AutoAlign/LinearOutput", translationLinearOutput);
+        Logger.recordOutput("Drive/AutoAlign/CheckerPose", isAutoAlignedCheckPose);
 
         break;
 
@@ -527,7 +529,7 @@ public class Drive extends SubsystemBase {
 
   @AutoLogOutput
   public boolean isAtAutoAlignPose() {
-    return isAtPose(desiredAutoAlignPose);
+    return isAtPose(isAutoAlignedCheckPose);
   }
 
   public boolean isAtPose(Pose2d pose) {
@@ -539,7 +541,7 @@ public class Drive extends SubsystemBase {
   }
 
   public boolean isAtTranslation(double tolerance) {
-    return isAtTranslation(desiredAutoAlignPose.getTranslation(), tolerance);
+    return isAtTranslation(isAutoAlignedCheckPose.getTranslation(), tolerance);
   }
 
   public boolean isAtTranslation(Translation2d trans, double tolerance) {
@@ -588,6 +590,12 @@ public class Drive extends SubsystemBase {
   public void setAutoAlignPose(Pose2d pose) {
     setWantedState(WantedState.AUTO_ALIGN);
     desiredAutoAlignPose = pose;
+    isAutoAlignedCheckPose = pose;
+  }
+
+  /** Set after setting the auto align pose for the cycle */
+  public void setIsAutoAlignCheckPose(Pose2d pose) {
+    isAutoAlignedCheckPose = pose;
   }
 
   public void setHeadingAlignRotation(Rotation2d rotation) {

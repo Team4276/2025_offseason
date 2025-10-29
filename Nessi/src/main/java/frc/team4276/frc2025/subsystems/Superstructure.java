@@ -104,13 +104,19 @@ public class Superstructure extends SubsystemBase {
 
   private WantedSuperState wantedSuperState = WantedSuperState.STOW;
   private CurrentSuperState currentSuperState = CurrentSuperState.STOW;
+  private CurrentSuperState prevSuperState = CurrentSuperState.STOW;
 
   private final double elevatorRaiseThreshold = 2.5;
   private boolean shouldEjectCoral = false;
+  private final Timer coralEjectTimer = new Timer();
 
   private SuperstructureConstants.ReefSelectionMethod reefSelectionMethod =
       ReefSelectionMethod.POSE;
   private boolean isL1Mode = false;
+
+  private boolean triggeredLineupBand = false;
+  private LoggedTunableNumber lineupTriggerRadius =
+      new LoggedTunableNumber("Superstructure/LineupTriggerRadius", 0.1);
 
   private LoggedTunableNumber maxfinalScoringPoseBlendDistanceBand =
       new LoggedTunableNumber("Superstructure/DistToCoralScoreFinalPoseBlend", 1.0);
@@ -435,6 +441,8 @@ public class Superstructure extends SubsystemBase {
       default:
         break;
     }
+
+    prevSuperState = currentSuperState;
   }
 
   private void stopped() {
@@ -495,9 +503,11 @@ public class Superstructure extends SubsystemBase {
     elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.L3);
   }
 
-  private final Timer coralEjectTimer = new Timer();
-
   private void scoreTeleopL1(ScoringSide side) {
+    if (prevSuperState != currentSuperState) {
+      triggeredLineupBand = false;
+    }
+
     if (hasCoral()) {
       driveToScoringPoseAndReturnIfObservationIsPresent(side);
     }
@@ -528,6 +538,10 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void scoreTeleopL2(ScoringSide side) {
+    if (prevSuperState != currentSuperState) {
+      triggeredLineupBand = false;
+    }
+
     if (hasCoral()) {
       driveToScoringPoseAndReturnIfObservationIsPresent(side);
     }
@@ -555,6 +569,10 @@ public class Superstructure extends SubsystemBase {
   }
 
   private void scoreTeleopL3(ScoringSide side) {
+    if (prevSuperState != currentSuperState) {
+      triggeredLineupBand = false;
+    }
+
     if (hasCoral()) {
       driveToScoringPoseAndReturnIfObservationIsPresent(side);
     }
@@ -699,9 +717,25 @@ public class Superstructure extends SubsystemBase {
                 : VisionMode.ROTATION_BASED);
     RobotState.getInstance().setSideToAccept(side);
 
-    drive.setAutoAlignPose(getAutoAlignCoralScorePose(getReefSide(), side));
+    drive.setAutoAlignPose(getTeleopAutoAlignCoralScorePose(getReefSide(), side));
+    drive.setIsAutoAlignCheckPose(FieldConstants.getCoralScorePose(getReefSide(), side));
 
     return false;
+  }
+
+  public Pose2d getTeleopAutoAlignCoralScorePose(ReefSide reefSide, ScoringSide scoringSide) {
+    return getAutoAlignCoralScorePose(
+        FieldConstants.getTeleopLineupPose(reefSide, scoringSide),
+        FieldConstants.getCoralScorePose(reefSide, scoringSide));
+  }
+
+  public Pose2d getTeleopAutoAlignCoralScorePose(Pose2d lineupPose, Pose2d scorePose) {
+    if (drive.isAtHeading(lineupPose.getRotation())
+        && drive.isAtTranslation(lineupPose.getTranslation(), lineupTriggerRadius.getAsDouble())) {
+      triggeredLineupBand = true;
+    }
+
+    return triggeredLineupBand ? scorePose : lineupPose;
   }
 
   public Pose2d getAutoAlignCoralScorePose(Pose2d lineupPose, Pose2d scorePose) {
@@ -718,7 +752,7 @@ public class Superstructure extends SubsystemBase {
 
   public Pose2d getAutoAlignCoralScorePose(ReefSide reefSide, ScoringSide scoringSide) {
     return getAutoAlignCoralScorePose(
-        FieldConstants.getLineupPose(reefSide, scoringSide),
+        FieldConstants.getAutoLineupPose(reefSide, scoringSide),
         FieldConstants.getCoralScorePose(reefSide, scoringSide));
   }
 

@@ -268,6 +268,15 @@ public class AutoFactory {
         .until(() -> robotContainer.getDrive().isAtAutoAlignPose());
   }
 
+  private Command driveToPointWithCheckerPose(Supplier<Pose2d> pose, Pose2d checkerPose) {
+    return Commands.run(
+            () -> {
+              robotContainer.getDrive().setAutoAlignPose(pose.get());
+              robotContainer.getDrive().setIsAutoAlignCheckPose(checkerPose);
+            })
+        .until(() -> robotContainer.getDrive().isAtAutoAlignPose());
+  }
+
   private Command setState(WantedSuperState state) {
     return robotContainer.getSuperstructure().setStateCommand(state);
   }
@@ -303,8 +312,9 @@ public class AutoFactory {
 
     ElasticUI.putAutoPath(List.of(FieldConstants.getCoralScorePose(reefSide, side)));
 
-    return driveToPoint(
-            () -> robotContainer.getSuperstructure().getAutoAlignCoralScorePose(reefSide, side))
+    return driveToPointWithCheckerPose(
+            () -> robotContainer.getSuperstructure().getAutoAlignCoralScorePose(reefSide, side),
+            FieldConstants.getCoralScorePose(reefSide, side))
         .alongWith(
             waitForRaise(FieldConstants.getCoralScorePose(reefSide, side), distanceToElevatorRaise)
                 .andThen(setState(state)))
@@ -331,9 +341,9 @@ public class AutoFactory {
 
     return driveTrajectory(traj)
         .andThen(
-            driveToPoint(
-                () ->
-                    robotContainer.getSuperstructure().getAutoAlignCoralScorePose(reefSide, side)))
+            driveToPointWithCheckerPose(
+                () -> robotContainer.getSuperstructure().getAutoAlignCoralScorePose(reefSide, side),
+                FieldConstants.getCoralScorePose(reefSide, side)))
         .alongWith(
             waitForRaise(FieldConstants.getCoralScorePose(reefSide, side), distanceToElevatorRaise)
                 .andThen(setState(state)))

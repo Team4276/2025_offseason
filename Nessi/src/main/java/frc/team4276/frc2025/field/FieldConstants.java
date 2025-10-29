@@ -129,7 +129,8 @@ public class FieldConstants {
   public static final double reefCenterToTag = Units.inchesToMeters(32.746);
 
   public static final double bumperToRobotCenter = Units.inchesToMeters(18.625);
-  public static final double lineupOffset = Units.inchesToMeters(40.0);
+  public static final double autoLineupOffset = Units.inchesToMeters(40.0);
+  public static final double teleopLineupOffset = Units.inchesToMeters(12.0);
   public static final double scoringOffset = Units.inchesToMeters(0.0);
   public static final double algaePickupOffset = Units.inchesToMeters(0.0);
   public static final double clearReefOffset = Units.inchesToMeters(13.0);
@@ -175,8 +176,12 @@ public class FieldConstants {
     return Optional.empty();
   }
 
-  public static Pose2d getLineupPose(ReefSide reefSide, ScoringSide side) {
-    return getReefReferencePose(reefSide, side, lineupOffset);
+  public static Pose2d getAutoLineupPose(ReefSide reefSide, ScoringSide side) {
+    return getReefReferencePose(reefSide, side, autoLineupOffset);
+  }
+
+  public static Pose2d getTeleopLineupPose(ReefSide reefSide, ScoringSide side) {
+    return getReefReferencePose(reefSide, side, teleopLineupOffset);
   }
 
   public static Pose2d getCoralScorePose(ReefSide reefSide, ScoringSide side) {
