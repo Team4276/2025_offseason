@@ -24,7 +24,7 @@ public class ElevatorConstants {
   public static final LoggedTunableNumber highAlgae =
       new LoggedTunableNumber("Elevator/HiAlgae", Units.inchesToMeters(17.32));
   public static final LoggedTunableNumber algaeChop =
-      new LoggedTunableNumber("Elevator/AlgaeChop", Units.inchesToMeters(0.5));
+      new LoggedTunableNumber("Elevator/AlgaeChop", Units.inchesToMeters(0.0));
   public static final LoggedTunableNumber climb =
       new LoggedTunableNumber("Elevator/Climb", Units.inchesToMeters(0.0));
 

@@ -120,7 +120,10 @@ public class ElasticUI {
   }
 
   public static void clearPathDisplayField() {
+    // pathDisplayField.clearPath();
+    // pathDisplayField.clearTrajectory();
     pathDisplayField = new SendableField();
+    // SmartDashboard.putData("Auto Path Display Field", pathDisplayField);
   }
 
   private static Notification autoEndNotification =

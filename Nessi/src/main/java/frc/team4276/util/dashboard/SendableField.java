@@ -11,7 +11,18 @@ import java.util.function.Supplier;
 
 public class SendableField implements Sendable {
   private Supplier<Pose2d> poseSupplier = () -> Pose2d.kZero;
-  private Supplier<List<Pose2d>> pathSupplier = () -> List.of();
+  private List<Supplier<Pose2d>> pathSupplier =
+      List.of(
+          () -> Pose2d.kZero,
+          () -> Pose2d.kZero,
+          () -> Pose2d.kZero,
+          () -> Pose2d.kZero,
+          () -> Pose2d.kZero,
+          () -> Pose2d.kZero,
+          () -> Pose2d.kZero,
+          () -> Pose2d.kZero,
+          () -> Pose2d.kZero,
+          () -> Pose2d.kZero);
   private Supplier<List<Pose2d>> trajectorySupplier = () -> List.of();
 
   public SendableField() {}
@@ -19,12 +30,12 @@ public class SendableField implements Sendable {
   public static void addPoseToBuilder(
       final SendableBuilder builder, String key, Supplier<Pose2d> pose) {
     builder.addDoubleArrayProperty(
-        key,
-        () ->
-            new double[] {
-              pose.get().getX(), pose.get().getY(), pose.get().getRotation().getDegrees()
-            },
-        null);
+        key, () -> toDoubleArray(pose.get()), null); // This works now I don't know why but
+    // it does nvm
+  }
+
+  private static double[] toDoubleArray(Pose2d pose) {
+    return new double[] {pose.getX(), pose.getY(), pose.getRotation().getDegrees()};
   }
 
   public SendableField withRobot(Supplier<Pose2d> poseSupplier) {
@@ -40,23 +51,46 @@ public class SendableField implements Sendable {
   public SendableField withPath(List<Pose2d> pathSupplier) { // TODO: this doesn't fucking work
     // it keeps indexing the last one and purging the previous list for some reason
     // i hate life
-    List<Pose2d> path = new LinkedList<>();
+    List<Supplier<Pose2d>> path = new LinkedList<>();
 
-    for (int i = 0; i < this.pathSupplier.get().size(); i++) {
-      path.add(this.pathSupplier.get().get(i));
+    for (int i = 0; i < this.pathSupplier.size(); i++) {
+      var pose = this.pathSupplier.get(i).get();
+      if (pose != Pose2d.kZero) {
+        path.add(() -> pose);
+      }
     }
 
-    for (var pose : pathSupplier) {
-      path.add(pose);
+    for (int i = 0; i < pathSupplier.size(); i++) {
+      int j = 0;
+      path.add(() -> pathSupplier.get(j));
     }
 
-    this.pathSupplier = () -> path;
+    // for (int i = 0; i < this.pathSupplier.size(); i++) {
+    // if (pathSupplier.size() - 1 <= i) {
+    // continue;
+    // }
+    // int j = i;
+    // this.pathSupplier.set(i, () -> pathSupplier.get(j));
+    // }
+
+    this.pathSupplier = path;
 
     return this;
   }
 
   public void clearPath() {
-    pathSupplier = () -> List.of();
+    pathSupplier =
+        List.of(
+            () -> Pose2d.kZero,
+            () -> Pose2d.kZero,
+            () -> Pose2d.kZero,
+            () -> Pose2d.kZero,
+            () -> Pose2d.kZero,
+            () -> Pose2d.kZero,
+            () -> Pose2d.kZero,
+            () -> Pose2d.kZero,
+            () -> Pose2d.kZero,
+            () -> Pose2d.kZero);
   }
 
   public SendableField withTrajectory(Trajectory<SwerveSample> trajectory) {
@@ -100,8 +134,8 @@ public class SendableField implements Sendable {
 
     if (pathSupplier != null) {
       int i = 0;
-      for (var pose : pathSupplier.get()) {
-        addPoseToBuilder(builder, "Path" + i, () -> pose);
+      for (var pose : pathSupplier) {
+        addPoseToBuilder(builder, "Path" + i, pose);
         i++;
       }
     }

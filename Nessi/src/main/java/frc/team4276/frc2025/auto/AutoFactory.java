@@ -34,6 +34,7 @@ public class AutoFactory {
 
   Command idle() {
     ElasticUI.clearPathDisplayField();
+    ElasticUI.putAutoPath(List.of());
 
     return resetPose(
         new Pose2d(
