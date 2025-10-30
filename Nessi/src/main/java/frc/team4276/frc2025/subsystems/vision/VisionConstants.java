@@ -14,13 +14,20 @@ public class VisionConstants {
   public static final boolean enableInstanceLogging =
       forceEnableInstanceLogging || Constants.getMode() == Mode.REPLAY;
 
-  public static final Transform3d ov9281RobotToCameraNew =
+  public static final Transform3d ov9281RobotToCamera =
       new Transform3d(
-          Units.inchesToMeters(10.5),
-          Units.inchesToMeters(11.25),
+          Units.inchesToMeters(11.0),
           Units.inchesToMeters(9.0),
+          Units.inchesToMeters(8.0),
           new Rotation3d(
-              Math.toRadians(0.0), -1.0 * Math.toRadians(20.0), -1.0 * Math.toRadians(0.0)));
+              Math.toRadians(0.0), -1.0 * Math.toRadians(20.0), -1.0 * Math.toRadians(20.0)));
+
+  public static final Transform3d ov2311RobotToCamera =
+      new Transform3d(
+          Units.inchesToMeters(11.0),
+          Units.inchesToMeters(-9.0),
+          Units.inchesToMeters(8.0),
+          new Rotation3d(Math.toRadians(0.0), -1.0 * Math.toRadians(20.0), Math.toRadians(20.0)));
 
   // AprilTag layout
   public static AprilTagFieldLayout aprilTagLayout =
@@ -28,16 +35,8 @@ public class VisionConstants {
 
   public static final CameraConfig[] configs =
       new CameraConfig[] {
-        new CameraConfig("Arducam_OV9281_USB_Camera", ov9281RobotToCameraNew, 1.25),
-        new CameraConfig(
-            "Arducam_OV2311_USB_Camera",
-            new Transform3d(
-                Units.inchesToMeters(8.875327),
-                Units.inchesToMeters(7.816629) * -1.0,
-                Units.inchesToMeters(17.274095),
-                new Rotation3d(
-                    Math.toRadians(3.9671), Math.toRadians(15), Math.toRadians(15.5108))),
-            1.0)
+        new CameraConfig("Arducam_OV9281_USB_Camera", ov9281RobotToCamera, 1.25),
+        new CameraConfig("Arducam_OV2311_USB_Camera", ov2311RobotToCamera, 1.0)
       };
 
   // Basic filtering thresholds

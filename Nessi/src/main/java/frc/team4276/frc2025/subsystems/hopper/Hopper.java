@@ -39,14 +39,16 @@ public class Hopper extends SubsystemBase {
 
   private final HopperIOInputsAutoLogged leftInputs = new HopperIOInputsAutoLogged();
   private final HopperIOInputsAutoLogged rightInputs = new HopperIOInputsAutoLogged();
-  private ElevatorFeedforward ff_left = new ElevatorFeedforward(
-      HopperConstants.kS_left.getAsDouble(),
-      HopperConstants.kG.getAsDouble(),
-      HopperConstants.kV.getAsDouble());
-  private ElevatorFeedforward ff_right = new ElevatorFeedforward(
-      HopperConstants.kS_right.getAsDouble(),
-      HopperConstants.kG.getAsDouble(),
-      HopperConstants.kV.getAsDouble());
+  private ElevatorFeedforward ff_left =
+      new ElevatorFeedforward(
+          HopperConstants.kS_left.getAsDouble(),
+          HopperConstants.kG.getAsDouble(),
+          HopperConstants.kV.getAsDouble());
+  private ElevatorFeedforward ff_right =
+      new ElevatorFeedforward(
+          HopperConstants.kS_right.getAsDouble(),
+          HopperConstants.kG.getAsDouble(),
+          HopperConstants.kV.getAsDouble());
   private final LoggedTunableProfile profile = new LoggedTunableProfile("Hopper", 50.0, 25.0);
   private TrapezoidProfile.State prevLeftState = new TrapezoidProfile.State();
   private TrapezoidProfile.State prevRightState = new TrapezoidProfile.State();
@@ -99,10 +101,12 @@ public class Hopper extends SubsystemBase {
       prevRightState = new TrapezoidProfile.State(rightInputs.position - rightOffset, 0.0);
 
     } else {
-      prevLeftState = profile.calculate(
-          0.02, prevLeftState, new TrapezoidProfile.State(goal.getPosition(), 0.0));
-      prevRightState = profile.calculate(
-          0.02, prevRightState, new TrapezoidProfile.State(goal.getPosition(), 0.0));
+      prevLeftState =
+          profile.calculate(
+              0.02, prevLeftState, new TrapezoidProfile.State(goal.getPosition(), 0.0));
+      prevRightState =
+          profile.calculate(
+              0.02, prevRightState, new TrapezoidProfile.State(goal.getPosition(), 0.0));
 
       leftIo.runSetpoint(
           prevLeftState.position + leftOffset, ff_left.calculate(prevLeftState.velocity));
