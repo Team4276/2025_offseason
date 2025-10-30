@@ -47,7 +47,8 @@ public class Superstructure extends SubsystemBase {
 
   private final ViXController controller = new ViXController(0);
 
-  private SuperstructureConstants.AutomationLevel automationLevel = AutomationLevel.AUTO_RELEASE;
+  private SuperstructureConstants.AutomationLevel automationLevel =
+      AutomationLevel.AUTO_DRIVE_MANUAL_RELEASE;
 
   public enum WantedSuperState {
     STOW,
@@ -688,7 +689,10 @@ public class Superstructure extends SubsystemBase {
 
       if (drive.isAtPose(getClosestAlgaePickup())) {
         elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.ALGAE_CHOP);
-        driveToReturnPose();
+
+        if (!DriverStation.isAutonomous()) {
+          driveToReturnPose();
+        }
       }
     }
   }
@@ -717,14 +721,22 @@ public class Superstructure extends SubsystemBase {
                 : VisionMode.ROTATION_BASED);
     RobotState.getInstance().setSideToAccept(side);
 
+    scoringSide = side;
+
     drive.setAutoAlignPose(getTeleopAutoAlignCoralScorePose(getReefSide(), side));
     drive.setIsAutoAlignCheckPose(FieldConstants.getCoralScorePose(getReefSide(), side));
 
     return false;
   }
 
+  private ScoringSide scoringSide = ScoringSide.BOTH;
+
+  public boolean getIsLeftScoringRelativeToRobot() {
+    return FieldConstants.getIsLeftScoringRelativeToRobot(getReefSide(), scoringSide);
+  }
+
   public Pose2d getTeleopAutoAlignCoralScorePose(ReefSide reefSide, ScoringSide scoringSide) {
-    return getAutoAlignCoralScorePose(
+    return getTeleopAutoAlignCoralScorePose(
         FieldConstants.getTeleopLineupPose(reefSide, scoringSide),
         FieldConstants.getCoralScorePose(reefSide, scoringSide));
   }

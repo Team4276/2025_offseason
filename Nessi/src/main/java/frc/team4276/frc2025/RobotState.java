@@ -33,6 +33,7 @@ public class RobotState {
 
   private Pose2d poseEstimate = Pose2d.kZero;
   private Pose2d odomPoseEstimate = Pose2d.kZero;
+  private Pose2d lastOdometryPose = Pose2d.kZero;
 
   private TimeInterpolatableBuffer<Pose2d> odomPoseBuffer =
       TimeInterpolatableBuffer.createBuffer(2.0);
@@ -82,6 +83,7 @@ public class RobotState {
     odomPoseBuffer.clear();
     poseEstimate = pose;
     odomPoseEstimate = pose;
+    lastOdometryPose = pose;
   }
 
   public void setTrajectorySetpoint(Pose2d setpoint) {
@@ -96,7 +98,7 @@ public class RobotState {
       double timestamp, Rotation2d yaw, SwerveModulePosition[] wheelPositions) {
     // Derive from kinematics
     var twist = kinematics.toTwist2d(lastWheelPositions, wheelPositions);
-    Pose2d lastOdometryPose = odomPoseEstimate;
+    lastOdometryPose = odomPoseEstimate;
     lastWheelPositions = wheelPositions;
     odomPoseEstimate = odomPoseEstimate.exp(twist);
 
@@ -114,15 +116,18 @@ public class RobotState {
   /** Adds a new timestamped vision measurement. */
   public void addVisionObservation(TagObservation... observations) {
     for (var obs : observations) {
-      // if (scoringSideToAccept == ScoringSide.LEFT) {
-      // if (obs.camera() == 0) {
-      // continue;
-      // }
-      // } else if (scoringSideToAccept == ScoringSide.RIGHT) {
-      // if (obs.camera() == 1) {
-      // continue;
-      // }
-      // }
+
+      if (scoringSideToAccept != ScoringSide.BOTH) {
+        if (FieldConstants.getIsLeftScoringRelativeToRobot(getReefSide(), scoringSideToAccept)) {
+          if (obs.camera() == 1) {
+            continue;
+          }
+        } else {
+          if (obs.camera() == 0) {
+            continue;
+          }
+        }
+      }
 
       if (!shouldAcceptTagEstimate(obs.tagId())) continue;
 
@@ -160,6 +165,16 @@ public class RobotState {
       case ACCEPT_SIDE:
         yield observationTagId == FieldConstants.getTagIdFromSide(reefSideToAccept);
     };
+  }
+
+  private ReefSide getReefSide() {
+    return FieldConstants.getSideFromTagId(
+            // reefSelectionMethod == ReefSelectionMethod.POSE
+            // ?
+            RobotState.getInstance().getTagIdFromClosestPoseSide()
+            // : RobotState.getInstance().getTagIdFromClosest60DegreeRotation()
+            )
+        .get();
   }
 
   public int getTagIdFromClosest60DegreeRotation() {

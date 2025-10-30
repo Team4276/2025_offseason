@@ -211,6 +211,12 @@ public class FieldConstants {
         new Pose2d(blueReefCenter.plus(reefToPose.rotateBy(angle)), angle));
   }
 
+  public static boolean getIsLeftScoringRelativeToRobot(ReefSide reefSide, ScoringSide side) {
+    return ((reefSide.ordinal() < 2 || reefSide.ordinal() == 5)
+        ? (side == ScoringSide.LEFT)
+        : (side != ScoringSide.LEFT));
+  }
+
   public static final Pose2d blueProcessorSideStart =
       new Pose2d(7.1415, 1.905, Rotation2d.kCCW_90deg);
   public static final Pose2d blueJITBProcessorSideStart =

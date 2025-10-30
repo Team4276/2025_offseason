@@ -133,18 +133,18 @@ public class VisionIOPhotonVision implements VisionIO {
       }
 
       if (result.multitagResult.isPresent()) {
-        Integer[] tagsUsed = new Integer[result.multitagResult.get().fiducialIDsUsed.size()];
-        result.multitagResult.get().fiducialIDsUsed.toArray(tagsUsed);
-        var cameraPose = result.multitagResult.get().estimatedPose.best;
-        var robotPose = cameraPose.plus(robotToCamera.inverse());
+        // int[] tagsUsed = new int[result.multitagResult.get().fiducialIDsUsed.size()];
+        // result.multitagResult.get().fiducialIDsUsed.toArray(tagsUsed);
+        // var cameraPose = result.multitagResult.get().estimatedPose.best;
+        // var robotPose = cameraPose.plus(robotToCamera.inverse());
 
-        poseObservations.add(
-            new PoseObservation(
-                tagsUsed,
-                result.getTimestampSeconds(),
-                index,
-                Pose3d.kZero.transformBy(robotPose),
-                cameraPose.getTranslation().getNorm()));
+        // poseObservations.add(
+        // new PoseObservation(
+        // tagsUsed,
+        // result.getTimestampSeconds(),
+        // index,
+        // Pose3d.kZero.transformBy(robotPose),
+        // cameraPose.getTranslation().getNorm()));
 
       } else if (result.hasTargets()) {
         double ambiguity = result.getBestTarget().getPoseAmbiguity();
@@ -179,13 +179,13 @@ public class VisionIOPhotonVision implements VisionIO {
             continue;
           }
 
-          poseObservations.add(
-              new PoseObservation(
-                  new Integer[] {result.getBestTarget().fiducialId},
-                  result.getTimestampSeconds(),
-                  index,
-                  robotPose,
-                  bestCameraToTarget.getTranslation().getNorm()));
+          // poseObservations.add(
+          // new PoseObservation(
+          // new Integer[] {result.getBestTarget().fiducialId},
+          // result.getTimestampSeconds(),
+          // index,
+          // robotPose,
+          // bestCameraToTarget.getTranslation().getNorm()));
         }
       }
     }

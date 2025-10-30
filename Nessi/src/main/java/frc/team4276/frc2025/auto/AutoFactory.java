@@ -205,7 +205,7 @@ public class AutoFactory {
         .andThen(driveAndIntakeFromStation(intakePose));
   }
 
-  Command poofsProcessorSide() {
+  Command poofsProcessorSide() { // TODO: this shit broke again idk why
     var startPose = FieldConstants.flippablePose(FieldConstants.blueProcessorSideStart, false);
     var intakePose = FieldConstants.flippablePose(FieldConstants.blueOutsideStationIntake, false);
 
