@@ -2,6 +2,7 @@ package frc.team4276.frc2025.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import frc.team4276.frc2025.subsystems.vision.VisionIOPhotonVision.DistanceCalcMethod;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface VisionIO {
@@ -15,7 +16,14 @@ public interface VisionIO {
 
   /** Represents the angle to a simple target, used for trig based pose estimation. */
   public static record TagObservation(
-      int tagId, double timestamp, int camera, double tx, double distance, Pose2d robotPose) {}
+      int tagId,
+      double timestamp,
+      int camera,
+      double tx,
+      double distance,
+      Pose2d robotPose,
+      DistanceCalcMethod calcMethod,
+      double[] distancesCalced) {}
 
   public static record PoseObservation(
       int[] tagIds, double timestamp, int camera, Pose3d robotPose, double distance) {}

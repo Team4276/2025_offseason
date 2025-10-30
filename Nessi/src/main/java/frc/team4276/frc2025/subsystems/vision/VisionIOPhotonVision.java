@@ -37,6 +37,13 @@ public class VisionIOPhotonVision implements VisionIO {
 
   private final List<PoseObservation> poseObservations;
 
+  public enum DistanceCalcMethod {
+    MECH_A,
+    TRANSFORM_3D,
+    PHOTON_UTILS,
+    JITB,
+  }
+
   public VisionIOPhotonVision(int index) {
     this.index = index;
     camera = new PhotonCamera(configs[index].name);
@@ -84,33 +91,66 @@ public class VisionIOPhotonVision implements VisionIO {
               new Pair<>(target.detectedCorners.get(i).x, target.detectedCorners.get(i).y));
         }
 
-        double distanceToTag;
+        double distanceToTag = -1;
+        DistanceCalcMethod distanceCalcMethod =
+            SmartDashboard.getBoolean("Camera_" + index + "_Use_MECH_A_Distance_Calc", false)
+                ? DistanceCalcMethod.MECH_A
+                : SmartDashboard.getBoolean(
+                        "Camera_" + index + "_Use_3D_Transform_Distance_Calc", true)
+                    ? DistanceCalcMethod.TRANSFORM_3D
+                    : SmartDashboard.getBoolean("Camera_" + index + "_Use_PU_Distance_Calc", false)
+                        ? DistanceCalcMethod.PHOTON_UTILS
+                        : DistanceCalcMethod.JITB;
 
-        if (SmartDashboard.getBoolean("Camera_" + index + "_Use_PU_Distance_Calc", false)) {
-          distanceToTag =
-              PhotonUtils.calculateDistanceToTargetMeters(
-                  robotToCamera.getZ(),
-                  FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ(),
-                  -robotToCamera.getRotation().getY(),
-                  Units.degreesToRadians(-target.pitch));
+        double distanceToTagMechA = -1;
+        double distanceToTag3d = -1;
+        if (target.bestCameraToTarget != null) {
+          double rawDistToTag = target.bestCameraToTarget.getTranslation().getNorm();
+          distanceToTagMechA = Rotation2d.fromDegrees(target.pitch).getCos() * rawDistToTag;
 
-        } else if (SmartDashboard.getBoolean(
-                "Camera_" + index + "_Use_3D_Transform_Distance_Calc", true)
-            && target.bestCameraToTarget != null) {
-          distanceToTag =
-              Math.sqrt(
-                  Math.pow(target.bestCameraToTarget.getTranslation().getNorm(), 2)
-                      - Math.pow(
-                          FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ()
-                              - robotToCamera.getZ(),
-                          2));
+          double a =
+              FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ()
+                  - robotToCamera.getZ();
+          distanceToTag3d = Math.sqrt(rawDistToTag * rawDistToTag - (a * a));
+        }
 
-        } else {
-          distanceToTag =
-              calculateDistanceToAprilTagInMetersUsingTrigMethod(
-                  calculateAngleEncompassingTagHeight(
-                      calculateTargetHeightInPixels(cornerListPairs)),
-                  FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ());
+        double distanceToTagPU =
+            PhotonUtils.calculateDistanceToTargetMeters(
+                robotToCamera.getZ(),
+                FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ(),
+                -robotToCamera.getRotation().getY(),
+                Units.degreesToRadians(target.pitch));
+
+        double distanceToTagJitb =
+            calculateDistanceToAprilTagInMetersUsingTrigMethod(
+                calculateAngleEncompassingTagHeight(calculateTargetHeightInPixels(cornerListPairs)),
+                FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ());
+
+        switch (distanceCalcMethod) {
+          case MECH_A:
+            distanceToTag = distanceToTagMechA;
+
+            break;
+
+          case TRANSFORM_3D:
+            distanceToTag = distanceToTag3d;
+
+            break;
+
+          case PHOTON_UTILS:
+            distanceToTag = distanceToTagPU;
+            break;
+
+          case JITB:
+            distanceToTag = distanceToTagJitb;
+            break;
+
+          default:
+            break;
+        }
+
+        if (distanceToTag < 0) {
+          continue;
         }
 
         var poseEstimate =
@@ -128,23 +168,30 @@ public class VisionIOPhotonVision implements VisionIO {
                   index,
                   Units.degreesToRadians(target.yaw),
                   distanceToTag,
-                  poseEstimate.get()));
+                  poseEstimate.get(),
+                  distanceCalcMethod,
+                  new double[] {
+                    distanceToTagMechA, distanceToTag3d, distanceToTagPU, distanceToTagJitb
+                  }));
         }
       }
 
       if (result.multitagResult.isPresent()) {
-        // int[] tagsUsed = new int[result.multitagResult.get().fiducialIDsUsed.size()];
-        // result.multitagResult.get().fiducialIDsUsed.toArray(tagsUsed);
-        // var cameraPose = result.multitagResult.get().estimatedPose.best;
-        // var robotPose = cameraPose.plus(robotToCamera.inverse());
+        var multitagResult = result.multitagResult.get();
+        int[] tagsUsed = new int[multitagResult.fiducialIDsUsed.size()];
+        for (int i = 0; i < multitagResult.fiducialIDsUsed.size(); i++) {
+          tagsUsed[i] = (int) multitagResult.fiducialIDsUsed.get(i);
+        }
+        var cameraPose = multitagResult.estimatedPose.best;
+        var robotPose = cameraPose.plus(robotToCamera.inverse());
 
-        // poseObservations.add(
-        // new PoseObservation(
-        // tagsUsed,
-        // result.getTimestampSeconds(),
-        // index,
-        // Pose3d.kZero.transformBy(robotPose),
-        // cameraPose.getTranslation().getNorm()));
+        poseObservations.add(
+            new PoseObservation(
+                tagsUsed,
+                result.getTimestampSeconds(),
+                index,
+                Pose3d.kZero.transformBy(robotPose),
+                cameraPose.getTranslation().getNorm()));
 
       } else if (result.hasTargets()) {
         double ambiguity = result.getBestTarget().getPoseAmbiguity();
@@ -179,13 +226,13 @@ public class VisionIOPhotonVision implements VisionIO {
             continue;
           }
 
-          // poseObservations.add(
-          // new PoseObservation(
-          // new Integer[] {result.getBestTarget().fiducialId},
-          // result.getTimestampSeconds(),
-          // index,
-          // robotPose,
-          // bestCameraToTarget.getTranslation().getNorm()));
+          poseObservations.add(
+              new PoseObservation(
+                  new int[] {result.getBestTarget().fiducialId},
+                  result.getTimestampSeconds(),
+                  index,
+                  robotPose,
+                  bestCameraToTarget.getTranslation().getNorm()));
         }
       }
     }

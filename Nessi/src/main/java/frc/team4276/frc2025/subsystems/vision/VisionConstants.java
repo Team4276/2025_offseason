@@ -15,14 +15,6 @@ public class VisionConstants {
   public static final double tagHeight = Units.inchesToMeters(6.5);
   public static final double fieldBorderMargin = 0.5;
 
-  public static final Transform3d ov9281RobotToCameraNew =
-      new Transform3d(
-          Units.inchesToMeters(10.5),
-          Units.inchesToMeters(11.25),
-          Units.inchesToMeters(9.0),
-          new Rotation3d(
-              Math.toRadians(0.0), -1.0 * Math.toRadians(20.0), -1.0 * Math.toRadians(0.0)));
-
   public static final Transform3d ov9281RobotToCameraNewest =
       new Transform3d(
           Units.inchesToMeters(11.0),
@@ -31,26 +23,12 @@ public class VisionConstants {
           new Rotation3d(
               Math.toRadians(0.0), -1.0 * Math.toRadians(20.0), -1.0 * Math.toRadians(20.0)));
 
-  public static final Transform3d ov2311RobotToCameraOld =
-      new Transform3d(
-          Units.inchesToMeters(8.875327),
-          Units.inchesToMeters(7.816629) * -1.0,
-          Units.inchesToMeters(17.274095),
-          new Rotation3d(Math.toRadians(3.9671), Math.toRadians(15), Math.toRadians(15.5108)));
-
-  public static final Transform3d ov2311RobotToCameraNew =
-      new Transform3d(
-          Units.inchesToMeters(10.5),
-          Units.inchesToMeters(11.25) * -1.0,
-          Units.inchesToMeters(9.5),
-          new Rotation3d(Math.toRadians(0.0), -1.0 * Math.toRadians(15), Math.toRadians(0.0)));
-
   public static final Transform3d ov2311RobotToCameraNewest =
       new Transform3d(
           Units.inchesToMeters(11.0),
           Units.inchesToMeters(9.0) * -1.0,
           Units.inchesToMeters(8.0),
-          new Rotation3d(Math.toRadians(0.0), -1.0 * Math.toRadians(25.0), Math.toRadians(20.0)));
+          new Rotation3d(Math.toRadians(0.0), -1.0 * Math.toRadians(20.0), Math.toRadians(20.0)));
 
   public static final CameraConfig[] configs =
       new CameraConfig[] {

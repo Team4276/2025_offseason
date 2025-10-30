@@ -12,6 +12,7 @@ import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.field.FieldConstants.ReefSide;
 import frc.team4276.frc2025.subsystems.SuperstructureConstants.ScoringSide;
@@ -35,8 +36,9 @@ public class RobotState {
   private Pose2d odomPoseEstimate = Pose2d.kZero;
   private Pose2d lastOdometryPose = Pose2d.kZero;
 
+  private double poseBufferHistorySeconds = 2.0;
   private TimeInterpolatableBuffer<Pose2d> odomPoseBuffer =
-      TimeInterpolatableBuffer.createBuffer(2.0);
+      TimeInterpolatableBuffer.createBuffer(poseBufferHistorySeconds);
 
   public enum VisionMode {
     ACCEPT_ALL,
@@ -133,7 +135,7 @@ public class RobotState {
 
       // Get rotation at timestamp
       var sample = odomPoseBuffer.getSample(obs.timestamp());
-      if (sample.isEmpty()) {
+      if (sample.isEmpty() || Timer.getTimestamp() - obs.timestamp() >= poseBufferHistorySeconds) {
         // exit if not there
         return;
       }
@@ -237,7 +239,7 @@ public class RobotState {
   }
 
   public void setSideToAccept(ScoringSide scoringSideToAccept) {
-    Logger.recordOutput("Robotstate/ScoringSideToAccept", scoringSideToAccept);
+    Logger.recordOutput("RobotState/ScoringSideToAccept", scoringSideToAccept);
     this.scoringSideToAccept = scoringSideToAccept;
   }
 
@@ -254,7 +256,7 @@ public class RobotState {
   }
 
   public Pose2d getEstimatedPose() {
-    Logger.recordOutput("Robotstate/Estimated3dPose", poseEstimator3d.getEstimatedPosition());
+    Logger.recordOutput("RobotState/Estimated3dPose", poseEstimator3d.getEstimatedPosition());
 
     return useTrajectorySetpoint() ? trajectorySetpoint : poseEstimate;
   }
