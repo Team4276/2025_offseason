@@ -242,7 +242,7 @@ public class RobotContainer {
             superstructure.configureButtonBinding(
                 Superstructure.WantedSuperState.SCORE_RIGHT_L2,
                 Superstructure.WantedSuperState.STOW,
-                Superstructure.WantedSuperState.STOW,
+                Superstructure.WantedSuperState.SCORE_RIGHT_L1,
                 Superstructure.WantedSuperState.PURGE_GAMEPIECE))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
@@ -253,7 +253,7 @@ public class RobotContainer {
             superstructure.configureButtonBinding(
                 Superstructure.WantedSuperState.SCORE_LEFT_L2,
                 Superstructure.WantedSuperState.STOW,
-                Superstructure.WantedSuperState.STOW,
+                Superstructure.WantedSuperState.SCORE_LEFT_L1,
                 Superstructure.WantedSuperState.PURGE_GAMEPIECE))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 

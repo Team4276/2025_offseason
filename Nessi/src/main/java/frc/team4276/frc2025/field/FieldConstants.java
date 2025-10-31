@@ -132,6 +132,7 @@ public class FieldConstants {
   public static final double autoLineupOffset = Units.inchesToMeters(40.0);
   public static final double teleopLineupOffset = Units.inchesToMeters(12.0);
   public static final double scoringOffset = Units.inchesToMeters(1.0);
+  public static final double lateralL1Offset = Units.inchesToMeters(5.0);
   public static final double algaePickupOffset = Units.inchesToMeters(0.0);
   public static final double clearReefOffset = Units.inchesToMeters(13.0);
 
@@ -188,6 +189,14 @@ public class FieldConstants {
     return getReefReferencePose(reefSide, side, scoringOffset);
   }
 
+  public static Pose2d getL1TeleopLineupPose(ReefSide reefSide, ScoringSide side) {
+    return getReefReferencePose(reefSide, side, teleopLineupOffset, lateralL1Offset);
+  }
+
+  public static Pose2d getL1CoralScorePose(ReefSide reefSide, ScoringSide side) {
+    return getReefReferencePose(reefSide, side, scoringOffset, lateralL1Offset);
+  }
+
   public static Pose2d getClearReefPose(ReefSide reefSide, ScoringSide side) {
     return getReefReferencePose(reefSide, side, clearReefOffset);
   }
@@ -197,12 +206,17 @@ public class FieldConstants {
   }
 
   private static Pose2d getReefReferencePose(ReefSide reefSide, ScoringSide side, double offset) {
+    return getReefReferencePose(reefSide, side, offset, 0.0);
+  }
+
+  private static Pose2d getReefReferencePose(
+      ReefSide reefSide, ScoringSide side, double offset, double lateralOffset) {
     var angle = Rotation2d.fromDegrees(reefSide.ordinal() * 60);
 
     var reefToPose =
         new Translation2d(
             -1.0 * (reefCenterToTag + bumperToRobotCenter + offset),
-            tagToReef
+            (tagToReef + lateralOffset)
                 * ((reefSide.ordinal() < 2 || reefSide.ordinal() == 5)
                     ? (side == ScoringSide.LEFT ? 1 : -1)
                     : (side == ScoringSide.LEFT ? -1 : 1)));
