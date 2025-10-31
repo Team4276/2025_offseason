@@ -691,7 +691,7 @@ public class Superstructure extends SubsystemBase {
         elevator.setWantedState(Elevator.WantedState.MOVE_TO_POSITION, ElevatorPosition.ALGAE_CHOP);
 
         if (!DriverStation.isAutonomous()) {
-          driveToReturnPose();
+          // driveToReturnPose();
         }
       }
     }
