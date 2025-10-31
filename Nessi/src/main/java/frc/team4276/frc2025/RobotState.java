@@ -34,7 +34,7 @@ public class RobotState {
 
   private Pose2d poseEstimate = Pose2d.kZero;
   private Pose2d odomPoseEstimate = Pose2d.kZero;
-  private Pose2d lastOdometryPose = Pose2d.kZero;
+  private Rotation2d gyroOffset = Rotation2d.kZero;
 
   private double poseBufferHistorySeconds = 2.0;
   private TimeInterpolatableBuffer<Pose2d> odomPoseBuffer =
@@ -82,10 +82,10 @@ public class RobotState {
 
   /** Resets the current odometry pose. */
   public void resetPose(Pose2d pose) {
+    gyroOffset = pose.getRotation().minus(odomPoseEstimate.getRotation().minus(gyroOffset));
     odomPoseBuffer.clear();
     poseEstimate = pose;
     odomPoseEstimate = pose;
-    lastOdometryPose = pose;
   }
 
   public void setTrajectorySetpoint(Pose2d setpoint) {
@@ -100,13 +100,14 @@ public class RobotState {
       double timestamp, Rotation2d yaw, SwerveModulePosition[] wheelPositions) {
     // Derive from kinematics
     var twist = kinematics.toTwist2d(lastWheelPositions, wheelPositions);
-    lastOdometryPose = odomPoseEstimate;
+    var lastOdometryPose = odomPoseEstimate;
     lastWheelPositions = wheelPositions;
     odomPoseEstimate = odomPoseEstimate.exp(twist);
 
     // Update gyro angle
     if (yaw != null) {
-      odomPoseEstimate = new Pose2d(odomPoseEstimate.getTranslation(), yaw);
+      Rotation2d angle = yaw.plus(gyroOffset);
+      odomPoseEstimate = new Pose2d(odomPoseEstimate.getTranslation(), angle);
     }
 
     odomPoseBuffer.addSample(timestamp, odomPoseEstimate);

@@ -131,7 +131,7 @@ public class FieldConstants {
   public static final double bumperToRobotCenter = Units.inchesToMeters(18.625);
   public static final double autoLineupOffset = Units.inchesToMeters(40.0);
   public static final double teleopLineupOffset = Units.inchesToMeters(12.0);
-  public static final double scoringOffset = Units.inchesToMeters(0.0);
+  public static final double scoringOffset = Units.inchesToMeters(1.0);
   public static final double algaePickupOffset = Units.inchesToMeters(0.0);
   public static final double clearReefOffset = Units.inchesToMeters(13.0);
 

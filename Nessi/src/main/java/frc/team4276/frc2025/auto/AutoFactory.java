@@ -175,6 +175,7 @@ public class AutoFactory {
 
     return resetPose(startPose)
         .andThen(driveAndAlgaePickup(ReefSide.CD, ScoringSide.LEFT))
+        .andThen(driveToPoint(FieldConstants.getClearReefPose(ReefSide.CD, ScoringSide.LEFT)))
         .andThen(algaeSwing(ReefSide.CD, ScoringSide.LEFT))
         .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_LEFT_L3))
         .andThen(driveAndIntakeFromStation(intakePose))
@@ -194,6 +195,7 @@ public class AutoFactory {
 
     return resetPose(startPose)
         .andThen(driveAndAlgaePickup(ReefSide.KL, ScoringSide.RIGHT))
+        .andThen(driveToPoint(FieldConstants.getClearReefPose(ReefSide.KL, ScoringSide.RIGHT)))
         .andThen(algaeSwing(ReefSide.KL, ScoringSide.RIGHT))
         .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_RIGHT_L3))
         .andThen(driveAndIntakeFromStation(intakePose))
@@ -215,6 +217,7 @@ public class AutoFactory {
         .andThen(driveAndScore(ReefSide.EF, WantedSuperState.SCORE_RIGHT_L2))
         .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndAlgaePickup(ReefSide.CD, ScoringSide.LEFT))
+        .andThen(driveToPoint(FieldConstants.getClearReefPose(ReefSide.CD, ScoringSide.LEFT)))
         .andThen(algaeSwing(ReefSide.CD, ScoringSide.LEFT))
         .andThen(driveAndScore(ReefSide.CD, WantedSuperState.SCORE_LEFT_L3))
         .andThen(driveAndIntakeFromStation(intakePose))
@@ -236,6 +239,7 @@ public class AutoFactory {
         .andThen(driveAndScore(ReefSide.IJ, WantedSuperState.SCORE_LEFT_L2))
         .andThen(driveAndIntakeFromStation(intakePose))
         .andThen(driveAndAlgaePickup(ReefSide.KL, ScoringSide.RIGHT))
+        .andThen(driveToPoint(FieldConstants.getClearReefPose(ReefSide.KL, ScoringSide.RIGHT)))
         .andThen(algaeSwing(ReefSide.KL, ScoringSide.RIGHT))
         .andThen(driveAndScore(ReefSide.KL, WantedSuperState.SCORE_RIGHT_L3))
         .andThen(driveAndIntakeFromStation(intakePose))
@@ -361,7 +365,6 @@ public class AutoFactory {
         .raceWith(waitForCoralIntake());
   }
 
-  // TODO: remove dtp in superstructure and do it here like for coral scoring
   private Command driveAndAlgaePickup(ReefSide reefSide, ScoringSide side) {
     return driveToPoint(FieldConstants.getClearReefPose(reefSide, side))
         .andThen(setState(WantedSuperState.REEF_ALGAE))
@@ -370,8 +373,7 @@ public class AutoFactory {
                 () ->
                     robotContainer.getElevator().getWantedElevatorPose()
                             == ElevatorPosition.ALGAE_CHOP
-                        && robotContainer.getElevator().atGoal()))
-        .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isAtAutoAlignPose()));
+                        && robotContainer.getElevator().atGoal()));
   }
 
   private Command algaeSwing(ReefSide reefSide, ScoringSide side) {
