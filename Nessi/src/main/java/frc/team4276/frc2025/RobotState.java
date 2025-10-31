@@ -118,7 +118,6 @@ public class RobotState {
   /** Adds a new timestamped vision measurement. */
   public void addVisionObservation(TagObservation... observations) {
     for (var obs : observations) {
-
       if (scoringSideToAccept != ScoringSide.BOTH) {
         if (FieldConstants.getIsLeftScoringRelativeToRobot(getReefSide(), scoringSideToAccept)) {
           if (obs.camera() == 1) {
@@ -171,11 +170,9 @@ public class RobotState {
 
   private ReefSide getReefSide() {
     return FieldConstants.getSideFromTagId(
-            // reefSelectionMethod == ReefSelectionMethod.POSE
-            // ?
-            RobotState.getInstance().getTagIdFromClosestPoseSide()
-            // : RobotState.getInstance().getTagIdFromClosest60DegreeRotation()
-            )
+            visionMode == VisionMode.ROTATION_BASED
+                ? RobotState.getInstance().getTagIdFromClosest60DegreeRotation()
+                : RobotState.getInstance().getTagIdFromClosestPoseSide())
         .get();
   }
 
