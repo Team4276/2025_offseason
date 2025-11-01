@@ -15,6 +15,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.team4276.frc2025.RobotState;
 import frc.team4276.frc2025.field.FieldConstants;
+import frc.team4276.util.dashboard.LoggedTunableNumber;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -29,6 +30,8 @@ public class VisionIOPhotonVision implements VisionIO {
   protected final int index;
   protected final PhotonCamera camera;
   protected final Transform3d robotToCamera;
+
+  private final LoggedTunableNumber yawOffset;
 
   private final double vFov;
   private final int verticalResolution;
@@ -60,6 +63,8 @@ public class VisionIOPhotonVision implements VisionIO {
     cornerListPairs = new ArrayList<Pair<Double, Double>>();
 
     poseObservations = new ArrayList<>();
+
+    yawOffset = new LoggedTunableNumber("Vision/Camera_" + index + "/YawOffset", 0.0);
 
     SmartDashboard.putBoolean("Camera_" + index + "_Use_PU_Distance_Calc", false);
     SmartDashboard.putBoolean("Camera_" + index + "_Use_3D_Transform_Distance_Calc", true);
@@ -105,7 +110,11 @@ public class VisionIOPhotonVision implements VisionIO {
                         ? DistanceCalcMethod.PHOTON_UTILS
                         : DistanceCalcMethod.JITB;
 
-        double rawDistToTag = target.bestCameraToTarget.getTranslation().getNorm();
+        double rawDistToTag = 2.0; // TODO: make this less janky
+        if (target.bestCameraToTarget != null) {
+          rawDistToTag = target.bestCameraToTarget.getTranslation().getNorm();
+        }
+
         double distanceToTagMechA =
             Rotation2d.fromDegrees(
                         target.pitch + Units.radiansToDegrees(-robotToCamera.getRotation().getY()))
@@ -156,33 +165,35 @@ public class VisionIOPhotonVision implements VisionIO {
           continue;
         }
 
-        var poseEstimate =
-            // calculateRobotPose(
-            // target.fiducialId,
-            // distanceToTag,
-            // Rotation2d.fromDegrees(target.yaw),
-            // result.getTimestampSeconds());
-            calculateRobotPose(
-                target.getFiducialId(),
-                result.getTimestampSeconds(),
-                Units.degreesToRadians(target.yaw),
-                Units.degreesToRadians(target.pitch),
-                target.bestCameraToTarget.getTranslation().getNorm());
-
-        if (poseEstimate.isPresent()) {
-          txtyObservations.add(
-              new TagObservation(
-                  target.fiducialId,
+        if (target.bestCameraToTarget != null) {
+          var poseEstimate =
+              // calculateRobotPose(
+              // target.fiducialId,
+              // distanceToTag,
+              // Rotation2d.fromDegrees(target.yaw),
+              // result.getTimestampSeconds());
+              calculateRobotPose(
+                  target.getFiducialId(),
                   result.getTimestampSeconds(),
-                  index,
                   Units.degreesToRadians(target.yaw),
-                  distanceToTag,
-                  poseEstimate.get(),
-                  distanceCalcMethod,
-                  distanceToTagMechA,
-                  distanceToTag3d,
-                  distanceToTagPU,
-                  distanceToTagJitb));
+                  Units.degreesToRadians(target.pitch),
+                  target.bestCameraToTarget.getTranslation().getNorm());
+
+          if (poseEstimate.isPresent()) {
+            txtyObservations.add(
+                new TagObservation(
+                    target.fiducialId,
+                    result.getTimestampSeconds(),
+                    index,
+                    Units.degreesToRadians(target.yaw),
+                    distanceToTag,
+                    poseEstimate.get(),
+                    distanceCalcMethod,
+                    distanceToTagMechA,
+                    distanceToTag3d,
+                    distanceToTagPU,
+                    distanceToTagJitb));
+          }
         }
       }
 
@@ -362,7 +373,12 @@ public class VisionIOPhotonVision implements VisionIO {
         robotPoseAtTime
             .get()
             .getRotation()
-            .plus(robotToCamera.getRotation().toRotation2d().plus(camToTagTranslation.getAngle()));
+            .plus(
+                robotToCamera
+                    .getRotation()
+                    .toRotation2d()
+                    .rotateBy(Rotation2d.fromDegrees(yawOffset.getAsDouble()))
+                    .plus(camToTagTranslation.getAngle()));
     var tagPose2d = FieldConstants.apriltagLayout.getTagPose(tagId);
 
     if (tagPose2d.isEmpty()) {
@@ -381,12 +397,19 @@ public class VisionIOPhotonVision implements VisionIO {
                 robotPoseAtTime
                     .get()
                     .getRotation()
-                    .plus(robotToCamera.getRotation().toRotation2d()))
+                    .plus(
+                        robotToCamera
+                            .getRotation()
+                            .toRotation2d()
+                            .rotateBy(Rotation2d.fromDegrees(yawOffset.getAsDouble()))))
             .transformBy(
                 new Transform2d(
                     new Pose2d(
                         robotToCamera.getTranslation().toTranslation2d(),
-                        robotToCamera.getRotation().toRotation2d()),
+                        robotToCamera
+                            .getRotation()
+                            .toRotation2d()
+                            .rotateBy(Rotation2d.fromDegrees(yawOffset.getAsDouble()))),
                     Pose2d.kZero));
     // Use gyro angle at time for robot rotation
     return Optional.of(new Pose2d(robotPose.getTranslation(), robotPoseAtTime.get().getRotation()));

@@ -295,9 +295,9 @@ public class RobotState {
   /** Adds a new timestamped vision measurement. */
   public void addVision3dPoseObservation(PoseObservation... observations) {
     for (var obs : observations) {
-      // if (!obs.isValid()) {
-      // continue;
-      // }
+      if (!obs.isValid()) {
+        continue;
+      }
 
       poseEstimator3d.addVisionMeasurement(obs.robotPose().toPose2d(), obs.timestamp());
     }

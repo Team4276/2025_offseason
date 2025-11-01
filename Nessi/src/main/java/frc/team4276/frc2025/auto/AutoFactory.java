@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.frc2025.RobotContainer;
 import frc.team4276.frc2025.RobotState;
+import frc.team4276.frc2025.RobotState.VisionMode;
 import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.field.FieldConstants.ReefSide;
 import frc.team4276.frc2025.subsystems.Superstructure.WantedSuperState;
@@ -260,8 +261,16 @@ public class AutoFactory {
     ElasticUI.putAutoPath(
         List.of(traj.getInitialPose(false).get(), traj.getFinalPose(false).get()));
 
-    return Commands.runOnce(() -> robotContainer.getDrive().setChoreoTrajectory(traj))
-        .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isTrajectoryFinished()));
+    return Commands.runOnce(
+            () -> {
+              robotContainer.getDrive().setChoreoTrajectory(traj);
+              RobotState.getInstance().setVisionMode(VisionMode.REJECT_ALL);
+            })
+        .andThen(Commands.waitUntil(() -> robotContainer.getDrive().isTrajectoryFinished()))
+        .finallyDo(
+            () -> {
+              RobotState.getInstance().setVisionMode(VisionMode.ACCEPT_ALL);
+            });
   }
 
   private Command driveToPoint(Pose2d pose) {
