@@ -37,7 +37,7 @@ public final class Constants {
     };
   }
 
-  public static final boolean isTuning = true; // TODO: Create separate tuning project
+  public static final boolean isTuning = false; // TODO: Create separate tuning project
 
   public static final boolean isSim = (mode == Mode.SIM);
 
