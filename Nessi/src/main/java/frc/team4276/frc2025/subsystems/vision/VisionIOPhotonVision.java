@@ -179,28 +179,39 @@ public class VisionIOPhotonVision implements VisionIO {
                   distanceToTag,
                   poseEstimate.get(),
                   distanceCalcMethod,
-                  new double[] {
-                    distanceToTagMechA, distanceToTag3d, distanceToTagPU, distanceToTagJitb
-                  }));
+                  distanceToTagMechA,
+                  distanceToTag3d,
+                  distanceToTagPU,
+                  distanceToTagJitb));
         }
       }
 
       if (result.multitagResult.isPresent()) {
         var multitagResult = result.multitagResult.get();
         int[] tagsUsed = new int[multitagResult.fiducialIDsUsed.size()];
+        boolean isValid = true;
+        double totalTagDist = 0.0;
         for (int i = 0; i < multitagResult.fiducialIDsUsed.size(); i++) {
           tagsUsed[i] = (int) multitagResult.fiducialIDsUsed.get(i);
+
+          if (!RobotState.getInstance().isValidTag(tagsUsed[i])) {
+            isValid = false;
+          }
+
+          totalTagDist += result.targets.get(i).bestCameraToTarget.getTranslation().getNorm();
         }
+
         var cameraPose = multitagResult.estimatedPose.best;
         var robotPose = cameraPose.plus(robotToCamera.inverse());
 
         poseObservations.add(
             new PoseObservation(
-                tagsUsed,
+                // new int[0],
+                isValid,
                 result.getTimestampSeconds(),
                 index,
                 Pose3d.kZero.transformBy(robotPose),
-                cameraPose.getTranslation().getNorm()));
+                totalTagDist / multitagResult.fiducialIDsUsed.size()));
 
       } else if (result.hasTargets()) {
         double ambiguity = result.getBestTarget().getPoseAmbiguity();
@@ -237,7 +248,8 @@ public class VisionIOPhotonVision implements VisionIO {
 
           poseObservations.add(
               new PoseObservation(
-                  new int[] {result.getBestTarget().fiducialId},
+                  // new int[0],
+                  RobotState.getInstance().isValidTag(result.getBestTarget().fiducialId),
                   result.getTimestampSeconds(),
                   index,
                   robotPose,

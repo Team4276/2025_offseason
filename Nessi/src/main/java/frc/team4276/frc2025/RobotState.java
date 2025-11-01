@@ -1,11 +1,12 @@
 package frc.team4276.frc2025;
 
-import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
+import static frc.team4276.frc2025.subsystems.drive.DriveConstants.kinematics;
 
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
@@ -13,6 +14,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import frc.team4276.frc2025.Constants.Mode;
 import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.field.FieldConstants.ReefSide;
 import frc.team4276.frc2025.subsystems.SuperstructureConstants.ScoringSide;
@@ -20,6 +22,8 @@ import frc.team4276.frc2025.subsystems.vision.VisionIO.PoseObservation;
 import frc.team4276.frc2025.subsystems.vision.VisionIO.TagObservation;
 import frc.team4276.util.AllianceFlipUtil;
 import frc.team4276.util.dashboard.ElasticUI;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
@@ -86,6 +90,7 @@ public class RobotState {
     odomPoseBuffer.clear();
     poseEstimate = pose;
     odomPoseEstimate = pose;
+    poseEstimator3d.resetPose(pose);
   }
 
   public void setTrajectorySetpoint(Pose2d setpoint) {
@@ -116,26 +121,42 @@ public class RobotState {
     poseEstimator3d.updateWithTime(timestamp, odomPoseEstimate.getRotation(), wheelPositions);
   }
 
+  private final List<Pose3d> allTagPoses0 = new LinkedList<>();
+  private final List<Pose3d> allTxTyPoses0 = new LinkedList<>();
+  private final List<Pose3d> allTagPoses1 = new LinkedList<>();
+  private final List<Pose3d> allTxTyPoses1 = new LinkedList<>();
+
   /** Adds a new timestamped vision measurement. */
   public void addVisionObservation(TagObservation... observations) {
+    allTagPoses0.clear();
+    allTxTyPoses0.clear();
+    allTagPoses1.clear();
+    allTxTyPoses1.clear();
+
     for (var obs : observations) {
       if (scoringSideToAccept != ScoringSide.BOTH) {
         if (FieldConstants.getIsLeftScoringRelativeToRobot(getReefSide(), scoringSideToAccept)) {
           if (obs.camera() == 1) {
+            Logger.recordOutput("RobotState/Camera1/ObservationAccepted", false);
             continue;
           }
         } else {
           if (obs.camera() == 0) {
+            Logger.recordOutput("RobotState/Camera0/ObservationAccepted", false);
             continue;
           }
         }
       }
 
-      if (!shouldAcceptTagEstimate(obs.tagId())) continue;
+      if (!shouldAcceptTagEstimate(obs.tagId())) {
+        Logger.recordOutput("RobotState/Camera" + obs.camera() + "/ObservationAccepted", false);
+        continue;
+      }
 
       // Get rotation at timestamp
       var sample = odomPoseBuffer.getSample(obs.timestamp());
       if (sample.isEmpty() || Timer.getTimestamp() - obs.timestamp() >= poseBufferHistorySeconds) {
+        Logger.recordOutput("RobotState/Camera" + obs.camera() + "/ObservationAccepted", false);
         // exit if not there
         return;
       }
@@ -143,11 +164,40 @@ public class RobotState {
       // Use gyro angle at time for robot rotation
       poseEstimate = obs.robotPose().transformBy(new Transform2d(sample.get(), odomPoseEstimate));
       // poseEstimate = obs.robotPose();
+
+      Logger.recordOutput("RobotState/Camera" + obs.camera() + "/ObservationAccepted", true);
+
+      if (Constants.getMode() == Mode.REPLAY) {
+        if (obs.camera() == 1) {
+          allTagPoses1.add(FieldConstants.apriltagLayout.getTagPose(obs.tagId()).get());
+          allTxTyPoses1.add(new Pose3d(poseEstimate));
+
+        } else {
+          allTagPoses0.add(FieldConstants.apriltagLayout.getTagPose(obs.tagId()).get());
+          allTxTyPoses0.add(new Pose3d(poseEstimate));
+        }
+      }
+    }
+
+    if (Constants.getMode() == Mode.REPLAY) {
+      // Log camera datadata
+      Logger.recordOutput(
+          "RobotState/AcceptedObservations/Camera_0/TagPoses",
+          allTagPoses0.toArray(new Pose3d[allTagPoses0.size()]));
+      Logger.recordOutput(
+          "RobotState/AcceptedObservations/Camera_0/TxtyPoses",
+          allTxTyPoses0.toArray(new Pose3d[allTxTyPoses0.size()]));
+      Logger.recordOutput(
+          "RobotState/AcceptedObservations/Camera_1/TagPoses",
+          allTagPoses1.toArray(new Pose3d[allTagPoses1.size()]));
+      Logger.recordOutput(
+          "RobotState/AcceptedObservations/Camera_1/TxtyPoses",
+          allTxTyPoses1.toArray(new Pose3d[allTxTyPoses1.size()]));
     }
   }
 
   private boolean shouldAcceptTagEstimate(int observationTagId) {
-    if (!FieldConstants.isReefTag(observationTagId)) {
+    if (!isValidTag(observationTagId)) {
       return false;
     }
 
@@ -213,10 +263,6 @@ public class RobotState {
         continue;
       }
 
-      if (AllianceFlipUtil.shouldFlip() && tag.ID > 11) {
-        continue;
-      }
-
       currDistance =
           tag.pose
               .getTranslation()
@@ -249,8 +295,30 @@ public class RobotState {
   /** Adds a new timestamped vision measurement. */
   public void addVision3dPoseObservation(PoseObservation... observations) {
     for (var obs : observations) {
+      // if (!obs.isValid()) {
+      // continue;
+      // }
+
       poseEstimator3d.addVisionMeasurement(obs.robotPose().toPose2d(), obs.timestamp());
     }
+  }
+
+  public boolean isValidTag(int id) {
+    if (!FieldConstants.isReefTag(id)) {
+      return false;
+    }
+
+    if (AllianceFlipUtil.shouldFlip()) {
+      if (id > 11) {
+        return false;
+      }
+    } else {
+      if (id < 12) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public Pose2d getEstimatedPose() {

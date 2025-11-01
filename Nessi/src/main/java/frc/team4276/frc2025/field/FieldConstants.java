@@ -228,7 +228,7 @@ public class FieldConstants {
   public static boolean getIsLeftScoringRelativeToRobot(ReefSide reefSide, ScoringSide side) {
     return ((reefSide.ordinal() < 2 || reefSide.ordinal() == 5)
         ? (side == ScoringSide.LEFT)
-        : (side != ScoringSide.LEFT));
+        : (side == ScoringSide.RIGHT));
   }
 
   public static final Pose2d blueProcessorSideStart =

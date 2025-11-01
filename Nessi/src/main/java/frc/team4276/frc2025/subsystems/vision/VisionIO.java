@@ -23,10 +23,26 @@ public interface VisionIO {
       double distance,
       Pose2d robotPose,
       DistanceCalcMethod calcMethod,
-      double[] distancesCalced) {}
+      double distance1Calced,
+      double distance2Calced,
+      double distance3Calced,
+      double distance4Calced) {}
+
+  // public static record TagObservation(
+  //     int tagId,
+  //     double timestamp,
+  //     int camera,
+  //     double tx,
+  //     double distance,
+  //     Pose2d robotPose,
+  //     DistanceCalcMethod calcMethod,
+  //     double[] distance1Calced) {}
 
   public static record PoseObservation(
-      int[] tagIds, double timestamp, int camera, Pose3d robotPose, double distance) {}
+      boolean isValid, double timestamp, int camera, Pose3d robotPose, double distance) {}
+
+  // public static record PoseObservation(
+  //     int[] tagIds, double timestamp, int camera, Pose3d robotPose, double distance) {}
 
   public default void updateInputs(VisionIOInputs inputs) {}
 }
