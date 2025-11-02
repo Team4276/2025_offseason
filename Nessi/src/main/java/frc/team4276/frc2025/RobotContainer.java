@@ -314,9 +314,9 @@ public class RobotContainer {
         .x()
         .onTrue(
             superstructure.configureButtonBinding(
-                Superstructure.WantedSuperState.REEF_ALGAE,
-                Superstructure.WantedSuperState.REEF_ALGAE,
-                Superstructure.WantedSuperState.REEF_ALGAE,
+                Superstructure.WantedSuperState.MANUAL_REEF_ALGAE,
+                Superstructure.WantedSuperState.MANUAL_REEF_ALGAE,
+                Superstructure.WantedSuperState.MANUAL_REEF_ALGAE,
                 Superstructure.WantedSuperState.SCORE_MANUAL_L2))
         .onFalse(superstructure.setStateCommand(Superstructure.WantedSuperState.STOW));
 
@@ -331,6 +331,10 @@ public class RobotContainer {
 
     // L1 Mode
     driver.povRight().onTrue(Commands.runOnce(() -> superstructure.setL1ModeEnabled(true)));
+
+    driver
+        .povLeft()
+        .onTrue(Commands.runOnce(() -> superstructure.toggleManualMode()).ignoringDisable(true));
 
     // Exit Mode
     driver

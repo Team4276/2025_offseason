@@ -909,4 +909,12 @@ public class Superstructure extends SubsystemBase {
   public void setL1ModeEnabled(boolean enabled) {
     isL1Mode = enabled;
   }
+
+  public void setManualModeEnabled(boolean enabled) {
+    isManualMode.set(enabled);
+  }
+
+  public void toggleManualMode() {
+    setManualModeEnabled(!isManualMode());
+  }
 }
