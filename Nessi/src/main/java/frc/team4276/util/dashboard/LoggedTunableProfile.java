@@ -15,8 +15,8 @@ public class LoggedTunableProfile {
   public LoggedTunableProfile(String key, double maxVel, double maxAccel) {
     profile = new TrapezoidProfile(new Constraints(maxVel, maxAccel));
     this.key = key;
-    this.maxVel = new LoggedTunableNumber(this.key + "/MaxVel", maxVel);
     this.maxAccel = new LoggedTunableNumber(this.key + "/MaxAccel", maxAccel);
+    this.maxVel = new LoggedTunableNumber(this.key + "/MaxVel", maxVel);
   }
 
   public State calculate(double t, State current, State goal) {

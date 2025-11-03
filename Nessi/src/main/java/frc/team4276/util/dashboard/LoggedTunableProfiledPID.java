@@ -18,24 +18,24 @@ public class LoggedTunableProfiledPID extends ProfiledPIDController {
       String key, double kp, double ki, double kd, double maxVel, double maxAccel) {
     super(kp, ki, kd, new TrapezoidProfile.Constraints(maxVel, maxAccel));
     this.key = key;
-    Kp = new LoggedTunableNumber(this.key + "/kP", kp);
-    Ki = new LoggedTunableNumber(this.key + "/kI", ki);
-    Kd = new LoggedTunableNumber(this.key + "/kD", kd);
-    KTol = new LoggedTunableNumber(this.key + "/Tolerance", getPositionTolerance());
-    this.maxVel = new LoggedTunableNumber(this.key + "/MaxVel", maxVel);
     this.maxAccel = new LoggedTunableNumber(this.key + "/MaxAccel", maxAccel);
+    this.maxVel = new LoggedTunableNumber(this.key + "/MaxVel", maxVel);
+    KTol = new LoggedTunableNumber(this.key + "/Tolerance", getPositionTolerance());
+    Kd = new LoggedTunableNumber(this.key + "/kD", kd);
+    Ki = new LoggedTunableNumber(this.key + "/kI", ki);
+    Kp = new LoggedTunableNumber(this.key + "/kP", kp);
   }
 
   public LoggedTunableProfiledPID(
       String key, double kp, double ki, double kd, double tol, double maxVel, double maxAccel) {
     super(kp, ki, kd, new TrapezoidProfile.Constraints(maxVel, maxAccel));
     this.key = key;
-    Kp = new LoggedTunableNumber(this.key + "/kP", kp);
-    Ki = new LoggedTunableNumber(this.key + "/kI", ki);
-    Kd = new LoggedTunableNumber(this.key + "/kD", kd);
-    KTol = new LoggedTunableNumber(this.key + "/Tolerance", tol);
-    this.maxVel = new LoggedTunableNumber(this.key + "/MaxVel", maxVel);
     this.maxAccel = new LoggedTunableNumber(this.key + "/MaxAccel", maxAccel);
+    this.maxVel = new LoggedTunableNumber(this.key + "/MaxVel", maxVel);
+    KTol = new LoggedTunableNumber(this.key + "/Tolerance", tol);
+    Kd = new LoggedTunableNumber(this.key + "/kD", kd);
+    Ki = new LoggedTunableNumber(this.key + "/kI", ki);
+    Kp = new LoggedTunableNumber(this.key + "/kP", kp);
   }
 
   @Override

@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
-public class ViXController extends CommandXboxController {
+public class ViXController extends CommandXboxController implements JoystickOutputController {
   private double JOYSTICK_DEADBAND = 0.1;
   private double TRIGGER_DEADBAND = 0.25;
 
@@ -23,37 +23,26 @@ public class ViXController extends CommandXboxController {
     this.JOYSTICK_DEADBAND = deadband;
   }
 
-  public class JoystickOutput {
-    public final double x;
-    public final double y;
-
-    public JoystickOutput(double x, double y) {
-      this.x = x;
-      this.y = y;
-    }
-
-    public JoystickOutput() {
-      this.x = 0.0;
-      this.y = 0.0;
-    }
-  }
-
+  @Override
   public JoystickOutput getRightWithDeadband() {
     return Math.hypot(getRightX(), getRightY()) < JOYSTICK_DEADBAND
         ? new JoystickOutput()
         : getRight();
   }
 
+  @Override
   public JoystickOutput getRight() {
     return new JoystickOutput(getRightX(), getRightY());
   }
 
+  @Override
   public JoystickOutput getLeftWithDeadband() {
     return Math.hypot(getLeftX(), getLeftY()) < JOYSTICK_DEADBAND
         ? new JoystickOutput()
         : getLeft();
   }
 
+  @Override
   public JoystickOutput getLeft() {
     return new JoystickOutput(getLeftX(), getLeftY());
   }

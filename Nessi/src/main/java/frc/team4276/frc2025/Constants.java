@@ -37,14 +37,7 @@ public final class Constants {
     };
   }
 
-  public static final boolean SysIdMode = false;
-
-  static {
-    assert !(SysIdMode && getMode() != Mode.REAL)
-        : "Robot must be in REAL mode when SysIdMode is enabled.";
-  }
-
-  public static final boolean isTuning = false;
+  public static final boolean isTuning = true; // TODO: Create separate tuning project
 
   public static final boolean isSim = (mode == Mode.SIM);
 

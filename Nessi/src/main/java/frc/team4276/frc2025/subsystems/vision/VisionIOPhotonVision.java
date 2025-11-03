@@ -1,16 +1,29 @@
 package frc.team4276.frc2025.subsystems.vision;
 
-import static frc.team4276.frc2025.subsystems.vision.VisionConstants.aprilTagLayout;
-import static frc.team4276.frc2025.subsystems.vision.VisionConstants.configs;
+import static frc.team4276.frc2025.subsystems.vision.VisionConstants.*;
 
+import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.team4276.frc2025.RobotState;
+import frc.team4276.frc2025.field.FieldConstants;
+import frc.team4276.util.dashboard.LoggedTunableNumber;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.photonvision.PhotonCamera;
+import org.photonvision.PhotonUtils;
 
 /** IO implementation for real PhotonVision hardware. */
 public class VisionIOPhotonVision implements VisionIO {
@@ -18,117 +31,242 @@ public class VisionIOPhotonVision implements VisionIO {
   protected final PhotonCamera camera;
   protected final Transform3d robotToCamera;
 
+  private final LoggedTunableNumber yawOffset;
+
+  private final double vFov;
+  private final int verticalResolution;
+
+  private final Set<Short> tagIds;
+
+  private final List<TagObservation> txtyObservations;
+  private final ArrayList<Pair<Double, Double>> cornerListPairs;
+
+  private final List<PoseObservation> poseObservations;
+
+  public enum DistanceCalcMethod {
+    MECH_A,
+    TRANSFORM_3D,
+    PHOTON_UTILS,
+    JITB,
+  }
+
   public VisionIOPhotonVision(int index) {
     this.index = index;
     camera = new PhotonCamera(configs[index].name);
     robotToCamera = configs[index].robotToCamera;
+    vFov = configs[index].vFov;
+    verticalResolution = configs[index].verticalResolution;
+
+    tagIds = new HashSet<>();
+
+    txtyObservations = new ArrayList<>();
+    cornerListPairs = new ArrayList<Pair<Double, Double>>();
+
+    poseObservations = new ArrayList<>();
+
+    yawOffset = new LoggedTunableNumber("Vision/Camera_" + index + "/YawOffset", 0.0);
+
+    SmartDashboard.putBoolean("Camera_" + index + "_Use_PU_Distance_Calc", false);
+    SmartDashboard.putBoolean("Camera_" + index + "_Use_3D_Transform_Distance_Calc", true);
   }
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
     inputs.connected = camera.isConnected();
 
+    tagIds.clear();
+    txtyObservations.clear();
+    cornerListPairs.clear();
+    poseObservations.clear();
+
     // Read new camera observations
-    Set<Short> tagIds = new HashSet<>();
-    List<PoseObservation> poseObservations = new ArrayList<>();
-    List<TargetObservation> txtyObservations = new ArrayList<>();
     for (var result : camera.getAllUnreadResults()) {
-      // Add tx/ty observation
-      if (result.hasTargets()) {
-        for (var target : result.getTargets()) {
-          if (target.getFiducialId() != -1) {
+      if (!result.hasTargets()) {
+        continue;
+      }
+
+      // Add tx/ty observations
+      for (var target : result.getTargets()) {
+        if (target.fiducialId == -1) {
+          continue;
+        }
+
+        tagIds.add((short) target.fiducialId);
+
+        cornerListPairs.clear();
+        for (int i = 0; i < 4; i++) {
+          cornerListPairs.add(
+              new Pair<>(target.detectedCorners.get(i).x, target.detectedCorners.get(i).y));
+        }
+
+        double distanceToTag = -1;
+        DistanceCalcMethod distanceCalcMethod =
+            SmartDashboard.getBoolean("Camera_" + index + "_Use_MECH_A_Distance_Calc", false)
+                ? DistanceCalcMethod.MECH_A
+                : SmartDashboard.getBoolean(
+                        "Camera_" + index + "_Use_3D_Transform_Distance_Calc", true)
+                    ? DistanceCalcMethod.TRANSFORM_3D
+                    : SmartDashboard.getBoolean("Camera_" + index + "_Use_PU_Distance_Calc", false)
+                        ? DistanceCalcMethod.PHOTON_UTILS
+                        : DistanceCalcMethod.JITB;
+
+        double rawDistToTag = 2.0; // TODO: make this less janky
+        if (target.bestCameraToTarget != null) {
+          rawDistToTag = target.bestCameraToTarget.getTranslation().getNorm();
+        }
+
+        double distanceToTagMechA =
+            Rotation2d.fromDegrees(
+                        target.pitch + Units.radiansToDegrees(-robotToCamera.getRotation().getY()))
+                    .getCos()
+                * rawDistToTag;
+
+        double a =
+            FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ()
+                - robotToCamera.getZ();
+        double distanceToTag3d = Math.sqrt(rawDistToTag * rawDistToTag - (a * a));
+
+        double distanceToTagPU =
+            PhotonUtils.calculateDistanceToTargetMeters(
+                robotToCamera.getZ(),
+                FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ(),
+                -robotToCamera.getRotation().getY(),
+                Units.degreesToRadians(target.pitch));
+
+        double distanceToTagJitb =
+            calculateDistanceToAprilTagInMetersUsingTrigMethod(
+                calculateAngleEncompassingTagHeight(calculateTargetHeightInPixels(cornerListPairs)),
+                FieldConstants.apriltagLayout.getTagPose(target.fiducialId).get().getZ());
+
+        switch (distanceCalcMethod) {
+          case MECH_A:
+            distanceToTag = distanceToTagMechA;
+
+            break;
+
+          case TRANSFORM_3D:
+            distanceToTag = distanceToTag3d;
+
+            break;
+
+          case PHOTON_UTILS:
+            distanceToTag = distanceToTagPU;
+            break;
+
+          case JITB:
+            distanceToTag = distanceToTagJitb;
+            break;
+
+          default:
+            break;
+        }
+
+        if (distanceToTag < 0) {
+          continue;
+        }
+
+        if (target.bestCameraToTarget != null) {
+          var poseEstimate =
+              // calculateRobotPose(
+              // target.fiducialId,
+              // distanceToTag,
+              // Rotation2d.fromDegrees(target.yaw),
+              // result.getTimestampSeconds());
+              calculateRobotPose(
+                  target.getFiducialId(),
+                  result.getTimestampSeconds(),
+                  Units.degreesToRadians(target.yaw),
+                  Units.degreesToRadians(target.pitch),
+                  target.bestCameraToTarget.getTranslation().getNorm());
+
+          if (poseEstimate.isPresent()) {
             txtyObservations.add(
-                new TargetObservation(
+                new TagObservation(
+                    target.fiducialId,
                     result.getTimestampSeconds(),
-                    target.getFiducialId(),
                     index,
-                    Units.degreesToRadians(target.getYaw()),
-                    Units.degreesToRadians(target.getPitch()),
-                    target.bestCameraToTarget.getTranslation().getNorm()));
+                    Units.degreesToRadians(target.yaw),
+                    distanceToTag,
+                    poseEstimate.get(),
+                    distanceCalcMethod,
+                    distanceToTagMechA,
+                    distanceToTag3d,
+                    distanceToTagPU,
+                    distanceToTagJitb));
           }
         }
       }
 
-      // Add pose observation
       if (result.multitagResult.isPresent()) {
         var multitagResult = result.multitagResult.get();
+        int[] tagsUsed = new int[multitagResult.fiducialIDsUsed.size()];
+        boolean isValid = true;
+        double totalTagDist = 0.0;
+        for (int i = 0; i < multitagResult.fiducialIDsUsed.size(); i++) {
+          tagsUsed[i] = (int) multitagResult.fiducialIDsUsed.get(i);
 
-        // Calculate robot pose
-        Transform3d fieldToCamera = multitagResult.estimatedPose.best;
-        Pose3d camPose = new Pose3d(fieldToCamera.getTranslation(), fieldToCamera.getRotation());
-
-        // Calculate average tag distance
-        double totalTagDistance = 0.0;
-        for (var target : result.targets) {
-          totalTagDistance += target.bestCameraToTarget.getTranslation().getNorm();
-        }
-
-        // Add tag IDs
-        tagIds.addAll(multitagResult.fiducialIDsUsed);
-
-        // Add observation
-        poseObservations.add(
-            new PoseObservation(
-                result.getTimestampSeconds(), // Timestamp
-                multitagResult.fiducialIDsUsed.size(), // Tag count
-                camPose, // 3D pose estimate
-                camPose, // 3D pose estimate
-                multitagResult.estimatedPose.ambiguity, // Ambiguity
-                totalTagDistance / result.targets.size(), // Average tag distance
-                PoseObservationType.PHOTONVISION)); // Observation type
-      } else if (!result.targets.isEmpty()) { // Single tag result
-        var target = result.targets.get(0);
-
-        // Calculate robot pose
-        var tagPose = aprilTagLayout.getTagPose(target.fiducialId);
-        if (tagPose.isPresent()) {
-          Transform3d fieldToTarget1 =
-              new Transform3d(tagPose.get().getTranslation(), tagPose.get().getRotation());
-          Transform3d cameraToTarget1 = target.bestCameraToTarget;
-          Transform3d fieldToCamera1 = fieldToTarget1.plus(cameraToTarget1.inverse());
-          Pose3d camPose1 =
-              new Pose3d(fieldToCamera1.getTranslation(), fieldToCamera1.getRotation());
-
-          Pose3d camPose2;
-
-          if (Math.abs(target.altCameraToTarget.getTranslation().getNorm()) >= 0.0001) {
-            Transform3d fieldToTarget2 =
-                new Transform3d(tagPose.get().getTranslation(), tagPose.get().getRotation());
-            Transform3d cameraToTarget2 = target.altCameraToTarget;
-            Transform3d fieldToCamera2 = fieldToTarget2.plus(cameraToTarget2.inverse());
-
-            camPose2 = new Pose3d(fieldToCamera2.getTranslation(), fieldToCamera2.getRotation());
-          } else {
-            camPose2 = camPose1;
+          if (!RobotState.getInstance().isValidTag(tagsUsed[i])) {
+            isValid = false;
           }
 
-          // Add tag ID
-          tagIds.add((short) target.fiducialId);
+          totalTagDist += result.targets.get(i).bestCameraToTarget.getTranslation().getNorm();
+        }
 
-          // Add observation
+        var cameraPose = multitagResult.estimatedPose.best;
+        var robotPose = cameraPose.plus(robotToCamera.inverse());
+
+        poseObservations.add(
+            new PoseObservation(
+                // new int[0],
+                isValid,
+                result.getTimestampSeconds(),
+                index,
+                Pose3d.kZero.transformBy(robotPose),
+                totalTagDist / multitagResult.fiducialIDsUsed.size()));
+
+      } else if (result.hasTargets()) {
+        double ambiguity = result.getBestTarget().getPoseAmbiguity();
+
+        var bestCameraToTarget = result.getBestTarget().getBestCameraToTarget();
+        var altCameraToTarget = result.getBestTarget().getAlternateCameraToTarget();
+
+        var bestRobotPose = Pose3d.kZero.transformBy(bestCameraToTarget);
+        var altRobotPose = Pose3d.kZero.transformBy(altCameraToTarget);
+
+        Pose3d robotPose;
+
+        // Borrow from Mech A
+        if (ambiguity < (1 - ambiguity) * 0.4) {
+          Rotation2d odomRotation = RobotState.getInstance().getEstimatedPose().getRotation();
+          Rotation2d bestVisionRotation = bestRobotPose.getRotation().toRotation2d();
+          Rotation2d altVisionRotation = altRobotPose.getRotation().toRotation2d();
+
+          if (Math.abs(odomRotation.minus(bestVisionRotation).getRadians())
+              < Math.abs(odomRotation.minus(altVisionRotation).getRadians())) {
+            robotPose = bestRobotPose;
+
+          } else {
+            robotPose = altRobotPose;
+          }
+
+          // Exit if robot pose is off the field
+          if (robotPose.getX() < -fieldBorderMargin
+              || robotPose.getX() > FieldConstants.fieldLength + fieldBorderMargin
+              || robotPose.getY() < -fieldBorderMargin
+              || robotPose.getY() > FieldConstants.fieldWidth + fieldBorderMargin) {
+            continue;
+          }
+
           poseObservations.add(
               new PoseObservation(
-                  result.getTimestampSeconds(), // Timestamp
-                  1, // Tag count
-                  camPose1, // 3D pose estimate
-                  camPose2, // 3D pose estimate
-                  target.poseAmbiguity, // Ambiguity
-                  cameraToTarget1.getTranslation().getNorm(), // Tag distances
-                  PoseObservationType.PHOTONVISION)); // Observation type
+                  // new int[0],
+                  RobotState.getInstance().isValidTag(result.getBestTarget().fiducialId),
+                  result.getTimestampSeconds(),
+                  index,
+                  robotPose,
+                  bestCameraToTarget.getTranslation().getNorm()));
         }
       }
-    }
-
-    // Save tx/ty observations to inputs object
-    inputs.targetObservations = new TargetObservation[txtyObservations.size()];
-    for (int i = 0; i < txtyObservations.size(); i++) {
-      inputs.targetObservations[i] = txtyObservations.get(i);
-    }
-
-    // Save pose observations to inputs object
-    inputs.poseObservations = new PoseObservation[poseObservations.size()];
-    for (int i = 0; i < poseObservations.size(); i++) {
-      inputs.poseObservations[i] = poseObservations.get(i);
     }
 
     // Save tag IDs to inputs objects
@@ -137,5 +275,143 @@ public class VisionIOPhotonVision implements VisionIO {
     for (int id : tagIds) {
       inputs.tagIds[i++] = id;
     }
+
+    // Save tx/ty observations to inputs object
+    inputs.targetObservations = new TagObservation[txtyObservations.size()];
+    for (int j = 0; j < txtyObservations.size(); j++) {
+      inputs.targetObservations[j] = txtyObservations.get(j);
+    }
+
+    inputs.poseObservations = new PoseObservation[poseObservations.size()];
+    for (int j = 0; j < poseObservations.size(); j++) {
+      inputs.poseObservations[j] = poseObservations.get(j);
+    }
+  }
+
+  private double calculateTargetHeightInPixels(Collection<Pair<Double, Double>> sortedCorners) {
+    return sortedCorners.stream().mapToDouble(Pair::getSecond).max().orElse(-1)
+        - sortedCorners.stream().mapToDouble(Pair::getSecond).min().orElse(-1);
+  }
+
+  private Rotation2d calculateAngleEncompassingTagHeight(double pixelHeight) {
+    return Rotation2d.fromDegrees(pixelHeight * vFov / verticalResolution);
+  }
+
+  private double calculateDistanceToAprilTagInMetersUsingTrigMethod(
+      Rotation2d angle, double tagHeightOffGround) {
+    var tanOfTheta1 = angle.getTan();
+    var sqrtTerm =
+        Math.sqrt(
+            Math.abs(
+                Math.pow(tagHeight, 2)
+                    - (4
+                        * tanOfTheta1
+                        * (tagHeightOffGround
+                            - robotToCamera.getZ()
+                            - Units.inchesToMeters(3.25)
+                            + tagHeight)
+                        * tanOfTheta1
+                        * (tagHeightOffGround
+                            - robotToCamera.getZ()
+                            - Units.inchesToMeters(3.25)))));
+    return Math.abs((tagHeight + sqrtTerm) / (2 * tanOfTheta1));
+  }
+
+  /**
+   * This no work bc target yaw when the camera is pitched results in a different actual yaw of the
+   * target relative to the robot
+   */
+  @SuppressWarnings("unused") // hehe
+  private Optional<Pose2d> calculateRobotPose(
+      final int tagId,
+      double distanceToTagMeters,
+      Rotation2d horizontalAngleToTarget,
+      double timestamp) {
+    var tagPose = FieldConstants.apriltagLayout.getTagPose(tagId).get().toPose2d();
+
+    var robotPoseAtTime = RobotState.getInstance().getEstimatedOdomPoseAtTime(timestamp);
+
+    if (robotPoseAtTime.isEmpty()) {
+      return Optional.empty();
+    }
+
+    var robotRotation = robotPoseAtTime.get().getRotation();
+
+    var correctedCameraRotation = robotRotation.plus(robotToCamera.getRotation().toRotation2d());
+
+    var scaledTx = Rotation2d.fromDegrees(-horizontalAngleToTarget.div(1.0).getDegrees());
+
+    var cameraToRobotCenter =
+        this.robotToCamera.inverse().getTranslation().toTranslation2d().rotateBy(robotRotation);
+
+    var angleToTag = scaledTx.plus(correctedCameraRotation);
+
+    var translation = new Translation2d(distanceToTagMeters, angleToTag);
+    var translatedPose = tagPose.getTranslation().minus(translation);
+
+    var fieldRelativeRobotTranslation = translatedPose.plus(cameraToRobotCenter);
+
+    return Optional.of(new Pose2d(fieldRelativeRobotTranslation, robotRotation));
+  }
+
+  private Optional<Pose2d> calculateRobotPose(
+      int tagId, double timestamp, double targetYaw, double targetPitch, double camToTargetDist) {
+    var robotPoseAtTime = RobotState.getInstance().getEstimatedOdomPoseAtTime(timestamp);
+
+    if (robotPoseAtTime.isEmpty()) {
+      return Optional.empty();
+    }
+
+    Translation2d camToTagTranslation =
+        new Pose3d(Translation3d.kZero, new Rotation3d(0, targetPitch, -targetYaw))
+            .transformBy(
+                new Transform3d(new Translation3d(camToTargetDist, 0, 0), Rotation3d.kZero))
+            .getTranslation()
+            .rotateBy(new Rotation3d(0, robotToCamera.getRotation().getY(), 0))
+            .toTranslation2d();
+    Rotation2d camToTagRotation =
+        robotPoseAtTime
+            .get()
+            .getRotation()
+            .plus(
+                robotToCamera
+                    .getRotation()
+                    .toRotation2d()
+                    .rotateBy(Rotation2d.fromDegrees(yawOffset.getAsDouble()))
+                    .plus(camToTagTranslation.getAngle()));
+    var tagPose2d = FieldConstants.apriltagLayout.getTagPose(tagId);
+
+    if (tagPose2d.isEmpty()) {
+      return Optional.empty();
+    }
+
+    Translation2d fieldToCameraTranslation =
+        new Pose2d(
+                tagPose2d.get().getTranslation().toTranslation2d(),
+                camToTagRotation.plus(Rotation2d.kPi))
+            .transformBy(new Transform2d(camToTagTranslation.getNorm(), 0.0, Rotation2d.kZero))
+            .getTranslation();
+    Pose2d robotPose =
+        new Pose2d(
+                fieldToCameraTranslation,
+                robotPoseAtTime
+                    .get()
+                    .getRotation()
+                    .plus(
+                        robotToCamera
+                            .getRotation()
+                            .toRotation2d()
+                            .rotateBy(Rotation2d.fromDegrees(yawOffset.getAsDouble()))))
+            .transformBy(
+                new Transform2d(
+                    new Pose2d(
+                        robotToCamera.getTranslation().toTranslation2d(),
+                        robotToCamera
+                            .getRotation()
+                            .toRotation2d()
+                            .rotateBy(Rotation2d.fromDegrees(yawOffset.getAsDouble()))),
+                    Pose2d.kZero));
+    // Use gyro angle at time for robot rotation
+    return Optional.of(new Pose2d(robotPose.getTranslation(), robotPoseAtTime.get().getRotation()));
   }
 }

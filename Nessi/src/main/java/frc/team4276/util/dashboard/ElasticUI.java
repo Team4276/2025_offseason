@@ -1,5 +1,7 @@
 package frc.team4276.util.dashboard;
 
+import choreo.trajectory.SwerveSample;
+import choreo.trajectory.Trajectory;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -12,14 +14,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import frc.team4276.util.AllianceFlipUtil;
-import java.util.function.BooleanSupplier;
+import frc.team4276.util.dashboard.Elastic.Notification;
+import frc.team4276.util.dashboard.Elastic.Notification.NotificationLevel;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class ElasticUI {
   private ElasticUI() {}
-
-  private static BooleanSupplier headingAlignSupplier;
-  private static BooleanSupplier driveAlignSupplier;
 
   private static final Timer rainbowTimer = new Timer();
   private static final String[] rainbow;
@@ -45,11 +46,6 @@ public class ElasticUI {
         };
   }
 
-  public static void setAlignToggleSuppliers(BooleanSupplier heading, BooleanSupplier drive) {
-    headingAlignSupplier = heading;
-    driveAlignSupplier = drive;
-  }
-
   public static void update() {
     if (rainbowTimer.advanceIfElapsed(0.06)) {
       if (offset >= rainbow.length) {
@@ -66,8 +62,6 @@ public class ElasticUI {
     }
 
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
-    SmartDashboard.putBoolean("Heading Align Enabled", !headingAlignSupplier.getAsBoolean());
-    SmartDashboard.putBoolean("Drive Align Enabled", !driveAlignSupplier.getAsBoolean());
   }
 
   public static void putSwerveDrive(
@@ -105,28 +99,38 @@ public class ElasticUI {
         });
   }
 
-  public static void putPoseEstimate(Supplier<Pose2d> estimatedPose) {
-    SmartDashboard.putData(
-        "Field",
-        new Sendable() {
-          @Override
-          public void initSendable(SendableBuilder builder) {
-            builder.setSmartDashboardType("Field");
+  private static final SendableField autoField = new SendableField();
+  private static final SendableField teleopField = new SendableField();
+  private static SendableField pathDisplayField = new SendableField();
 
-            builder.addDoubleArrayProperty(
-                "Robot",
-                () ->
-                    new double[] {
-                      estimatedPose.get().getX()
-                      // - (fieldLength / 2)
-                      ,
-                      estimatedPose.get().getY()
-                      // - (fieldWidth / 2)
-                      ,
-                      estimatedPose.get().getRotation().getDegrees()
-                    },
-                null);
-          }
-        });
+  public static void putPoseEstimate(Supplier<Pose2d> poseEstimate) {
+    autoField.withRobot(poseEstimate);
+    teleopField.withRobot(poseEstimate);
+
+    SmartDashboard.putData("Auto Field", autoField);
+    SmartDashboard.putData("Teleop Field", teleopField);
+  }
+
+  public static void putAutoPath(List<Pose2d> poses) {
+    SmartDashboard.putData("Auto Path Display Field", pathDisplayField.withPath(poses));
+  }
+
+  public static void putAutoTrajectory(Trajectory<SwerveSample> traj) {
+    SmartDashboard.putData("Auto Path Display Field", pathDisplayField.withTrajectory(traj));
+  }
+
+  public static void clearPathDisplayField() {
+    // pathDisplayField.clearPath();
+    // pathDisplayField.clearTrajectory();
+    pathDisplayField = new SendableField();
+    // SmartDashboard.putData("Auto Path Display Field", pathDisplayField);
+  }
+
+  private static Notification autoEndNotification =
+      new Notification(NotificationLevel.INFO, "AUTO FINISHED", "n/a seconds", 5000);
+
+  public static void sendAutoEndNotification(double time) {
+    Elastic.sendNotification(
+        autoEndNotification.withDescription(String.format("%.2f", time) + " seconds!"));
   }
 }
