@@ -15,12 +15,12 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class Robot extends LoggedRobot {
-  private Command mAutonomousCommand;
+  private Command autonomousCommand;
 
-  private final RobotContainer mRobotContainer;
+  private final RobotContainer robotContainer;
 
   public Robot() {
-    Logger.recordMetadata("ProjectName", "Arche"); // Set a metadata value
+    Logger.recordMetadata("ProjectName", "Ache"); // Set a metadata value
 
     // Set up data receivers & replay source
     switch (Constants.getMode()) {
@@ -47,7 +47,7 @@ public class Robot extends LoggedRobot {
     Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may
                     // be added.
 
-    mRobotContainer = new RobotContainer();
+    robotContainer = new RobotContainer();
   }
 
   @Override
@@ -69,10 +69,10 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousInit() {
-    mAutonomousCommand = mRobotContainer.getAutonomousCommand();
+    autonomousCommand = robotContainer.getAutonomousCommand();
 
-    if (mAutonomousCommand != null) {
-      mAutonomousCommand.schedule();
+    if (autonomousCommand != null) {
+      autonomousCommand.schedule();
     }
   }
 
@@ -86,8 +86,8 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void teleopInit() {
-    if (mAutonomousCommand != null) {
-      mAutonomousCommand.cancel();
+    if (autonomousCommand != null) {
+      autonomousCommand.cancel();
     }
   }
 

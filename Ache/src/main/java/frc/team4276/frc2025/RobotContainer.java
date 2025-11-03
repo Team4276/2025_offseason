@@ -9,13 +9,14 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.team4276.lib.hid.ViXController;
 
 public class RobotContainer {
-  private final ViXController mDriver = new ViXController(Ports.DRIVER_CONTROLLER);
+  private final ViXController driver = new ViXController(Ports.DRIVER_CONTROLLER);
 
   public RobotContainer() {
     configureBindings();
   }
 
   private void configureBindings() {
+
   }
 
   /**
