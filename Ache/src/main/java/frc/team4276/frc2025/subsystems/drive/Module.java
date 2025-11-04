@@ -2,12 +2,9 @@ package frc.team4276.frc2025.subsystems.drive;
 
 import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
 
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import org.littletonrobotics.junction.Logger;
@@ -55,25 +52,9 @@ public class Module {
   public void runSetpoint(SwerveModuleState state) {
     // Optimize state
     state.optimize(inputs.turnPosition);
-    // state.cosineScale(inputs.turnPosition);
 
     // Apply setpoints
     io.runDriveVelocitySetpoint(state.speedMetersPerSecond / wheelRadiusMeters);
-    io.setTurnPosition(state.angle);
-  }
-
-  /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
-  public void runSetpoint(SwerveModuleState state, Vector<N2> forces) {
-    // Optimize state
-    state.optimize(inputs.turnPosition);
-    // state.cosineScale(inputs.turnPosition);
-    var direction = VecBuilder.fill(state.angle.getCos(), state.angle.getSin());
-    var torqueNm = forces.dot(direction) * wheelRadiusMeters;
-
-    // Apply setpoints
-    io.runDriveVelocitySetpoint(
-        state.speedMetersPerSecond / wheelRadiusMeters,
-        (torqueNm / DriveConstants.driveMotorReduction) * DriveConstants.ffkT);
     io.setTurnPosition(state.angle);
   }
 

@@ -12,4 +12,6 @@ public class Ports {
   public static final int BACK_LEFT_TURN = 8;
 
   public static final int DRIVER_CONTROLLER = 0;
+  public static final int DEMO_CONTROLLER_LEFT = 1;
+  public static final int DEMO_CONTROLLER_RIGHT = 2;
 }

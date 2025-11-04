@@ -2,39 +2,45 @@ package frc.team4276.frc2025;
 
 import static frc.team4276.frc2025.subsystems.drive.DriveConstants.kinematics;
 
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
+
 import java.util.Optional;
 
+import org.littletonrobotics.junction.AutoLogOutput;
+
 public class RobotState {
-  private SwerveModulePosition[] lastWheelPositions =
-      new SwerveModulePosition[] {
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition()
-      };
+  private SwerveModulePosition[] lastWheelPositions = new SwerveModulePosition[] {
+      new SwerveModulePosition(),
+      new SwerveModulePosition(),
+      new SwerveModulePosition(),
+      new SwerveModulePosition()
+  };
 
-  private Pose2d estimatedPose = Pose2d.kZero;
-  private Pose2d odomPoseEstimate = Pose2d.kZero;
-  private Rotation2d gyroOffset = Rotation2d.kZero;
+  private Rotation2d lastYaw = Rotation2d.kZero;
 
-  private double poseBufferHistorySeconds = 2.0;
-  private TimeInterpolatableBuffer<Pose2d> odomPoseBuffer =
-      TimeInterpolatableBuffer.createBuffer(poseBufferHistorySeconds);
-
-  public enum VisionMode {
-    ACCEPT_ALL,
-    REJECT_ALL,
-    ROTATION_BASED,
-    POSE_BASED,
-    ACCEPT_SIDE
-  }
+  private SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(
+      kinematics, 
+      lastYaw,
+      lastWheelPositions, 
+      Pose2d.kZero, 
+      VecBuilder.fill(0.03, 0.03, Units.degreesToRadians(1)),
+      VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(40)));
+      
+  private SwerveDrivePoseEstimator odomPoseEstimator = new SwerveDrivePoseEstimator(kinematics, lastYaw,
+      lastWheelPositions, Pose2d.kZero);
 
   private ChassisSpeeds robotVelocity = new ChassisSpeeds();
+
+  @AutoLogOutput private int visionUpdateCount = 0;
 
   private static RobotState mInstance;
 
@@ -50,10 +56,8 @@ public class RobotState {
 
   /** Resets the current odometry pose. */
   public void resetPose(Pose2d pose) {
-    gyroOffset = pose.getRotation().minus(odomPoseEstimate.getRotation().minus(gyroOffset));
-    odomPoseBuffer.clear();
-    estimatedPose = pose;
-    odomPoseEstimate = pose;
+    poseEstimator.resetPosition(lastYaw, lastWheelPositions, pose);
+    odomPoseEstimator.resetPosition(lastYaw, lastWheelPositions, pose);
   }
 
   public void addDriveSpeeds(ChassisSpeeds speeds) {
@@ -62,33 +66,35 @@ public class RobotState {
 
   public void addOdometryObservation(
       double timestamp, Rotation2d yaw, SwerveModulePosition[] wheelPositions) {
-    // Derive from kinematics
-    var twist = kinematics.toTwist2d(lastWheelPositions, wheelPositions);
-    var lastOdometryPose = odomPoseEstimate;
+    poseEstimator.updateWithTime(timestamp, yaw, wheelPositions);
+    odomPoseEstimator.updateWithTime(timestamp, yaw, wheelPositions);
     lastWheelPositions = wheelPositions;
-    odomPoseEstimate = odomPoseEstimate.exp(twist);
-
-    // Update gyro angle
-    if (yaw != null) {
-      Rotation2d angle = yaw.plus(gyroOffset);
-      odomPoseEstimate = new Pose2d(odomPoseEstimate.getTranslation(), angle);
-    }
-
-    odomPoseBuffer.addSample(timestamp, odomPoseEstimate);
-
-    estimatedPose = estimatedPose.exp(lastOdometryPose.log(odomPoseEstimate));
+    lastYaw = yaw;
   }
 
+  public void addVisionMeasurement(
+      Pose2d visionRobotPoseMeters,
+      double timestampSeconds,
+      Matrix<N3, N1> visionMeasurementStdDevs) {
+
+    visionUpdateCount++;
+
+    poseEstimator.addVisionMeasurement(
+        visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
+  }
+
+  @AutoLogOutput(key = "RobotState/EstimatedPose")
   public Pose2d getEstimatedPose() {
-    return estimatedPose;
+    return poseEstimator.getEstimatedPosition();
   }
 
+  @AutoLogOutput(key = "RobotState/EstimatedOdomPose")
   public Pose2d getEstimatedOdomPose() {
-    return odomPoseEstimate;
+    return odomPoseEstimator.getEstimatedPosition();
   }
 
   public Optional<Pose2d> getEstimatedOdomPoseAtTime(double timestamp) {
-    return odomPoseBuffer.getSample(timestamp);
+    return odomPoseEstimator.sampleAt(timestamp);
   }
 
   public ChassisSpeeds getFieldVelocity() {
