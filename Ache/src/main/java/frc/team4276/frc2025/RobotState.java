@@ -28,19 +28,20 @@ public class RobotState {
   private Rotation2d lastYaw = Rotation2d.kZero;
 
   private SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(
-      kinematics, 
+      kinematics,
       lastYaw,
-      lastWheelPositions, 
-      Pose2d.kZero, 
+      lastWheelPositions,
+      Pose2d.kZero,
       VecBuilder.fill(0.03, 0.03, Units.degreesToRadians(1)),
       VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(40)));
-      
+
   private SwerveDrivePoseEstimator odomPoseEstimator = new SwerveDrivePoseEstimator(kinematics, lastYaw,
       lastWheelPositions, Pose2d.kZero);
 
   private ChassisSpeeds robotVelocity = new ChassisSpeeds();
 
-  @AutoLogOutput private int visionUpdateCount = 0;
+  @AutoLogOutput
+  private int visionUpdateCount = 0;
 
   private static RobotState mInstance;
 
@@ -66,6 +67,8 @@ public class RobotState {
 
   public void addOdometryObservation(
       double timestamp, Rotation2d yaw, SwerveModulePosition[] wheelPositions) {
+    // fix null yaw
+
     poseEstimator.updateWithTime(timestamp, yaw, wheelPositions);
     odomPoseEstimator.updateWithTime(timestamp, yaw, wheelPositions);
     lastWheelPositions = wheelPositions;
