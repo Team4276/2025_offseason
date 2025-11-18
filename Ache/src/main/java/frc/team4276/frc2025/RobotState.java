@@ -11,7 +11,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.util.Units;
 
 import java.util.Optional;
 
@@ -32,8 +31,8 @@ public class RobotState {
       lastYaw,
       lastWheelPositions,
       Pose2d.kZero,
-      VecBuilder.fill(0.03, 0.03, Units.degreesToRadians(1)),
-      VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(40)));
+      VecBuilder.fill(0.1, 0.1, 0.1),
+      VecBuilder.fill(.9, .9, 2.0));
 
   private SwerveDrivePoseEstimator odomPoseEstimator = new SwerveDrivePoseEstimator(kinematics, lastYaw,
       lastWheelPositions, Pose2d.kZero);
@@ -86,12 +85,12 @@ public class RobotState {
         visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
   }
 
-  @AutoLogOutput(key = "RobotState/EstimatedPose")
+  // @AutoLogOutput(key = "RobotState/EstimatedPose")
   public Pose2d getEstimatedPose() {
     return poseEstimator.getEstimatedPosition();
   }
 
-  @AutoLogOutput(key = "RobotState/EstimatedOdomPose")
+  // @AutoLogOutput(key = "RobotState/EstimatedOdomPose")
   public Pose2d getEstimatedOdomPose() {
     return odomPoseEstimator.getEstimatedPosition();
   }

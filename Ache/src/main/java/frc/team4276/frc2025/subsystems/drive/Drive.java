@@ -90,6 +90,9 @@ public class Drive extends SubsystemBase {
     modules[1] = new Module(frModuleIO, 1);
     modules[2] = new Module(blModuleIO, 2);
     modules[3] = new Module(brModuleIO, 3);
+
+    // Start odometry thread
+    SparkOdometryThread.getInstance().start();
   }
 
   @Override
@@ -146,21 +149,22 @@ public class Drive extends SubsystemBase {
           double velocity = (modulePositions[j].distanceMeters - lastModulePositions[j].distanceMeters) / dt;
           double omega = modulePositions[j].angle.minus(lastModulePositions[j].angle).getRadians() / dt;
           // Check if delta is too large
-          if (Math.abs(omega) > DriveConstants.maxVelocityMPS * 1.5
-              || Math.abs(velocity) > DriveConstants.maxAngularVelocity * 1.5) {
+          if (Math.abs(velocity) > DriveConstants.maxVelocityMPS * 1.5
+              || Math.abs(omega) > DriveConstants.maxAngularVelocity * 1.5) {
             includeMeasurement = false;
             break;
           }
         }
       }
-
+      Logger.recordOutput("Drive/lastMeasurementIncluded", includeMeasurement);
       // If delta isn't too large we can include the measurement.
       if (includeMeasurement) {
         lastModulePositions = modulePositions;
         RobotState.getInstance()
             .addOdometryObservation(
                 sampleTimestamps[i],
-                gyroInputs.connected ? gyroInputs.yawPosition : null,
+                // gyroInputs.connected ? gyroInputs.yawPosition : null,
+                gyroInputs.yawPosition,
                 modulePositions);
         lastTime = sampleTimestamps[i];
         RobotState.getInstance().addDriveSpeeds(kinematics.toChassisSpeeds(getModuleStates()));
@@ -265,7 +269,10 @@ public class Drive extends SubsystemBase {
         AllianceFlipUtil.apply(Rotation2d.k180deg));
   }
 
-  /** Returns the module states (turn angles and drive velocities) for all of the modules. */
+  /**
+   * Returns the module states (turn angles and drive velocities) for all of the
+   * modules.
+   */
   @AutoLogOutput(key = "Drive/SwerveStates/Measured")
   private SwerveModuleState[] getModuleStates() {
     SwerveModuleState[] states = new SwerveModuleState[4];
