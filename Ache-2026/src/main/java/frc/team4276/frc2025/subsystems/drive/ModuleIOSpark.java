@@ -109,9 +109,10 @@ public class ModuleIOSpark implements ModuleIO {
         .uvwAverageDepth(2);
     driveConfig.closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .pidf(
-            driveKp, 0.0,
-            driveKd, 0.0);
+        .pid(
+          driveKp, 
+          0.0, 
+          driveKd);
     driveConfig.signals
         .primaryEncoderPositionAlwaysOn(true)
         .primaryEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
@@ -143,7 +144,7 @@ public class ModuleIOSpark implements ModuleIO {
         .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
         .positionWrappingEnabled(true)
         .positionWrappingInputRange(0, 2 * Math.PI)
-        .pidf(turnKp, 0.0, turnKd, 0.0);
+        .pid(turnKp, 0.0, turnKd);
     turnConfig.signals
         .absoluteEncoderPositionAlwaysOn(true)
         .absoluteEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
@@ -231,7 +232,7 @@ public class ModuleIOSpark implements ModuleIO {
     }
     lastVelocity = velocityRadPerSec;
 
-    driveController.setReference(
+    driveController.setSetpoint(
         velocityRadPerSec,
         ControlType.kVelocity,
         ClosedLoopSlot.kSlot0,
@@ -243,7 +244,7 @@ public class ModuleIOSpark implements ModuleIO {
   public void setTurnPosition(Rotation2d rotation) {
     double setpoint = MathUtil.inputModulus(
         rotation.plus(zeroRotation).getRadians(), 0, 2 * Math.PI);
-    turnController.setReference(setpoint, ControlType.kPosition);
+    turnController.setSetpoint(setpoint, ControlType.kPosition);
   }
 
   @Override
