@@ -92,24 +92,19 @@ public class Vision extends SubsystemBase {
 
       // Loop over pose observations
       for (var observation : inputs[cameraIndex].poseObservations) {
+        robotPoses.add(observation.pose());
+
         lastTargetSeenTime = observation.timestamp();
 
-        // Check whether to reject pose
-        boolean rejectPose = shouldRejectPoseObservation(observation);
-
         // Add pose to log
-        robotPoses.add(observation.pose());
-        if (rejectPose) {
+        if (shouldRejectPoseObservation(observation)) {
           robotPosesRejected.add(observation.pose());
-        } else {
-          robotPosesAccepted.add(observation.pose());
-        }
-
-        // Skip if rejected
-        if (rejectPose) {
+          
           continue;
         }
-
+        
+        robotPosesAccepted.add(observation.pose());
+        
         // Calculate standard deviations
         double stdDevFactor =
             Math.pow(observation.averageTagDistance(), 2.0) / observation.tagCount();

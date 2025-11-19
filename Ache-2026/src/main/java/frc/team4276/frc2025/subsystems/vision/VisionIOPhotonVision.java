@@ -18,6 +18,8 @@ import static frc.team4276.frc2025.subsystems.vision.VisionConstants.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import frc.team4276.frc2025.field.FieldConstants;
+
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -48,8 +50,8 @@ public class VisionIOPhotonVision implements VisionIO {
     this.robotToCamera = configs[index].robotToCamera;
     this.robotPoseSupplier = robotPoseSupplier;
 
-    poseEstimator = new PhotonPoseEstimator(aprilTagLayout, PoseStrategy.CONSTRAINED_SOLVEPNP, robotToCamera);
-    poseEstimator.setMultiTagFallbackStrategy(PoseStrategy.CLOSEST_TO_REFERENCE_POSE);
+    poseEstimator = new PhotonPoseEstimator(aprilTagLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, robotToCamera);
+    poseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
   }
 
   @Override
@@ -76,6 +78,10 @@ public class VisionIOPhotonVision implements VisionIO {
 
       estimate.ifPresent(
           (poseEstimate) -> {
+            if (rejectEstimate(poseEstimate)) {
+              return;
+            }
+
             // Calculate average tag distance
             double totalTagDistance = 0.0;
             for (var target : poseEstimate.targetsUsed) {
@@ -108,5 +114,22 @@ public class VisionIOPhotonVision implements VisionIO {
     for (int id : tagIds) {
       inputs.tagIds[i++] = id;
     }
+  }
+
+  private boolean rejectEstimate(EstimatedRobotPose estimate) {
+    boolean hasReefTag = false;
+    for (var target : estimate.targetsUsed) {
+      if (target.fiducialId == 4 ||
+          target.fiducialId == 5 ||
+          target.fiducialId == 14 ||
+          target.fiducialId == 15) {
+            return false;
+      }
+      if(FieldConstants.isReefTag(target.fiducialId)){
+        hasReefTag = true;
+      }
+    }
+
+    return !hasReefTag;
   }
 }

@@ -108,10 +108,6 @@ public class Elevator extends SubsystemBase {
     this.wantedElevatorPose = elevatorPosition;
   }
 
-  public ElevatorPosition getWantedElevatorPose() {
-    return wantedElevatorPose;
-  }
-
   public boolean atGoal() {
     return Constants.isSim
         ? true

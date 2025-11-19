@@ -88,7 +88,7 @@ public class RobotState {
   }
 
   public int getTagIdFromClosestPoseSide() {
-    int closestTag = 7;
+    int closestTag = -1;
     double minDistance = Double.POSITIVE_INFINITY;
     double currDistance = 0.0;
     for (AprilTag tag : FieldConstants.apriltagLayout.getTags()) {

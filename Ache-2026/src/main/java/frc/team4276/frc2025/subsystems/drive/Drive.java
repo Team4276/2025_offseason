@@ -163,8 +163,7 @@ public class Drive extends SubsystemBase {
         RobotState.getInstance()
             .addOdometryObservation(
                 sampleTimestamps[i],
-                // gyroInputs.connected ? gyroInputs.yawPosition : null,
-                gyroInputs.yawPosition,
+                gyroInputs.connected ? gyroInputs.yawPosition : null,
                 modulePositions);
         lastTime = sampleTimestamps[i];
         RobotState.getInstance().addDriveSpeeds(kinematics.toChassisSpeeds(getModuleStates()));
