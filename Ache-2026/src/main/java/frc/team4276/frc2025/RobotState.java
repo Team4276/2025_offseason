@@ -2,6 +2,7 @@ package frc.team4276.frc2025;
 
 import static frc.team4276.frc2025.subsystems.drive.DriveConstants.kinematics;
 
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -11,6 +12,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import frc.team4276.frc2025.field.FieldConstants;
 
 import java.util.Optional;
 
@@ -83,6 +85,30 @@ public class RobotState {
 
     poseEstimator.addVisionMeasurement(
         visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
+  }
+
+  public int getTagIdFromClosestPoseSide() {
+    int closestTag = 7;
+    double minDistance = Double.POSITIVE_INFINITY;
+    double currDistance = 0.0;
+    for (AprilTag tag : FieldConstants.apriltagLayout.getTags()) {
+      if (!FieldConstants.isReefTag(tag.ID)) {
+        continue;
+      }
+
+      currDistance =
+          tag.pose
+              .getTranslation()
+              .toTranslation2d()
+              .getDistance(getEstimatedPose().getTranslation());
+
+      if (currDistance < minDistance) {
+        closestTag = tag.ID;
+        minDistance = currDistance;
+      }
+    }
+
+    return closestTag;
   }
 
   // @AutoLogOutput(key = "RobotState/EstimatedPose")

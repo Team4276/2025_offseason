@@ -1,6 +1,5 @@
 package frc.team4276.frc2025.subsystems.elevator;
 
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import frc.team4276.frc2025.Ports;
 import frc.team4276.lib.dashboard.LoggedTunableNumber;
@@ -49,6 +48,10 @@ public class ElevatorConstants {
     public double getPositionMetres() {
       return elevatorSetpointSupplier.getAsDouble();
     }
+
+    public double getPositionRotations(){
+        return getPositionMetres() * gearRatio / drumCircumference;
+    }
   }
 
   public static final int leaderId = Ports.ELEVATOR_LEADER;
@@ -69,22 +72,23 @@ public class ElevatorConstants {
   public static final double ki = 0.0;
   public static final double kd = 0.0;
 
+  public static final double tolerance = 0.01; // m
+
+  public static final double gearRatio = 5.0;
+
+  public static final double maxVelMps = 1.5;
+  public static final double maxVelRps = maxVelMps * gearRatio / drumCircumference;
+  public static final double maxAccelMpss = 20.0;
+  public static final double maxAccelRpss = maxAccelMpss * gearRatio / drumCircumference;
+
+  public static final double kS = 0.0;
+  public static final double kV = 4.38;
+  public static final double kG = 0.52;
+  public static final double kA = 0.08;
+
   public static final int readFreq = 50;
 
   public static final double minInput = 0.0; // m
   public static final double maxInput = Units.inchesToMeters(25.5); // m
 
-  public static final double gearRatio = 5.0;
-  public static final Translation2d origin =
-      new Translation2d(0.0, -Units.inchesToMeters(0.860191));
-  public static final double length = Units.inchesToMeters(35);
-
-  public static final double maxPosition = Units.inchesToMeters(25.5); // m
-
-  public static final double tolerance = 0.01; // m
-
-  public static final LoggedTunableNumber kS = new LoggedTunableNumber("Elevator/kS", 0.0);
-  public static final LoggedTunableNumber kV = new LoggedTunableNumber("Elevator/kV", 4.38);
-  public static final LoggedTunableNumber kG = new LoggedTunableNumber("Elevator/kG", 0.52);
-  public static final LoggedTunableNumber kA = new LoggedTunableNumber("Elevator/kA", 0.08);
 }

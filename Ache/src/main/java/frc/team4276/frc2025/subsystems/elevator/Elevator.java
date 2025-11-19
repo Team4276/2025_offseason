@@ -3,9 +3,12 @@ package frc.team4276.frc2025.subsystems.elevator;
 import static frc.team4276.frc2025.subsystems.elevator.ElevatorConstants.*;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.Constants;
+import frc.team4276.lib.dashboard.LoggedTunableProfile;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -30,7 +33,15 @@ public class Elevator extends SubsystemBase {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
 
+  private ElevatorFeedforward ff = new ElevatorFeedforward(
+      kS.getAsDouble(), kG.getAsDouble(), kV.getAsDouble(), kA.getAsDouble());
+  private final LoggedTunableProfile profile = new LoggedTunableProfile("Elevator", 1.5, 20.0);
+  private TrapezoidProfile.State setpointState = new TrapezoidProfile.State();
+
   private BooleanSupplier coastOverride = () -> false;
+
+  /** position that reads zero on the elevator */
+  private double homedPosition = 0.0;
 
   public Elevator(ElevatorIO io) {
     this.io = io;
@@ -48,6 +59,10 @@ public class Elevator extends SubsystemBase {
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
 
+    if (inputs.botLimit) {
+      homedPosition = inputs.position;
+    }
+
     systemState = handleStateTransitions();
     applyStates();
 
@@ -62,16 +77,27 @@ public class Elevator extends SubsystemBase {
 
       io.setBrakeMode(!(coastOverride.getAsBoolean() && hasFlippedCoast));
 
+      setpointState = new TrapezoidProfile.State(getPositionMetres(), 0.0);
+
+      if (Constants.isTuning) {
+        ff = new ElevatorFeedforward(
+            kS.getAsDouble(), kG.getAsDouble(), kV.getAsDouble(), kA.getAsDouble());
+      }
+
     } else {
       if (wasDisabled) {
         io.setBrakeMode(true);
         wasDisabled = false;
         hasFlippedCoast = false;
       }
+
+      Logger.recordOutput("Elevator/SetpointState/PosMetres", setpointState.position);
+      Logger.recordOutput("Elevator/SetpointState/VelMetres", setpointState.velocity);
     }
 
     Logger.recordOutput("Elevator/WantedElevatorPose", wantedElevatorPose);
     Logger.recordOutput("Elevator/AtGoal", atGoal());
+    Logger.recordOutput("Elevator/HomedPositionRotation", homedPosition);
     Logger.recordOutput("Elevator/PositionMetres", getPositionMetres());
   }
 
@@ -94,7 +120,13 @@ public class Elevator extends SubsystemBase {
         break;
 
       case MOVING_TO_POSITION:
-        io.runSetpoint(wantedElevatorPose.getPositionRotations());
+        setpointState = profile.calculate(
+            0.02,
+            setpointState,
+            new TrapezoidProfile.State(wantedElevatorPose.getPositionMetres(), 0.0));
+        double setpointRotations = metresToRotations(MathUtil.clamp(setpointState.position, minInput, maxInput))
+            + homedPosition;
+        io.runSetpoint(setpointRotations, ff.calculate(setpointState.velocity));
 
         break;
 
@@ -127,6 +159,6 @@ public class Elevator extends SubsystemBase {
   }
 
   public double getPositionMetres() {
-    return rotationsToMetres(inputs.position);
+    return rotationsToMetres(inputs.position) - rotationsToMetres(homedPosition);
   }
 }
