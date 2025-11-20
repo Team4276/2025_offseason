@@ -16,7 +16,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -183,8 +182,7 @@ public class Drive extends SubsystemBase {
         RobotState.getInstance()
             .addOdometryObservation(
                 sampleTimestamps[i],
-                // gyroInputs.connected ? gyroInputs.yawPosition : null,
-                gyroInputs.yawPosition,
+                gyroInputs.connected ? gyroInputs.yawPosition : null,
                 modulePositions);
         lastTime = sampleTimestamps[i];
         RobotState.getInstance().addDriveSpeeds(kinematics.toChassisSpeeds(getModuleStates()));

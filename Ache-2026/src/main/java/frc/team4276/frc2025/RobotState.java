@@ -68,8 +68,10 @@ public class RobotState {
 
   public void addOdometryObservation(
       double timestamp, Rotation2d yaw, SwerveModulePosition[] wheelPositions) {
-    // fix null yaw
-
+    if(yaw == null){
+      var twist = kinematics.toTwist2d(lastWheelPositions, wheelPositions);
+      yaw = odomPoseEstimator.getEstimatedPosition().getRotation().rotateBy(new Rotation2d(twist.dtheta));
+    }
     poseEstimator.updateWithTime(timestamp, yaw, wheelPositions);
     odomPoseEstimator.updateWithTime(timestamp, yaw, wheelPositions);
     lastWheelPositions = wheelPositions;

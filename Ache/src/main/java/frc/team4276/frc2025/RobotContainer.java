@@ -122,9 +122,13 @@ public class RobotContainer {
 
     driver
         .rightTrigger()
-        .onTrue(Commands.runOnce(() -> superstructure.test()))
+        .onTrue(Commands.runOnce(() -> superstructure.testRight()))
         .onFalse(Commands.runOnce(() -> superstructure.stow()));
 
+    driver
+        .leftTrigger()
+        .onTrue(Commands.runOnce(() -> superstructure.testLeft()))
+        .onFalse(Commands.runOnce(() -> superstructure.stow()));
   }
 
   /**

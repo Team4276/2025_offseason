@@ -54,6 +54,10 @@ public class FieldConstants {
     };
   }
 
+  public static boolean isReefTag(int tagId) {
+    return (tagId >= 6 && tagId <= 11) || (tagId >= 17 && tagId <= 22);
+  }
+
   public static enum ScoringSide {
     LEFT,
     RIGHT,
