@@ -35,13 +35,15 @@ public class IntakeIOTalonFX implements IntakeIO {
   private final StatusSignal<AngularVelocity> pivotAngularVelocityRadPerSec;
   private final StatusSignal<Voltage> pivotAppliedVolts;
   private final StatusSignal<Current> pivotSupplyCurrentAmps;
-  private final StatusSignal<Current> pivotTorqueCurrentAmps;
+  private final StatusSignal<Current> pivotStatorCurrentAmps;
   private final StatusSignal<Temperature> pivotMotorTemp;
 
   private final StatusSignal<Voltage> rollerAppliedVolts;
   private final StatusSignal<Current> rollerSupplyCurrentAmps;
-  private final StatusSignal<Current> rollerTorqueCurrentAmps;
+  private final StatusSignal<Current> rollerStatorCurrentAmps;
   private final StatusSignal<Temperature> rollerMotorTemp;
+
+  private final StatusSignal<Angle> encoderAngle;
 
   public IntakeIOTalonFX() {
     pivot = TalonFXFactory.createDefaultTalon(Ports.INTAKE_PIVOT);
@@ -83,14 +85,15 @@ public class IntakeIOTalonFX implements IntakeIO {
     pivotAngularVelocityRadPerSec = pivot.getRotorVelocity();
     pivotAppliedVolts = pivot.getMotorVoltage();
     pivotSupplyCurrentAmps = pivot.getSupplyCurrent();
-    pivotTorqueCurrentAmps = pivot.getTorqueCurrent();
+    pivotStatorCurrentAmps = pivot.getStatorCurrent();
     pivotMotorTemp = pivot.getDeviceTemp();
 
-    rollerAppliedVolts = pivot.getMotorVoltage();
-    rollerSupplyCurrentAmps = pivot.getSupplyCurrent();
-    rollerTorqueCurrentAmps = pivot.getTorqueCurrent();
-    rollerMotorTemp = pivot.getDeviceTemp();
+    rollerAppliedVolts = rollers.getMotorVoltage();
+    rollerSupplyCurrentAmps = rollers.getSupplyCurrent();
+    rollerStatorCurrentAmps = rollers.getStatorCurrent();
+    rollerMotorTemp = rollers.getDeviceTemp();
 
+    encoderAngle = encoder.getAbsolutePosition();
   }
 
   @Override
@@ -100,23 +103,28 @@ public class IntakeIOTalonFX implements IntakeIO {
         pivotAngularVelocityRadPerSec,
         pivotAppliedVolts,
         pivotSupplyCurrentAmps,
-        pivotTorqueCurrentAmps,
+        pivotStatorCurrentAmps,
         pivotMotorTemp,
         rollerAppliedVolts,
         rollerSupplyCurrentAmps,
-        rollerTorqueCurrentAmps,
-        rollerMotorTemp);
+        rollerStatorCurrentAmps,
+        rollerMotorTemp,
+        encoderAngle);
 
     inputs.position = pivotAngle.getValueAsDouble();
     inputs.velocity = pivotAngularVelocityRadPerSec.getValueAsDouble();
+    inputs.absoluteEncoderPosition = encoderAngle.getValueAsDouble();
+    
+    inputs.isConnected[0] = pivot.isConnected();
     inputs.appliedVolts[0] = pivotAppliedVolts.getValueAsDouble();
     inputs.supplyCurrentAmps[0] = pivotSupplyCurrentAmps.getValueAsDouble();
-    inputs.torqueCurrentAmps[0] = pivotTorqueCurrentAmps.getValueAsDouble();
+    inputs.statorCurrentAmps[0] = pivotStatorCurrentAmps.getValueAsDouble();
     inputs.tempCelcius[0] = pivotMotorTemp.getValueAsDouble();
 
+    inputs.isConnected[1] = rollers.isConnected();
     inputs.appliedVolts[1] = rollerAppliedVolts.getValueAsDouble();
     inputs.supplyCurrentAmps[1] = rollerSupplyCurrentAmps.getValueAsDouble();
-    inputs.torqueCurrentAmps[1] = rollerTorqueCurrentAmps.getValueAsDouble();
+    inputs.statorCurrentAmps[1] = rollerStatorCurrentAmps.getValueAsDouble();
     inputs.tempCelcius[1] = rollerMotorTemp.getValueAsDouble();
   }
 

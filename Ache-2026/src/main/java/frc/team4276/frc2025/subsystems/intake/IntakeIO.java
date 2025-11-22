@@ -9,12 +9,12 @@ public interface IntakeIO {
     public boolean isEncoderConnected = true;
 
     public double position = 0.0;
-    public double absoluteEncoderPosition = 0.0;
     public double velocity = 0.0;
+    public double absoluteEncoderPosition = 0.0;
 
     public double[] appliedVolts = {0.0, 0.0};
     public double[] supplyCurrentAmps = {0.0, 0.0};
-    public double[] torqueCurrentAmps = {0.0, 0.0};
+    public double[] statorCurrentAmps = {0.0, 0.0};
     public double[] tempCelcius = {0.0, 0.0};
   }
 
