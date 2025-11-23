@@ -5,6 +5,7 @@ import static frc.team4276.frc2025.subsystems.intake.IntakeConstants.*;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Intake extends SubsystemBase {
@@ -38,6 +39,7 @@ public class Intake extends SubsystemBase {
   private SystemState systemState = SystemState.IDLING;
 
   private boolean hasCoral = false;
+  private Debouncer coralDebounce = new Debouncer(0.25);
 
   private final IntakeIO io;
   private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
@@ -53,6 +55,10 @@ public class Intake extends SubsystemBase {
 
     systemState = handleStateTransition();
     applyState();
+
+    Logger.recordOutput("Intake/WantedState", wantedState);
+    Logger.recordOutput("Intake/SystemState", systemState);
+    Logger.recordOutput("Intake/HasCoral", hasCoral);
   }
 
   private SystemState handleStateTransition() {
@@ -88,6 +94,10 @@ public class Intake extends SubsystemBase {
       case CLEAR_ARM:
         yield SystemState.CLEARING_ARM;
       case L1_SCORE:
+        if (!hasCoral) {
+          yield SystemState.STOWED;
+        }
+
         yield SystemState.L1_SCORING;
       case DEPLOY:
         yield SystemState.DEPLOYING;
@@ -121,7 +131,14 @@ public class Intake extends SubsystemBase {
         break;
       case INTAKING:
         io.runPivotSetpoint(pivotIntakePosition);
-        io.runRollerVolts(rollerIntakeVolts);
+        if (coralDebounce.calculate(inputs.statorCurrentAmps[1] > hasCoralTripCurrent.getAsDouble())) {
+          hasCoral = true;
+          io.runRollerVolts(rollerHoldVolts);
+
+        } else {
+          io.runRollerVolts(rollerIntakeVolts);
+
+        }
 
         break;
       case STAGING:
@@ -131,7 +148,10 @@ public class Intake extends SubsystemBase {
         break;
       case STAGE_EJECTING:
         io.runPivotSetpoint(pivotStagePosition);
-        io.runRollerVolts(rollerStageEjectVolts);
+        if (pivotAtPosition(pivotStagePosition)) {
+          io.runRollerVolts(rollerStageEjectVolts);
+          hasCoral = false;
+        }
 
         break;
       case CLEARING_ARM:
@@ -140,6 +160,10 @@ public class Intake extends SubsystemBase {
         break;
       case L1_SCORING:
         io.runPivotSetpoint(pivotScorePosition);
+        if (pivotAtPosition(pivotScorePosition)) {
+          io.runRollerVolts(rollerScoreVolts);
+          hasCoral = false;
+        }
 
         break;
       case DEPLOYING:
@@ -148,12 +172,24 @@ public class Intake extends SubsystemBase {
         break;
       case EJECTING:
         io.runPivotSetpoint(pivotEjectPosition);
-        
+        if (pivotAtPosition(pivotEjectPosition)) {
+          io.runRollerVolts(rollerEjectVolts);
+          hasCoral = false;
+        }
+
         break;
     }
   }
 
-  public boolean pivotAtSetpoint(){
-    return MathUtil.isNear(0.0, 0.0, 0.0);  
+  public boolean pivotAtPosition(double position) {
+    return MathUtil.isNear(position, inputs.position, positionTolerance);
+  }
+
+  public boolean hasCoral(){
+    return hasCoral;
+  }
+
+  public void overrideCoralState(boolean hasCoral){
+    this.hasCoral = hasCoral;
   }
 }

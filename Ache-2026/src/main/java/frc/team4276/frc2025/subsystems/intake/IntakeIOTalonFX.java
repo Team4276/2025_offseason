@@ -70,8 +70,8 @@ public class IntakeIOTalonFX implements IntakeIO {
     TalonFXConfiguration rollerConfig = new TalonFXConfiguration();
     pivotConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
     pivotConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    pivotConfig.CurrentLimits.SupplyCurrentLimit = 40.0;
-    pivotConfig.CurrentLimits.StatorCurrentLimit = 90.0;
+    pivotConfig.CurrentLimits.SupplyCurrentLimit = 30.0;
+    pivotConfig.CurrentLimits.StatorCurrentLimit = 60.0;
 
     CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
     encoderConfig.MagnetSensor.MagnetOffset = encoderOffset;
@@ -111,9 +111,9 @@ public class IntakeIOTalonFX implements IntakeIO {
         rollerMotorTemp,
         encoderAngle);
 
-    inputs.position = pivotAngle.getValueAsDouble();
-    inputs.velocity = pivotAngularVelocityRadPerSec.getValueAsDouble();
-    inputs.absoluteEncoderPosition = encoderAngle.getValueAsDouble();
+    inputs.position = pivotAngle.getValueAsDouble() * positionConversionFactor;
+    inputs.velocity = pivotAngularVelocityRadPerSec.getValueAsDouble() * positionConversionFactor;
+    inputs.absoluteEncoderPosition = encoderAngle.getValueAsDouble() * absoluteEncoderPositionConversionFactor;
     
     inputs.isConnected[0] = pivot.isConnected();
     inputs.appliedVolts[0] = pivotAppliedVolts.getValueAsDouble();

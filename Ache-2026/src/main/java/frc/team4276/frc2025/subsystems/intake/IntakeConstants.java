@@ -1,6 +1,7 @@
 package frc.team4276.frc2025.subsystems.intake;
 
 import edu.wpi.first.math.util.Units;
+import frc.team4276.lib.dashboard.LoggedTunableNumber;
 
 public class IntakeConstants {
     public static final double pivotStowPosition = Units.degreesToRadians(135.0);
@@ -25,8 +26,17 @@ public class IntakeConstants {
     public static final double kD = 0.0;
 
     public static final double kS = 0.0;
-    public static final double maxAccel = 0.0;
-    public static final double cruiseVel = 0.0;
 
-    public static final double encoderOffset = 0.0;
+    public static final double gearRatio =  (25.0 / 1.0) * (64.0 / 30.0);
+    public static final double positionConversionFactor = 2 * Math.PI / gearRatio;
+
+    public static final double maxAccel = Units.degreesToRadians(180.0) / positionConversionFactor;
+    public static final double cruiseVel = Units.degreesToRadians(90.0) / positionConversionFactor;
+
+    public static final double absoluteEncoderPositionConversionFactor = 2 * Math.PI;
+    public static final double encoderOffset = 0.0 / absoluteEncoderPositionConversionFactor;
+    public static final double positionTolerance = Units.degreesToRadians(1.0);
+
+    public static final LoggedTunableNumber hasCoralTripCurrent = new LoggedTunableNumber("Intake/HasCoralTripCurrent", 10.0);
+    public static final LoggedTunableNumber hasCoralDebounceTime = new LoggedTunableNumber("Intake/HasCoralDebounceTime", 0.25);
 }

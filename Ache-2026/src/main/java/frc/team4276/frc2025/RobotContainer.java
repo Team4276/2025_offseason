@@ -15,6 +15,12 @@ import frc.team4276.frc2025.subsystems.drive.GyroIOADIS;
 import frc.team4276.frc2025.subsystems.drive.ModuleIO;
 import frc.team4276.frc2025.subsystems.drive.ModuleIOSim;
 import frc.team4276.frc2025.subsystems.drive.ModuleIOSpark;
+import frc.team4276.frc2025.subsystems.elevator.Elevator;
+import frc.team4276.frc2025.subsystems.elevator.ElevatorIO;
+import frc.team4276.frc2025.subsystems.elevator.ElevatorIOSparkMax;
+import frc.team4276.frc2025.subsystems.intake.Intake;
+import frc.team4276.frc2025.subsystems.intake.IntakeIO;
+import frc.team4276.frc2025.subsystems.intake.IntakeIOTalonFX;
 import frc.team4276.frc2025.subsystems.vision.Vision;
 import frc.team4276.frc2025.subsystems.vision.VisionIO;
 import frc.team4276.frc2025.subsystems.vision.VisionIOPhotonVision;
@@ -25,9 +31,12 @@ import frc.team4276.lib.hid.ViXController;
 public class RobotContainer {
   private Drive drive;
   private Vision vision;
+  private Elevator elevator;
+  private Intake intake;
 
   private final ViXController driver = new ViXController(Ports.DRIVER_CONTROLLER);
-  private final CowsController demoController = new CowsController(Ports.DEMO_CONTROLLER_LEFT, Ports.DEMO_CONTROLLER_RIGHT);
+  private final CowsController demoController = new CowsController(Ports.DEMO_CONTROLLER_LEFT,
+      Ports.DEMO_CONTROLLER_RIGHT);
 
   public RobotContainer() {
 
@@ -35,48 +44,65 @@ public class RobotContainer {
       switch (Constants.getType()) {
         case COMPBOT -> {
           // Real robot, instantiate hardware IO implementations
-          drive =
-              new Drive(
-                  Constants.isDemo ? demoController : driver,
-                  new GyroIOADIS(),
-                  new ModuleIOSpark(0),
-                  new ModuleIOSpark(1),
-                  new ModuleIOSpark(2),
-                  new ModuleIOSpark(3));
-          vision = new Vision(RobotState.getInstance()::addVisionMeasurement, 
-            new VisionIOPhotonVision(0, RobotState.getInstance()::getEstimatedPose), 
-            new VisionIOPhotonVision(1, RobotState.getInstance()::getEstimatedPose));
+          drive = new Drive(
+              Constants.isDemo ? demoController : driver,
+              new GyroIOADIS(),
+              new ModuleIOSpark(0),
+              new ModuleIOSpark(1),
+              new ModuleIOSpark(2),
+              new ModuleIOSpark(3));
+          vision = new Vision(RobotState.getInstance()::addVisionMeasurement,
+              new VisionIOPhotonVision(0, RobotState.getInstance()::getEstimatedPose),
+              new VisionIOPhotonVision(1, RobotState.getInstance()::getEstimatedPose));
+          elevator = new Elevator(new ElevatorIOSparkMax());
+          intake = new Intake(new IntakeIOTalonFX());
         }
 
         case SIMBOT -> {
           // Sim robot, instantiate physics sim IO implementations
-          drive =
-              new Drive(
-                  Constants.isDemo ? demoController : driver,
-                  new GyroIO() {},
-                  new ModuleIOSim(),
-                  new ModuleIOSim(),
-                  new ModuleIOSim(),
-                  new ModuleIOSim());
-            vision = new Vision(RobotState.getInstance()::addVisionMeasurement);
+          drive = new Drive(
+              Constants.isDemo ? demoController : driver,
+              new GyroIO() {
+              },
+              new ModuleIOSim(),
+              new ModuleIOSim(),
+              new ModuleIOSim(),
+              new ModuleIOSim());
+          vision = new Vision(RobotState.getInstance()::addVisionMeasurement);
+          elevator = new Elevator(new ElevatorIO(){});
+          intake = new Intake(new IntakeIO(){});
         }
       }
     }
 
     // No-op implmentations for replay
     if (drive == null) {
-      drive =
-          new Drive(
-              Constants.isDemo ? demoController : driver,
-              new GyroIO() {},
-              new ModuleIO() {},
-              new ModuleIO() {},
-              new ModuleIO() {},
-              new ModuleIO() {});
+      drive = new Drive(
+          Constants.isDemo ? demoController : driver,
+          new GyroIO() {
+          },
+          new ModuleIO() {
+          },
+          new ModuleIO() {
+          },
+          new ModuleIO() {
+          },
+          new ModuleIO() {
+          });
     }
-    
+
     if (vision == null) {
-      vision = new Vision(RobotState.getInstance()::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
+      vision = new Vision(RobotState.getInstance()::addVisionMeasurement, new VisionIO() {
+      }, new VisionIO() {
+      });
+    }
+
+    if (elevator == null){
+      elevator = new Elevator(new ElevatorIO(){});
+    }
+
+    if(intake == null){
+      intake = new Intake(new IntakeIO(){});
     }
 
     configureBindings();
@@ -89,14 +115,14 @@ public class RobotContainer {
         .start()
         .onTrue(
             Commands.runOnce(
-                    () ->
-                        RobotState.getInstance()
-                            .resetPose(
-                                new Pose2d(
-                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
-                                    AllianceFlipUtil.apply(Rotation2d.kZero))))
+                () -> RobotState.getInstance()
+                    .resetPose(
+                        new Pose2d(
+                            RobotState.getInstance().getEstimatedPose().getTranslation(),
+                            AllianceFlipUtil.apply(Rotation2d.kZero))))
                 .ignoringDisable(true));
 
+    
   }
 
   /**

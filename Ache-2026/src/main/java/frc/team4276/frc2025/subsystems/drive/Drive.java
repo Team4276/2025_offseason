@@ -93,6 +93,7 @@ public class Drive extends SubsystemBase {
 
     // Start odometry thread
     SparkOdometryThread.getInstance().start();
+    PhoenixOdometryThread.getInstance().start();
   }
 
   @Override
