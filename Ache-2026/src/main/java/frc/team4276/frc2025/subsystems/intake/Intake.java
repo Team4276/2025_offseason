@@ -19,7 +19,7 @@ public class Intake extends SubsystemBase {
     CLEAR_ARM,
     L1_SCORE,
     DEPLOY,
-    EJECT
+    PURGE
   }
 
   private enum SystemState {
@@ -32,7 +32,7 @@ public class Intake extends SubsystemBase {
     CLEARING_ARM,
     L1_SCORING,
     DEPLOYING,
-    EJECTING
+    PURGING
   }
 
   private WantedState wantedState = WantedState.IDLE;
@@ -101,8 +101,8 @@ public class Intake extends SubsystemBase {
         yield SystemState.L1_SCORING;
       case DEPLOY:
         yield SystemState.DEPLOYING;
-      case EJECT:
-        yield SystemState.EJECTING;
+      case PURGE:
+        yield SystemState.PURGING;
     };
   }
 
@@ -170,7 +170,7 @@ public class Intake extends SubsystemBase {
         io.runPivotSetpoint(pivotDeployPosition);
 
         break;
-      case EJECTING:
+      case PURGING:
         io.runPivotSetpoint(pivotEjectPosition);
         if (pivotAtPosition(pivotEjectPosition)) {
           io.runRollerVolts(rollerEjectVolts);
@@ -179,6 +179,10 @@ public class Intake extends SubsystemBase {
 
         break;
     }
+  }
+
+  public void setWantedState(WantedState state){
+    wantedState = state;
   }
 
   public boolean pivotAtPosition(double position) {

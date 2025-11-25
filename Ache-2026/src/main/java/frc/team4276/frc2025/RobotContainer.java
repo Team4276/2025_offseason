@@ -9,6 +9,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.team4276.frc2025.subsystems.Superstructure;
+import frc.team4276.frc2025.subsystems.Superstructure.WantedSuperState;
 import frc.team4276.frc2025.subsystems.drive.Drive;
 import frc.team4276.frc2025.subsystems.drive.GyroIO;
 import frc.team4276.frc2025.subsystems.drive.GyroIOADIS;
@@ -34,12 +36,13 @@ public class RobotContainer {
   private Elevator elevator;
   private Intake intake;
 
+  private final Superstructure superstructure;
+
   private final ViXController driver = new ViXController(Ports.DRIVER_CONTROLLER);
   private final CowsController demoController = new CowsController(Ports.DEMO_CONTROLLER_LEFT,
       Ports.DEMO_CONTROLLER_RIGHT);
 
   public RobotContainer() {
-
     if (Constants.getMode() != Constants.Mode.REPLAY) {
       switch (Constants.getType()) {
         case COMPBOT -> {
@@ -69,8 +72,10 @@ public class RobotContainer {
               new ModuleIOSim(),
               new ModuleIOSim());
           vision = new Vision(RobotState.getInstance()::addVisionMeasurement);
-          elevator = new Elevator(new ElevatorIO(){});
-          intake = new Intake(new IntakeIO(){});
+          elevator = new Elevator(new ElevatorIO() {
+          });
+          intake = new Intake(new IntakeIO() {
+          });
         }
       }
     }
@@ -97,13 +102,17 @@ public class RobotContainer {
       });
     }
 
-    if (elevator == null){
-      elevator = new Elevator(new ElevatorIO(){});
+    if (elevator == null) {
+      elevator = new Elevator(new ElevatorIO() {
+      });
     }
 
-    if(intake == null){
-      intake = new Intake(new IntakeIO(){});
+    if (intake == null) {
+      intake = new Intake(new IntakeIO() {
+      });
     }
+
+    superstructure = new Superstructure(drive, vision, elevator, intake, driver);
 
     configureBindings();
 
@@ -122,7 +131,126 @@ public class RobotContainer {
                             AllianceFlipUtil.apply(Rotation2d.kZero))))
                 .ignoringDisable(true));
 
-    
+    driver
+        .povRight()
+        .onTrue(Commands.runOnce(() -> superstructure.setL1ModeEnabled(true)));
+
+    driver
+        .povDown()
+        .onTrue(Commands.runOnce(() -> superstructure.setL1ModeEnabled(false)));
+
+    driver
+        .b()
+        .onTrue(superstructure.setStateCommand(WantedSuperState.PURGE))
+        .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
+
+    driver
+        .rightTrigger()
+        .and(driver.y().negate())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                WantedSuperState.REEF_TEST_RIGHT, // L3 Right
+                WantedSuperState.STOW,
+                WantedSuperState.SCORE_L1_INTAKE_RIGHT,
+                WantedSuperState.INTAKE_CORAL))
+        .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
+
+    driver
+        .leftTrigger()
+        .and(driver.y().negate())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                WantedSuperState.REEF_TEST_LEFT, // L3 Left
+                WantedSuperState.STOW, // Net Algae
+                WantedSuperState.SCORE_L1_INTAKE_LEFT,
+                WantedSuperState.STOW)) // Algae Ground Pickup
+        .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
+
+    driver
+        .rightBumper()
+        .and(driver.y().negate())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                WantedSuperState.REEF_TEST_RIGHT, // L2 Right
+                WantedSuperState.STOW,
+                WantedSuperState.STOW,
+                WantedSuperState.STOW)) // Coral L1 Ground Pickup
+        .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
+
+    driver
+        .leftBumper()
+        .and(driver.y().negate())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                WantedSuperState.REEF_TEST_LEFT, // L2 Left
+                WantedSuperState.STOW, // Processor Algae
+                WantedSuperState.STOW,
+                WantedSuperState.STOW)) // Algae Tree Pickup
+        .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
+
+    driver
+        .rightTrigger()
+        .and(driver.y())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                WantedSuperState.REEF_TEST_RIGHT, // L4 Right
+                WantedSuperState.STOW,
+                WantedSuperState.STOW,
+                WantedSuperState.INTAKE_CORAL))
+        .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
+
+    driver
+        .leftTrigger()
+        .and(driver.y())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                WantedSuperState.REEF_TEST_LEFT, // L4 Left
+                WantedSuperState.STOW,
+                WantedSuperState.STOW,
+                WantedSuperState.STOW))
+        .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
+
+    driver
+        .rightBumper()
+        .and(driver.y())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                WantedSuperState.REEF_TEST_RIGHT, // L1 Right from End Effector
+                WantedSuperState.STOW,
+                WantedSuperState.STOW,
+                WantedSuperState.STOW))
+        .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
+
+    driver
+        .leftBumper()
+        .and(driver.y())
+        .onTrue(
+            superstructure.configureButtonBinding(
+                WantedSuperState.REEF_TEST_LEFT, // L1 Left from End Effector
+                WantedSuperState.STOW,
+                WantedSuperState.STOW,
+                WantedSuperState.STOW))
+        .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
+
+    driver
+        .x()
+        .onTrue(
+            superstructure.configureButtonBinding(
+                WantedSuperState.STOW,
+                WantedSuperState.STOW,
+                WantedSuperState.STOW,  // Algae Reef Pickup
+                WantedSuperState.STOW)) // Algae Reef Pickup
+        .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
+
+    driver
+        .a()
+        .onTrue(
+            superstructure.configureButtonBinding(
+                WantedSuperState.STOW, // Manual Score End Effector Coral
+                WantedSuperState.STOW, // Manual Score Algae
+                WantedSuperState.STOW,  // Manual Score Intake Coral
+                WantedSuperState.STOW))
+        .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
   }
 
   /**

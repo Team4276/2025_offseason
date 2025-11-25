@@ -8,6 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -15,10 +16,12 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.Constants;
 import frc.team4276.lib.AllianceFlipUtil;
+import frc.team4276.lib.dashboard.LoggedTunablePID;
 import frc.team4276.lib.hid.JoystickOutputController;
 import frc.team4276.frc2025.RobotState;
 
@@ -43,6 +46,22 @@ public class Drive extends SubsystemBase {
 
   private WantedState wantedState = WantedState.TELEOP;
   private SystemState systemState = SystemState.TELEOP;
+
+  private final LoggedTunablePID teleopAutoAlignController = new LoggedTunablePID(
+      3.0, 0, 0.1, Units.inchesToMeters(1.0), "Drive/AutoAlign/TeleopTranslation");
+  private final LoggedTunablePID autoAutoAlignController = new LoggedTunablePID(
+      3.0, 0, 0.1, Units.inchesToMeters(1.0), "Drive/AutoAlign/AutoTranslation");
+  private final LoggedTunablePID headingAlignController = new LoggedTunablePID(5.0, 0, 0, Math.toRadians(1.0),
+      "Drive/HeadingAlign");
+
+  private Pose2d desiredAutoAlignPose = Pose2d.kZero;
+  private Pose2d isAutoAlignedCheckPose = Pose2d.kZero;
+  private final double autoAlignStaticFrictionConstant = maxVelocityMPS * 0.02;
+
+  private Rotation2d desiredHeadingAlignRotation = Rotation2d.kZero;
+
+  private double maxAutoAlignDriveTranslationOutput = maxVelocityMPS * 0.67;
+  private double maxAutoAlignDriveRotationOutput = maxAngularVelocity * 0.67;
 
   static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
@@ -209,9 +228,40 @@ public class Drive extends SubsystemBase {
         break;
 
       case AUTO_ALIGN:
+        Translation2d translationError = desiredAutoAlignPose.getTranslation().minus(currentPose.getTranslation());
+        double translationLinearError = translationError.getNorm();
+        double translationLinearOutput;
+
+        if (translationLinearError < teleopAutoAlignController.getErrorTolerance()) {
+          translationLinearOutput = 0.0;
+
+        } else if (DriverStation.isAutonomous()) {
+          translationLinearOutput = Math.abs(autoAutoAlignController.calculate(translationLinearError, 0.0))
+              + autoAlignStaticFrictionConstant;
+
+        } else {
+          translationLinearOutput = Math.abs(teleopAutoAlignController.calculate(translationLinearError, 0.0))
+              + autoAlignStaticFrictionConstant;
+        }
+
+        translationLinearOutput = Math.min(translationLinearOutput, maxAutoAlignDriveTranslationOutput);
+
+        double vx = translationLinearOutput * translationError.getAngle().getCos();
+        double vy = translationLinearOutput * translationError.getAngle().getSin();
+
+        double autoAlignThetaError = MathUtil.angleModulus(
+            currentPose.getRotation().minus(desiredAutoAlignPose.getRotation()).getRadians());
+        double omega = Math.min(
+            headingAlignController.calculate(autoAlignThetaError, 0.0),
+            maxAutoAlignDriveRotationOutput);
+
+        if (headingAlignController.atSetpoint()) {
+          omega = 0.0;
+        }
+
+        requestedSpeeds = new ChassisSpeeds(vx, vy, omega);
 
         break;
-
       case CHARACTERIZATION:
         break;
     }
@@ -282,4 +332,12 @@ public class Drive extends SubsystemBase {
     return states;
   }
 
+  public void setWantedState(WantedState wantedState) {
+    this.wantedState = wantedState;
+  }
+
+  public void setAutoAlignPose(Pose2d pose) {
+    setWantedState(WantedState.AUTO_ALIGN);
+    desiredAutoAlignPose = pose;
+  }
 }
