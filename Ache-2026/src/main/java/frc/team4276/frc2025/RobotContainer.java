@@ -23,6 +23,8 @@ import frc.team4276.frc2025.subsystems.elevator.ElevatorIOTalonFX;
 import frc.team4276.frc2025.subsystems.intake.Intake;
 import frc.team4276.frc2025.subsystems.intake.IntakeIO;
 import frc.team4276.frc2025.subsystems.intake.IntakeIOTalonFX;
+import frc.team4276.frc2025.subsystems.toggles.TogglesIO;
+import frc.team4276.frc2025.subsystems.toggles.TogglesIOHardware;
 import frc.team4276.frc2025.subsystems.vision.Vision;
 import frc.team4276.frc2025.subsystems.vision.VisionIO;
 import frc.team4276.frc2025.subsystems.vision.VisionIOPhotonVision;
@@ -35,6 +37,7 @@ public class RobotContainer {
   private Vision vision;
   private Elevator elevator;
   private Intake intake;
+  private TogglesIO toggles;
 
   private final Superstructure superstructure;
 
@@ -59,6 +62,7 @@ public class RobotContainer {
               new VisionIOPhotonVision(1, RobotState.getInstance()::getEstimatedPose));
           elevator = new Elevator(new ElevatorIOTalonFX());
           intake = new Intake(new IntakeIOTalonFX());
+          toggles = new TogglesIOHardware();
         }
 
         case SIMBOT -> {
@@ -76,6 +80,8 @@ public class RobotContainer {
           });
           intake = new Intake(new IntakeIO() {
           });
+          toggles = new TogglesIO() {
+          };
         }
       }
     }
@@ -112,7 +118,12 @@ public class RobotContainer {
       });
     }
 
-    superstructure = new Superstructure(drive, vision, elevator, intake, driver);
+    if (toggles == null) {
+      toggles = new TogglesIO() {
+      };
+    }
+
+    superstructure = new Superstructure(driver, drive, vision, elevator, intake, toggles);
 
     configureBindings();
 
@@ -238,7 +249,7 @@ public class RobotContainer {
             superstructure.configureButtonBinding(
                 WantedSuperState.STOW,
                 WantedSuperState.STOW,
-                WantedSuperState.STOW,  // Algae Reef Pickup
+                WantedSuperState.STOW, // Algae Reef Pickup
                 WantedSuperState.STOW)) // Algae Reef Pickup
         .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
 
@@ -248,7 +259,7 @@ public class RobotContainer {
             superstructure.configureButtonBinding(
                 WantedSuperState.STOW, // Manual Score End Effector Coral
                 WantedSuperState.STOW, // Manual Score Algae
-                WantedSuperState.STOW,  // Manual Score Intake Coral
+                WantedSuperState.STOW, // Manual Score Intake Coral
                 WantedSuperState.STOW))
         .onFalse(superstructure.setStateCommand(WantedSuperState.STOW));
   }

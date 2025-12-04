@@ -25,4 +25,8 @@ public class Ports {
   public static final int DRIVER_CONTROLLER = 0;
   public static final int DEMO_CONTROLLER_LEFT = 1;
   public static final int DEMO_CONTROLLER_RIGHT = 2;
+  
+  /* Toggles */
+  public static final int ELEVATOR_COAST_SWITCH = 0;
+  public static final int INTAKE_COAST_SWITCH = 1;
 }

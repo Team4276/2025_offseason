@@ -27,14 +27,12 @@ public class IntakeConstants {
 
     public static final double kS = 0.0;
 
-    public static final double gearRatio =  (25.0 / 1.0) * (64.0 / 30.0);
-    public static final double positionConversionFactor = 2 * Math.PI / gearRatio;
+    public static final double motorRotationsPerRad = (25.0 / 1.0) * (64.0 / 30.0) / (2 * Math.PI);
 
-    public static final double maxAccel = Units.degreesToRadians(180.0) / positionConversionFactor;
-    public static final double cruiseVel = Units.degreesToRadians(90.0) / positionConversionFactor;
+    public static final double maxAccel = Units.degreesToRadians(180.0) * motorRotationsPerRad;
+    public static final double cruiseVel = Units.degreesToRadians(90.0) * motorRotationsPerRad;
 
-    public static final double absoluteEncoderPositionConversionFactor = 2 * Math.PI;
-    public static final double encoderOffset = 0.0 / absoluteEncoderPositionConversionFactor;
+    public static final double encoderOffset = 0.0 / (2 * Math.PI); //TODO: check and be safe :D
     public static final double positionTolerance = Units.degreesToRadians(1.0);
 
     public static final LoggedTunableNumber hasCoralTripCurrent = new LoggedTunableNumber("Intake/HasCoralTripCurrent", 10.0);

@@ -2,7 +2,9 @@ package frc.team4276.frc2025.subsystems;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.team4276.frc2025.RobotState;
@@ -10,7 +12,10 @@ import frc.team4276.frc2025.field.FieldConstants;
 import frc.team4276.frc2025.field.FieldConstants.ScoringSide;
 import frc.team4276.frc2025.subsystems.drive.Drive;
 import frc.team4276.frc2025.subsystems.elevator.Elevator;
+import frc.team4276.frc2025.subsystems.elevator.ElevatorConstants.ElevatorPosition;
 import frc.team4276.frc2025.subsystems.intake.Intake;
+import frc.team4276.frc2025.subsystems.toggles.TogglesIO;
+import frc.team4276.frc2025.subsystems.toggles.TogglesIOInputsAutoLogged;
 import frc.team4276.frc2025.subsystems.vision.Vision;
 import frc.team4276.lib.hid.ViXController;
 
@@ -23,6 +28,9 @@ public class Superstructure extends SubsystemBase {
   private final Elevator elevator;
   private final Intake intake;
   private final ViXController controller;
+
+  private final TogglesIO togglesIO;
+  private final TogglesIOInputsAutoLogged togglesInputs = new TogglesIOInputsAutoLogged();
 
   public enum WantedSuperState {
     STOW,
@@ -57,17 +65,26 @@ public class Superstructure extends SubsystemBase {
 
   private boolean isL1Mode = true;
 
-  public Superstructure(Drive drive, Vision vision, Elevator elevator, Intake intake, ViXController controller) {
+  public Superstructure(ViXController controller, Drive drive, Vision vision, Elevator elevator, Intake intake,
+      TogglesIO togglesIO) {
+    this.controller = controller;
     this.drive = drive;
     this.vision = vision;
     this.elevator = elevator;
     this.intake = intake;
-    this.controller = controller;
+    this.togglesIO = togglesIO;
   }
 
   @Override
   public void periodic() {
+    togglesIO.updateInputs(togglesInputs);
+    Logger.processInputs("Toggles", togglesInputs);
+
     if (intake.hasCoral()) {
+      if (gamePieceState == GamePieceState.NO_BANANA) {
+        CommandScheduler.getInstance().schedule(controller.rumbleCommand(RumbleType.kBothRumble, 1.0, 1.0));
+      }
+
       gamePieceState = GamePieceState.CORAL;
     } else {
       gamePieceState = GamePieceState.NO_BANANA;
@@ -103,52 +120,75 @@ public class Superstructure extends SubsystemBase {
   private void applyState() {
     switch (currentSuperState) {
       case STOWED:
-        intake.setWantedState(Intake.WantedState.STOW);
-        drive.setWantedState(Drive.WantedState.TELEOP);
+        stow();
 
         break;
       case REEF_TESTING_LEFT:
-        intake.setWantedState(Intake.WantedState.STOW);
-        FieldConstants.getCoralScorePose(RobotState.getInstance().getTagIdFromClosestPoseSide(), ScoringSide.LEFT)
-            .ifPresent(
-                (pose) -> drive.setAutoAlignPose(pose));
+        reefTesting(ScoringSide.LEFT);
 
         break;
       case REEF_TESTING_RIGHT:
-        intake.setWantedState(Intake.WantedState.STOW);
-        FieldConstants.getCoralScorePose(RobotState.getInstance().getTagIdFromClosestPoseSide(), ScoringSide.RIGHT)
-            .ifPresent(
-                (pose) -> drive.setAutoAlignPose(pose));
+        reefTesting(ScoringSide.RIGHT);
 
         break;
 
       case INTAKING_CORAL:
-        intake.setWantedState(Intake.WantedState.INTAKE);
-        drive.setWantedState(Drive.WantedState.TELEOP);
+        intakeCoral();
 
         break;
       case SCORING_L1_INTAKE_LEFT:
-        intake.setWantedState(Intake.WantedState.L1_SCORE);
-        drive.setWantedState(Drive.WantedState.TELEOP);
-        // FieldConstants.getCoralScorePose(RobotState.getInstance().getTagIdFromClosestPoseSide(), ScoringSide.LEFT)
-        //     .ifPresent(
-        //         (pose) -> drive.setAutoAlignPose(pose));
+        scoreL1Intake(ScoringSide.LEFT);
 
         break;
       case SCORING_L1_INTAKE_RIGHT:
-        intake.setWantedState(Intake.WantedState.L1_SCORE);
-        drive.setWantedState(Drive.WantedState.TELEOP);
-        // FieldConstants.getCoralScorePose(RobotState.getInstance().getTagIdFromClosestPoseSide(), ScoringSide.RIGHT)
-        //     .ifPresent(
-        //         (pose) -> drive.setAutoAlignPose(pose));
+        scoreL1Intake(ScoringSide.LEFT);
 
         break;
       case PURGING:
-        intake.setWantedState(Intake.WantedState.PURGE);
-        drive.setWantedState(Drive.WantedState.TELEOP);
+        purge();
 
         break;
     }
+  }
+
+  private void stow() {
+    intake.setWantedState(Intake.WantedState.STOW);
+    drive.setWantedState(Drive.WantedState.TELEOP);
+    elevator.setWantedState(Elevator.WantedState.IDLE, ElevatorPosition.STOW);
+  }
+
+  private void reefTesting(ScoringSide side) {
+    intake.setWantedState(Intake.WantedState.STOW);
+    FieldConstants.getCoralScorePose(RobotState.getInstance().getTagIdFromClosestPoseSide(), side)
+        .ifPresent(
+            (pose) -> drive.setAutoAlignPose(pose));
+    elevator.setWantedState(Elevator.WantedState.IDLE, ElevatorPosition.STOW);
+
+  }
+
+  private void intakeCoral() {
+    intake.setWantedState(Intake.WantedState.INTAKE);
+    drive.setWantedState(Drive.WantedState.TELEOP);
+    elevator.setWantedState(Elevator.WantedState.IDLE, ElevatorPosition.STOW);
+
+  }
+
+  private void scoreL1Intake(ScoringSide side) {
+    intake.setWantedState(Intake.WantedState.L1_SCORE);
+    drive.setWantedState(Drive.WantedState.TELEOP);
+    // FieldConstants.getCoralScorePose(RobotState.getInstance().getTagIdFromClosestPoseSide(),
+    // side)
+    // .ifPresent(
+    // (pose) -> drive.setAutoAlignPose(pose));
+    elevator.setWantedState(Elevator.WantedState.IDLE, ElevatorPosition.STOW);
+
+  }
+
+  private void purge() {
+    intake.setWantedState(Intake.WantedState.PURGE);
+    drive.setWantedState(Drive.WantedState.TELEOP);
+    elevator.setWantedState(Elevator.WantedState.IDLE, ElevatorPosition.STOW);
+
   }
 
   public boolean hasCoral() {

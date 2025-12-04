@@ -27,6 +27,7 @@ public class IntakeIOTalonFX implements IntakeIO {
   private final TalonFX rollers;
   private final CANcoder encoder;
 
+  private boolean brakeModeEnabled = true;
   VoltageOut pivotVoltageOut = new VoltageOut(0.0);
   VoltageOut rollersVoltageOut = new VoltageOut(0.0);
   MotionMagicVoltage motionMagicVoltage = new MotionMagicVoltage(0.0).withSlot(0);
@@ -111,10 +112,10 @@ public class IntakeIOTalonFX implements IntakeIO {
         rollerMotorTemp,
         encoderAngle);
 
-    inputs.position = pivotAngle.getValueAsDouble() * positionConversionFactor;
-    inputs.velocity = pivotAngularVelocityRadPerSec.getValueAsDouble() * positionConversionFactor;
-    inputs.absoluteEncoderPosition = encoderAngle.getValueAsDouble() * absoluteEncoderPositionConversionFactor;
-    
+    inputs.position = pivotAngle.getValueAsDouble() / motorRotationsPerRad;
+    inputs.velocity = pivotAngularVelocityRadPerSec.getValueAsDouble() / motorRotationsPerRad;
+    inputs.absoluteEncoderPosition = encoderAngle.getValueAsDouble() * 2 * Math.PI;
+
     inputs.isConnected[0] = pivot.isConnected();
     inputs.appliedVolts[0] = pivotAppliedVolts.getValueAsDouble();
     inputs.supplyCurrentAmps[0] = pivotSupplyCurrentAmps.getValueAsDouble();
@@ -145,13 +146,21 @@ public class IntakeIOTalonFX implements IntakeIO {
   }
 
   @Override
-  public void runPivotSetpoint(double position) {
-    pivot.setControl(motionMagicVoltage.withPosition(position));
+  public void runPivotSetpoint(double positionRads) {
+    pivot.setControl(motionMagicVoltage.withPosition(positionRads * motorRotationsPerRad));
   }
 
+  /** Only call during disable */
   @Override
   public void setBrakeMode(boolean enabled) {
-    pivot.setNeutralMode(enabled ? NeutralModeValue.Brake : NeutralModeValue.Coast);
+    if (brakeModeEnabled == enabled)
+      return;
+    brakeModeEnabled = enabled;
+    new Thread(
+        () -> {
+          pivot.setNeutralMode(enabled ? NeutralModeValue.Brake : NeutralModeValue.Coast);
+        })
+        .start();
   }
 
 }

@@ -25,6 +25,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
   private final TalonFX master;
   private final TalonFX follower;
 
+  private boolean brakeModeEnabled = true;
   VoltageOut voltageOut = new VoltageOut(0.0);;
   MotionMagicVoltage motionMagicVoltage = new MotionMagicVoltage(0.0).withSlot(0);
 
@@ -84,7 +85,7 @@ public class ElevatorIOTalonFX implements ElevatorIO {
 
     inputs.position = elevatorPosition.getValueAsDouble() / motorRotationsPerMetre;
     inputs.velocity = elevatorVelocity.getValueAsDouble() / motorRotationsPerMetre;
-    
+
     inputs.isConnected[0] = master.isConnected();
     inputs.appliedVolts = elevatorAppliedVolts.getValueAsDouble();
     inputs.supplyCurrentAmps = elevatorSupplyCurrentAmps.getValueAsDouble();
@@ -110,7 +111,11 @@ public class ElevatorIOTalonFX implements ElevatorIO {
   /** Only call when disabled */
   @Override
   public void setPosition(double positionMetres) {
-    master.setPosition(positionMetres * motorRotationsPerMetre);
+    new Thread(
+        () -> {
+          master.setPosition(positionMetres * motorRotationsPerMetre);
+        })
+        .start();
   }
 
   @Override
@@ -119,9 +124,17 @@ public class ElevatorIOTalonFX implements ElevatorIO {
     follower.stopMotor();
   }
 
-  /** Only call when disabled */
+  /** Only call during disable */
   @Override
-  public void setBrakeMode(boolean enabled) {
-    master.setNeutralMode(enabled ? NeutralModeValue.Brake : NeutralModeValue.Coast);
+  public void setBrakeMode(boolean enabled) { // TODO: make safe
+    if (brakeModeEnabled == enabled)
+      return;
+    brakeModeEnabled = enabled;
+    new Thread(
+        () -> {
+          master.setNeutralMode(enabled ? NeutralModeValue.Brake : NeutralModeValue.Coast);
+          follower.setNeutralMode(enabled ? NeutralModeValue.Brake : NeutralModeValue.Coast);
+        })
+        .start();
   }
 }
