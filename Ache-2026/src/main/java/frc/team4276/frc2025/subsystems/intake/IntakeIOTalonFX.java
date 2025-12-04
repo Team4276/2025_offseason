@@ -20,7 +20,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import frc.team4276.frc2025.Ports;
-import frc.team4276.lib.TalonFXFactory;
+import frc.team4276.lib.ctre.TalonFXFactory;
 
 public class IntakeIOTalonFX implements IntakeIO {
   private final TalonFX pivot;

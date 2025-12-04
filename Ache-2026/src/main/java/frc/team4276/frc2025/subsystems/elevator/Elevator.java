@@ -94,7 +94,7 @@ public class Elevator extends SubsystemBase {
         break;
 
       case MOVING_TO_POSITION:
-        io.runSetpoint(wantedElevatorPose.getPositionRotations());
+        io.runSetpoint(MathUtil.clamp(wantedElevatorPose.getPositionMetres(), minInput, maxInput));
 
         break;
 
@@ -114,12 +114,12 @@ public class Elevator extends SubsystemBase {
         : MathUtil.isNear(wantedElevatorPose.getPositionMetres(), getPositionMetres(), tolerance);
   }
 
-  public static double metresToRotations(double metres) {
-    return (metres / drumCircumference) * gearRatio;
+  public double metresToRotations(double metres) {
+    return metres * motorRotationsPerMetre;
   }
 
-  public static double rotationsToMetres(double rotations) {
-    return (rotations / gearRatio) * drumCircumference;
+  public double rotationsToMetres(double rotations) {
+    return rotations / motorRotationsPerMetre;
   }
 
   public double getPositionMetres() {

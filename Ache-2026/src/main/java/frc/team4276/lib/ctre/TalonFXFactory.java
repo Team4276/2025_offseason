@@ -1,4 +1,4 @@
-package frc.team4276.lib;
+package frc.team4276.lib.ctre;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;

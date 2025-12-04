@@ -11,11 +11,11 @@ public class Ports {
   public static final int BACK_LEFT_DRIVE = 7;
   public static final int BACK_LEFT_TURN = 8;
 
-  public static final int PIGEON = 11;
+  public static final int PIGEON = 9;
 
   /* Subsystems */
-  public static final int ELEVATOR_LEADER = 9;
-  public static final int ELEVATOR_FOLLOWER = 10;
+  public static final int ELEVATOR_LEADER = 10;
+  public static final int ELEVATOR_FOLLOWER = 11;
 
   public static final int INTAKE_PIVOT = 12;
   public static final int INTAKE_ROLLERS = 13;

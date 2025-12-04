@@ -1,7 +1,7 @@
 package frc.team4276.frc2025.subsystems.drive;
 
 import static frc.team4276.frc2025.subsystems.drive.DriveConstants.*;
-import static frc.team4276.lib.SparkUtil.*;
+import static frc.team4276.lib.rev.SparkUtil.*;
 
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;

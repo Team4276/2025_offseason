@@ -19,7 +19,7 @@ import frc.team4276.frc2025.subsystems.drive.ModuleIOSim;
 import frc.team4276.frc2025.subsystems.drive.ModuleIOSpark;
 import frc.team4276.frc2025.subsystems.elevator.Elevator;
 import frc.team4276.frc2025.subsystems.elevator.ElevatorIO;
-import frc.team4276.frc2025.subsystems.elevator.ElevatorIOSparkMax;
+import frc.team4276.frc2025.subsystems.elevator.ElevatorIOTalonFX;
 import frc.team4276.frc2025.subsystems.intake.Intake;
 import frc.team4276.frc2025.subsystems.intake.IntakeIO;
 import frc.team4276.frc2025.subsystems.intake.IntakeIOTalonFX;
@@ -57,7 +57,7 @@ public class RobotContainer {
           vision = new Vision(RobotState.getInstance()::addVisionMeasurement,
               new VisionIOPhotonVision(0, RobotState.getInstance()::getEstimatedPose),
               new VisionIOPhotonVision(1, RobotState.getInstance()::getEstimatedPose));
-          elevator = new Elevator(new ElevatorIOSparkMax());
+          elevator = new Elevator(new ElevatorIOTalonFX());
           intake = new Intake(new IntakeIOTalonFX());
         }
 
