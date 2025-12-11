@@ -6,7 +6,6 @@ package frc.robot;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -29,39 +28,57 @@ public class Robot extends TimedRobot {
   private StatusSignal<AngularVelocity> velocityRPS;
   private StatusSignal<Voltage> voltageOut;
 
+  private VoltageOut motor1VoltageOut = new VoltageOut(0.0);
+  private MotionMagicVoltage motor1MotionMagicVoltage = new MotionMagicVoltage(0.0);
+  private VoltageOut motor2VoltageOut = new VoltageOut(0.0);
+
   public Robot() {
-    TalonFXConfiguration motor = new TalonFXConfiguration();
-    motor.CurrentLimits.SupplyCurrentLimitEnable = true;
-    motor.CurrentLimits.StatorCurrentLimitEnable = true;
-    motor.CurrentLimits.SupplyCurrentLimit = 40.0;
-    motor.CurrentLimits.StatorCurrentLimit = 90.0;
+    TalonFXConfiguration motor1Config = new TalonFXConfiguration();
+    motor1Config.CurrentLimits.SupplyCurrentLimitEnable = true;
+    motor1Config.CurrentLimits.StatorCurrentLimitEnable = true;
+    motor1Config.CurrentLimits.SupplyCurrentLimit = 40.0;
+    motor1Config.CurrentLimits.StatorCurrentLimit = 90.0;
 
-    motor.Slot0.kP = 5.0;
-    motor.Slot0.kI = 0.0;
-    motor.Slot0.kD = 0.0;
+    motor1Config.Slot0.kP = 0.5;
+    motor1Config.Slot0.kI = 0.0;
+    motor1Config.Slot0.kD = 0.0;
 
-    motor.Slot0.kS = 0.2;
+    motor1Config.Slot0.kS = 0.0;
 
-    motor.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-    motor.MotionMagic.MotionMagicAcceleration = 150.0;
-    motor.MotionMagic.MotionMagicCruiseVelocity = 150.0;
-    motor.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    motor1Config.Feedback.RotorToSensorRatio = 1.0;
+
+    motor1Config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    motor1Config.MotionMagic.MotionMagicAcceleration = 15.0;
+    motor1Config.MotionMagic.MotionMagicCruiseVelocity = 15.0;
+    motor1Config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
+
+    TalonFXConfiguration motor2Config = new TalonFXConfiguration();
+    motor2Config.CurrentLimits.SupplyCurrentLimitEnable = true;
+    motor2Config.CurrentLimits.StatorCurrentLimitEnable = true;
+    motor2Config.CurrentLimits.SupplyCurrentLimit = 30.0;
+    motor2Config.CurrentLimits.StatorCurrentLimit = 60.0;
+
+    motor2Config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    motor2Config.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
 
     motor1.clearStickyFaults();
     motor2.clearStickyFaults();
 
-    motor1.getConfigurator().apply(motor);
-    motor2.getConfigurator().apply(motor);
+    motor1.getConfigurator().apply(motor1Config);
+    motor2.getConfigurator().apply(motor2Config);
 
     positionRot = motor1.getPosition();
     velocityRPS = motor1.getVelocity();
     voltageOut = motor1.getMotorVoltage();
 
-    motor2.setControl(new Follower(1, true));
-    SmartDashboard.putNumber("Elevator_Position_Setpoint", 0.5);
-    SmartDashboard.putNumber("Elevator_Position_Setpoint_2", 10.0);
-    SmartDashboard.putNumber("Elevator_Position_Setpoint_3", 20.0);
-    SmartDashboard.putNumber("Elevator_Position_Setpoint_4", 40.0);
+    SmartDashboard.putNumber("Elevator_Position_Setpoint", 0.0);
+    SmartDashboard.putNumber("Elevator_Position_Setpoint_2", 15.0);
+    SmartDashboard.putNumber("Elevator_Position_Setpoint_3", 15.0);
+    SmartDashboard.putNumber("Elevator_Position_Setpoint_4", 15.0);
+    SmartDashboard.putNumber("Intake_OuttakeVoltage", 10.0);
+    SmartDashboard.putNumber("Intake_IntakeVoltage", -10.0);
+
+    motor1.setPosition(0.0);
   }
 
   @Override
@@ -87,26 +104,34 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     if (controller.getAButton()) {
-      motor1.setControl(new MotionMagicVoltage(SmartDashboard.getNumber("Elevator_Position_Setpoint", 0.5)));
+      motor1.setControl(new MotionMagicVoltage(SmartDashboard.getNumber("Elevator_Position_Setpoint", 0.0)));
     } else if (controller.getBButton()) {
-      motor1.setControl(new MotionMagicVoltage(SmartDashboard.getNumber("Elevator_Position_Setpoint_2", 10.0)));
+      motor1.setControl(new MotionMagicVoltage(SmartDashboard.getNumber("Elevator_Position_Setpoint_2", 15.0)));
 
     } else if (controller.getXButton()) {
-      motor1.setControl(new MotionMagicVoltage(SmartDashboard.getNumber("Elevator_Position_Setpoint_3", 20.0)));
+      motor1.setControl(new MotionMagicVoltage(SmartDashboard.getNumber("Elevator_Position_Setpoint_3", 15.0)));
 
     } else if (controller.getYButton()) {
-      motor1.setControl(new MotionMagicVoltage(SmartDashboard.getNumber("Elevator_Position_Setpoint_4", 40.0)));
+      motor1.setControl(new MotionMagicVoltage(SmartDashboard.getNumber("Elevator_Position_Setpoint_4", 15.0)));
 
     } else {
-      double scalar = 3.0;
+      double scalar = 5.0;
       double output = controller.getRightY() * controller.getRightY();
-      motor1.setVoltage(scalar * output * Math.signum(controller.getRightY()));
+      motor1.setControl(motor1VoltageOut.withOutput(scalar * output * Math.signum(controller.getRightY())));
+    }
+
+    if (controller.getLeftTriggerAxis() > 0.1) {
+      motor2.setControl(motor2VoltageOut.withOutput(SmartDashboard.getNumber("Intake_OuttakeVoltage", 10.0)));
+    } else if (controller.getRightTriggerAxis() > 0.1) {
+      motor2.setControl(motor2VoltageOut.withOutput(SmartDashboard.getNumber("Intake_IntakeVoltage", -10.0)));
+    } else {
+      motor2.setControl(motor2VoltageOut.withOutput(0.0));
     }
   }
 
   @Override
   public void teleopExit() {
-    motor1.setControl(new VoltageOut(0.0));
+    motor1.setControl(motor2VoltageOut.withOutput(0.0));
   }
 
   @Override
